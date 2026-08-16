@@ -1,0 +1,1338 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>偏倚分数 BF 互动讲解器 · 用负对照校准观测性因果估计 | Bias Fraction Interactive Explainer (manuscript v35)</title>
+<style>
+  :root{
+    --bg:#FFFFFF; --card:#FAF7F1; --ink:#21242B; --muted:#4A4F5A; --line:#C9C4BC;
+    --bias:#A93226; --comp:#B07D00; --effect:#1F6F3F; --blue:#1F5E8F; --purple:#5B3FA8;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{margin:0; background:var(--bg); color:var(--ink);
+       font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",-apple-system,"Segoe UI",sans-serif;
+       line-height:1.75; font-size:16px;}
+  .wrap{max-width:1060px; margin:0 auto; padding:0 22px 80px;}
+  header.hero{padding:46px 22px 34px; border-bottom:1px solid var(--line);}
+  .hero h1{font-size:29px; line-height:1.35; margin:0 0 10px; text-align:center;}
+  .hero .sub{color:var(--muted); font-size:16px; text-align:center;}
+  .badges{margin-top:14px; display:flex; flex-wrap:wrap; gap:8px; justify-content:center;}
+  .badge{font-size:13px; padding:4px 12px; border-radius:999px; border:1px solid var(--line); color:var(--muted);}
+  nav.toc{position:sticky; top:0; z-index:50; background:var(--bg); border-bottom:1px solid var(--line);
+          display:flex; flex-wrap:wrap; gap:2px; padding:8px 14px; font-size:14px; justify-content:center; align-items:center;}
+  nav.toc a{color:var(--ink); text-decoration:none; padding:6px 10px; border-radius:6px; white-space:nowrap;}
+  nav.toc a:hover{background:var(--card);}
+  h2{font-size:24px; margin:56px 0 6px; padding-bottom:8px; border-bottom:2px solid var(--ink); text-align:center;}
+  h3{font-size:19px; margin:30px 0 8px;}
+  h4{font-size:16.5px; margin:22px 0 6px;}
+  p{margin:10px 0;}
+  .card{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:18px 20px; margin:16px 0;}
+  .callout{border-left:5px solid var(--blue); background:#EEF4F9; padding:12px 16px; border-radius:0 10px 10px 0; margin:16px 0;}
+  .callout.red{border-left-color:var(--bias); background:#F9EDEB;}
+  .callout.green{border-left-color:var(--effect); background:#EDF5EF;}
+  .callout.amber{border-left-color:var(--comp); background:#FBF3E0;}
+  .kw{font-weight:700;}
+  .en{color:var(--muted); font-size:14px;}
+  .formula{font-family:"Cambria Math","STIX Two Math",Georgia,serif; font-size:20px; text-align:center; margin:14px 0; color:var(--ink);}
+  .formula small{display:block; font-family:inherit; font-size:13.5px; color:var(--muted); margin-top:6px; font-style:normal;}
+  .radical{display:inline-flex; align-items:center; vertical-align:middle; white-space:nowrap;}
+  .radical .rtsym{font-size:1.35em; line-height:1; margin-right:1px; font-family:Georgia,serif;}
+  .radical .rtbody{border-top:1.8px solid var(--ink); padding:0 7px 2px 1px; line-height:1.4;}
+  table{width:100%; border-collapse:collapse; margin:16px 0; font-size:15px; background:#fff;}
+  th,td{border:1px solid var(--line); padding:8px 12px; text-align:left; vertical-align:top;}
+  th{background:#EFEAE0; font-weight:700;}
+  .metric-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:16px; margin:18px 0;}
+  .metric{border:1px solid var(--line); border-radius:12px; padding:16px 18px; background:#fff; border-top:6px solid var(--blue);}
+  .metric .name{font-weight:800; font-size:18px;}
+  .metric .sym{font-family:Georgia,serif; font-size:21px; margin:8px 0; text-align:center;}
+  .metric .def{font-size:14.5px; margin:6px 0;}
+  .metric .meta{font-size:13px; color:var(--muted); margin-top:10px;}
+  .metric.bias{border-top-color:var(--bias);}
+  .metric.comp{border-top-color:var(--comp);}
+  .metric.effect{border-top-color:var(--effect);}
+  .metric.purple{border-top-color:var(--purple);}
+  .pill{display:inline-block; padding:2px 10px; border-radius:999px; font-size:13px; font-weight:700; color:#fff;}
+  .pill.bias{background:var(--bias);} .pill.comp{background:var(--comp);} .pill.effect{background:var(--effect);}
+  .pill.blue{background:var(--blue);} .pill.purple{background:var(--purple);}
+  .lab{display:flex; gap:20px; flex-wrap:wrap; align-items:flex-start; margin:14px 0;}
+  .lab .controls{flex:1 1 320px; min-width:300px;}
+  .lab .display{flex:1 1 420px; min-width:320px;}
+  .slider-row{margin:14px 0;}
+  .slider-row label{font-weight:700; font-size:15px; display:block;}
+  .slider-row .val{float:right; font-family:ui-monospace,Menlo,monospace; color:var(--muted);}
+  input[type=range]{width:100%; accent-color:var(--purple); margin-top:6px;}
+  .presets{margin-top:10px; display:flex; flex-wrap:wrap; gap:8px;}
+  button.preset{font-size:13.5px; padding:6px 12px; border:1px solid var(--line); background:#fff; border-radius:8px; cursor:pointer;}
+  button.preset:hover{border-color:var(--purple); color:var(--purple);}
+  button.preset.active{background:var(--purple); color:#fff; border-color:var(--purple);}
+  .readout{background:#fff; border:1px solid var(--line); border-radius:12px; padding:14px 16px; margin-top:10px;}
+  .readout .big{font-size:34px; font-weight:800; font-family:ui-monospace,Menlo,monospace;}
+  .readout .row{display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px dashed var(--line); font-size:14.5px;}
+  .readout .row:last-child{border-bottom:none;}
+  svg text{font-family:"PingFang SC","Microsoft YaHei","Segoe UI",Arial,sans-serif;}
+  .card svg{display:block; width:100%; height:auto;}
+  .figure-note{font-size:13.5px; color:var(--muted); margin:6px 0 0;}
+  .tabs{display:flex; gap:8px; margin:14px 0 6px;}
+  button.tab{font-size:15px; padding:8px 18px; border:1px solid var(--line); background:#fff; border-radius:8px 8px 0 0; cursor:pointer; border-bottom:none;}
+  button.tab.active{background:var(--ink); color:#fff; border-color:var(--ink); font-weight:700;}
+  .zonelegend{display:flex; gap:16px; flex-wrap:wrap; margin:8px 0; font-size:14px; font-weight:600;}
+  .zonelegend span::before{content:"■"; margin-right:5px; font-size:13px;}
+  .zonelegend .bd::before{color:var(--bias);} .zonelegend .cp::before{color:var(--comp);} .zonelegend .ed::before{color:var(--effect);}
+  .heat{display:grid; grid-template-columns:auto repeat(6,1fr); gap:3px; font-size:13px; margin:12px 0;}
+  .heat .cell{padding:10px 4px; text-align:center; border-radius:4px; cursor:default; font-weight:600; border:1px solid transparent;}
+  .heat .cell:hover{border-color:var(--ink);}
+  .heat .hdr{font-weight:700; color:var(--muted); text-align:center; padding:4px;}
+  .tooltip{position:fixed; background:#21242B; color:#fff; font-size:13px; padding:8px 12px; border-radius:8px; pointer-events:none; max-width:300px; z-index:99; display:none; line-height:1.5;}
+  .gloss dt{font-weight:800; margin-top:12px;}
+  .gloss dd{margin:2px 0 0 0; font-size:15px;}
+  .gloss dd .en{display:block;}
+  footer{margin-top:70px; padding-top:18px; border-top:1px solid var(--line); color:var(--muted); font-size:13.5px;}
+
+  .anim-caption{background:#fff; border:1px solid var(--line); border-radius:10px; padding:12px 16px; margin-top:10px; font-size:15px; min-height:64px;}
+  .anim-caption .step-no{display:inline-block; background:var(--ink); color:#fff; font-size:12px; padding:2px 10px; border-radius:999px; margin-right:8px; font-weight:700;}
+  .anim-controls{display:flex; gap:8px; margin-top:8px;}
+  button.astep{font-size:14px; padding:6px 14px; border:1px solid var(--line); background:#fff; border-radius:8px; cursor:pointer; font-weight:600;}
+  button.astep:hover{border-color:var(--purple); color:var(--purple);}
+  .codeblock{background:#F4F1EA; border:1px solid var(--line); border-radius:10px; padding:14px 16px; font-size:13px; line-height:1.6; overflow-x:auto; font-family:ui-monospace,Menlo,Consolas,monospace; white-space:pre;}
+
+  /* ================= i18n 语言切换 ================= */
+  body.lang-zh .i18n-en{display:none !important;}
+  body.lang-en .i18n-zh{display:none !important;}
+  body.lang-en h2 .en, body.lang-en h3 .en{display:none;}
+  .lang-btn{font-size:14px; font-weight:800; padding:6px 16px; margin-left:12px; border-radius:999px;
+            border:2px solid var(--purple); color:var(--purple); background:#fff; cursor:pointer; white-space:nowrap;}
+  .lang-btn:hover{background:var(--purple); color:#fff;}
+  .lang-btn-hero{display:block; margin:16px auto 0; font-size:15px; padding:8px 26px;}
+  @media (max-width:760px){ .hero h1{font-size:23px;} .formula{font-size:17px;} }
+</style>
+</head>
+<body>
+<script>
+/* 尽早设置语言 class，避免双语内容闪烁 */
+(function(){
+  try{
+    var lang = localStorage.getItem("bf-lang") || "zh";
+    document.body.classList.add(lang === "en" ? "lang-en" : "lang-zh");
+    document.documentElement.lang = lang === "en" ? "en" : "zh-CN";
+  }catch(e){ document.body.classList.add("lang-zh"); }
+})();
+</script>
+
+<header class="hero">
+  <div class="wrap" style="padding:0;">
+    <h1><span class="i18n-zh">偏倚分数 BF：用负对照量化观察性因果估计中的系统性偏倚</span><span class="i18n-en">The Bias Fraction: Quantifying Systematic Bias in Observational Causal Estimates with Negative Controls</span></h1>
+    <div class="sub">
+      <span class="i18n-zh">用<b>负对照（negative controls）</b>校准观察性研究中的系统性偏倚，并用一个介于 0 与 1 之间的数——<b>偏倚分数（bias fraction, BF）</b>——回答：<br><b>"校准之后剩下的信号里，到底有多少是真实效应，有多少是偏倚？"</b></span>
+      <span class="i18n-en">Calibrate systematic bias in observational studies with <b>negative controls</b>, and use a single number between 0 and 1 — the <b>bias fraction (BF)</b> — to answer:<br><b>"Of the signal that survives calibration, how much is real effect and how much is bias?"</b></span>
+    </div>
+    <div class="badges">
+      <span class="badge"><span class="i18n-zh">论文版本 manuscript v35（2026-08-16）</span><span class="i18n-en">Manuscript v35 (2026-08-16)</span></span>
+      <span class="badge"><span class="i18n-zh">目标读者：方法学专家 + 临床医生</span><span class="i18n-en">Audience: methodologists + clinicians</span></span>
+      <span class="badge"><span class="i18n-zh">数据：MIMIC-IV（14,677 例心衰住院患者）+ 336 条件模拟研究</span><span class="i18n-en">Data: MIMIC-IV (14,677 HF patients) + 336-condition simulation</span></span>
+      <span class="badge">R <span class="i18n-zh">包</span><span class="i18n-en">package</span>: biasratio v0.2.0</span>
+    </div>
+    <button class="lang-btn lang-btn-hero" id="langBtnHero" type="button" aria-label="Switch language">
+      <span class="i18n-zh">🌐 Switch to English</span>
+      <span class="i18n-en">🌐 切换到中文</span>
+    </button>
+  </div>
+</header>
+
+<nav class="toc">
+  <a href="#why"><span class="i18n-zh">① 背景</span><span class="i18n-en">① Background</span></a>
+  <a href="#concepts"><span class="i18n-zh">② 核心概念</span><span class="i18n-en">② Core concepts</span></a>
+  <a href="#nc-anim"><span class="i18n-zh">③ 负对照详解（动画）</span><span class="i18n-en">③ Negative controls (animated)</span></a>
+  <a href="#metrics"><span class="i18n-zh">④ 指标词典</span><span class="i18n-en">④ Metric dictionary</span></a>
+  <a href="#lab"><span class="i18n-zh">⑤ 互动实验室</span><span class="i18n-en">⑤ Interactive lab</span></a>
+  <a href="#case"><span class="i18n-zh">⑥ 病例研究</span><span class="i18n-en">⑥ Case study</span></a>
+  <a href="#sim"><span class="i18n-zh">⑦ 模拟研究</span><span class="i18n-en">⑦ Simulation</span></a>
+  <a href="#apply"><span class="i18n-zh">⑧ 如何应用</span><span class="i18n-en">⑧ How to apply</span></a>
+  <a href="#glossary"><span class="i18n-zh">⑨ 术语表</span><span class="i18n-en">⑨ Glossary</span></a>
+  <button class="lang-btn" id="langBtnNav" type="button" aria-label="Switch language">
+    <span class="i18n-zh">🌐 EN</span>
+    <span class="i18n-en">🌐 中文</span>
+  </button>
+</nav>
+
+<div class="wrap">
+
+<!-- ============ ① 背景 ============ -->
+<section id="why">
+<h2><span class="i18n-zh">① 为什么需要这个指标</span><span class="i18n-en">① Why this metric exists</span> <span class="en">Why this metric exists</span></h2>
+
+<p><span class="i18n-zh">真实世界证据（real-world evidence, RWE）越来越多地进入指南与监管决策。研究者用<b>目标试验模拟（target trial emulation, TTE）</b>、<b>TMLE</b> 等方法，尽可能模仿随机试验。但这些方法共同依赖一个关键假设：<span class="kw">无未测量混杂假设（no unmeasured confounding）</span>——即"所有影响治疗与结局的共同原因都已被测量并调整"。</span>
+<span class="i18n-en">Real-world evidence (RWE) increasingly informs guidelines and regulatory decisions. Researchers use <b>target trial emulation (TTE)</b>, <b>TMLE</b>, and related methods to mimic randomized trials as closely as possible. But all of these methods share one critical assumption: <span class="kw">no unmeasured confounding</span> — that "every common cause of treatment and outcome has been measured and adjusted for."</span></p>
+
+<div class="callout">
+  <span class="i18n-zh"><b>一项调查数据：</b>对 237 项 TTE 研究的横断面调查显示，只有 <b>30.8%</b> 的研究用统计方法评估了未测量混杂（Ren et al., JAMA Network Open 2026）。也就是说，<b>近七成的 TTE 研究没有任何经验性的偏倚检查</b>就发表了因果结论。</span>
+  <span class="i18n-en"><b>A survey finding:</b> a cross-sectional survey of 237 TTE studies found that only <b>30.8%</b> used statistical methods to assess unmeasured confounding (Ren et al., JAMA Network Open 2026). In other words, <b>nearly seven in ten TTE studies published causal conclusions without any empirical bias check</b>.</span>
+</div>
+
+<h3><span class="i18n-zh">健康依从者效应：药物流行病学中的典型混杂现象</span><span class="i18n-en">The healthy adherer effect: a canonical confounding mechanism in pharmacoepidemiology</span></h3>
+<p><span class="i18n-zh"><b>健康依从者效应（healthy adherer effect）</b>：依从治疗的患者，即使吃的是安慰剂，结局也更好——因为他们本身更健康、更自律、医疗资源更好。观察性研究中，"吃够了药"这件事本身就携带了大量与药物无关的预后信息。</span>
+<span class="i18n-en"><b>The healthy adherer effect:</b> patients who adhere to therapy have better outcomes even on placebo — because they are healthier, more disciplined, and have better access to care to begin with. In observational studies, "taking the full dose" itself carries a wealth of prognostic information that has nothing to do with the drug.</span></p>
+
+<div class="card">
+  <span class="i18n-zh"><b>本论文的病例（MIMIC-IV）：</b>在心衰住院患者中比较"达到 ≥50% 目标剂量 β 受体阻滞剂"与"&lt;50%"。这项病例研究在设计与实施两个层面都做到了当前的"最佳实践"——<b>严格遵循 TARGET 指南</b>（Transparent Reporting of Observational Studies Emulating a Target Trial，目标试验模拟的报告规范）进行设计与报告，并采用<b>TMLE——因果推断方法论前沿的双重稳健估计器</b>进行分析。</span>
+  <span class="i18n-en"><b>The paper's case study (MIMIC-IV):</b> among hospitalized heart-failure patients, comparing "achieving ≥50% of the target beta-blocker dose" with "&lt;50%". The case study followed current best practice at both the design and analysis stages — it was <b>designed and reported under the TARGET guideline</b> (Transparent Reporting of Observational Studies Emulating a Target Trial) and analyzed with <b>TMLE, a state-of-the-art doubly robust estimator at the frontier of causal inference methodology</b>.</span>
+  <ul>
+    <li><span class="i18n-zh">未校准的 TMLE 估计：<b>RR = 0.83</b>，看起来 β 受体阻滞剂把 1 年死亡降低了约 17%——与随机试验的表面结论相容。</span><span class="i18n-en">The uncalibrated TMLE estimate: <b>RR = 0.83</b>, apparently a ~17% reduction in 1-year mortality — superficially compatible with randomized-trial evidence.</span></li>
+    <li><span class="i18n-zh">但"能达到目标剂量"的患者，本身就是更健康的患者。</span><span class="i18n-en">But patients who reach the target dose are healthier patients to begin with.</span></li>
+    <li><span class="i18n-zh">12 个<b>负对照结局</b>（该药"不可能"影响的结局，如白内障、痛风）<b>全部</b>呈保护性关联——这就是系统性偏倚存在的直接证据。</span><span class="i18n-en">All 12 <b>negative control outcomes</b> (outcomes the drug cannot plausibly affect, e.g., cataract, gout) showed <b>protective associations</b> — direct evidence that systematic bias exists.</span></li>
+    <li><span class="i18n-zh"><b>关键启示：</b>即便有"规范设计 + 前沿估计方法"的双重保障，系统性偏移依然无法避免——TARGET 规范的试验模拟和 TMLE 双重稳健估计各自解决的是它们设计上能解决的威胁（时间变化混杂、不朽时间偏倚、模型误设），而<b>未测量混杂不在其列</b>。这正是需要经验性偏倚诊断（负对照校准 + BF）的理由。</span><span class="i18n-en"><b>Key lesson:</b> even under the dual safeguard of protocol-conformant design and a frontier estimator, systematic shifting persists — TARGET-conformant emulation and doubly robust TMLE address the threats they were built to address (time-varying confounding, immortal time bias, model misspecification), and <b>unmeasured confounding is not among them</b>. That is precisely why an empirical bias diagnostic (negative control calibration + BF) is needed.</span></li>
+  </ul>
+</div>
+
+<h3><span class="i18n-zh">现有校准方法（校准 p 值）的局限</span><span class="i18n-en">The limitation of existing calibration (the calibrated p-value)</span></h3>
+<p><span class="i18n-zh">OHDSI 的<b>经验校准（empirical calibration）</b>框架（Schuemie et al. 2014, 2018）的做法分两步：<b>第一步</b>，用负对照估计出系统偏倚的分布（均值 μ̂<sub>B</sub> 和波动 σ̂<sub>B</sub>）；<b>第二步</b>，把观测估计放进这个"偏倚分布"里重新检验，得到一个<b>校准 p 值（calibrated p-value）</b>。</span>
+<span class="i18n-en">The OHDSI <b>empirical calibration</b> framework (Schuemie et al. 2014, 2018) proceeds in two steps: <b>step 1</b>, estimate the distribution of systematic bias from negative controls (mean μ̂<sub>B</sub> and spread σ̂<sub>B</sub>); <b>step 2</b>, re-test the observed estimate against this "bias distribution," yielding a <b>calibrated p-value</b>.</span></p>
+
+<div class="card">
+  <span class="i18n-zh"><b>校准 p 值到底在说什么？（划重点）</b></span><span class="i18n-en"><b>What the calibrated p-value actually says (key point)</b></span>
+  <ul>
+    <li><span class="i18n-zh"><b>校准 p &gt; 0.05</b>：扣除系统偏倚之后，剩下的效应小到与"零"没有统计上可区分的差别 → <b>"没有证据表明该治疗存在真实效应"</b>。<span style="color:var(--bias);font-weight:700;">注意：这绝不表示"没有偏倚"。</span>恰恰相反，此时偏倚往往很大——正是它把估计"拨"到了零附近。</span><span class="i18n-en"><b>Calibrated p &gt; 0.05:</b> after removing systematic bias, the residual effect is too small to distinguish from zero → <b>"no evidence of a real treatment effect."</b> <span style="color:var(--bias);font-weight:700;">Note: this does NOT mean "no bias."</span> Quite the opposite — the bias is often large at this point; it is exactly what pulled the estimate toward zero.</span></li>
+    <li><span class="i18n-zh"><b>校准 p &lt; 0.05</b>：扣除偏倚之后，仍然有与零可区分的残余效应 → "有证据支持真实效应"。</span><span class="i18n-en"><b>Calibrated p &lt; 0.05:</b> after removing bias, a residual effect distinguishable from zero remains → "evidence supports a real effect."</span></li>
+  </ul>
+  <span class="i18n-zh"><b>它的局限：</b>这是一个"是 / 否"的二元判决，回答不了下一个问题——<b>"扣除的偏倚有多大？剩下的效应又有多大？"</b> 两个截然不同的情形会给出同一个"不显著"：</span>
+  <span class="i18n-en"><b>Its limitation:</b> it is a yes/no verdict and cannot answer the next question — <b>"how large was the bias removed, and how large is the effect that remains?"</b> Two very different scenarios yield the same "not significant":</span>
+</div>
+
+<div class="callout amber">
+  <span class="i18n-zh"><b>"校准后不显著"的两种含义：</b><br>
+  ① <b>效应被偏倚淹没</b>——真实效应存在，但偏倚太大，校准后信号被抹平；<br>
+  ② <b>本来就无效</b>——校准正确地移除了偏倚，剩下一个真实的零效应。<br>
+  校准 p 值<b>无法区分</b>这两种情况。<b>BF 正是为区分它们而设计的连续量</b>：它直接报告"偏倚占校准后信号的几成"。</span>
+  <span class="i18n-en"><b>Two meanings of "not significant after calibration":</b><br>
+  ① <b>The effect was swamped by bias</b> — a real effect exists, but the bias was so large that the calibrated signal vanished; <br>
+  ② <b>Truly null</b> — calibration correctly removed the bias, leaving a genuine zero effect.<br>
+  The calibrated p-value <b>cannot distinguish</b> the two. <b>BF is designed as the continuous quantity that separates them</b>: it directly reports "what share of the calibrated signal is bias."</span>
+</div>
+</section>
+<!-- ============ ② 核心概念 ============ -->
+<section id="concepts">
+<h2><span class="i18n-zh">② 核心概念</span><span class="i18n-en">② Core concepts</span> <span class="en">Core concepts</span></h2>
+
+<div class="metric-grid">
+  <div class="metric bias">
+    <div class="name"><span class="i18n-zh">负对照结局</span><span class="i18n-en">Negative control outcome</span></div>
+    <div class="def"><span class="i18n-zh"><b>严谨定义：</b>与主结局共享同一套混杂结构、但<b>不可能</b>被治疗因果影响的结局。若治疗与负对照也出现关联，该关联只能来自混杂（或偏倚）。</span>
+    <span class="i18n-en"><b>Formal definition:</b> an outcome that shares the confounding structure of the primary outcome but <b>cannot</b> be causally affected by treatment. If treatment associates with a negative control, that association can only arise from confounding (bias).</span></div>
+    <div class="meta"><span class="i18n-zh">💡 <b>通俗解释：</b>负对照的真实效应已知为零。若治疗与负对照也出现关联，该关联不可能来自药物作用，只能来自<b>研究设计中的系统偏倚</b>。</span>
+    <span class="i18n-en">💡 <b>Plain language:</b> a negative control's true effect is known to be zero. Any treatment–control association cannot come from the drug — it can only come from <b>systematic bias in the study design</b>.</span></div>
+  </div>
+  <div class="metric purple">
+    <div class="name"><span class="i18n-zh">经验零分布</span><span class="i18n-en">Empirical null distribution</span></div>
+    <div class="def"><span class="i18n-zh"><b>严谨定义：</b>用 K 个负对照的估计值 (γ̂<sub>k</sub>, τ̂<sub>k</sub>) 通过最大似然拟合的分布 N( μ̂<sub>B</sub>, <span class="radical"><span class="rtsym">√</span><span class="rtbody">τ̂<sub>k</sub>² + σ̂<sub>B</sub>²</span></span> )，其中 μ̂<sub>B</sub> 是<b>平均系统偏倚</b>，σ̂<sub>B</sub> 是对照间偏倚的异质性。</span>
+    <span class="i18n-en"><b>Formal definition:</b> the distribution N( μ̂<sub>B</sub>, <span class="radical"><span class="rtsym">√</span><span class="rtbody">τ̂<sub>k</sub>² + σ̂<sub>B</sub>²</span></span> ) fitted by maximum likelihood to the K negative-control estimates (γ̂<sub>k</sub>, τ̂<sub>k</sub>), where μ̂<sub>B</sub> is the <b>mean systematic bias</b> and σ̂<sub>B</sub> the between-control heterogeneity of bias.</span></div>
+    <div class="meta"><span class="i18n-zh">💡 <b>通俗解释：</b>负对照集合刻画了<b>偏倚的分布特征</b>。12 个负对照全部偏向保护一侧，说明研究设计会系统性地高估保护作用。</span>
+    <span class="i18n-en">💡 <b>Plain language:</b> the control set characterizes <b>the distribution of bias</b>. All 12 controls leaning protective means the study design systematically over-estimates protective effects.</span></div>
+  </div>
+  <div class="metric comp">
+    <div class="name"><span class="i18n-zh">偏倚交换性</span><span class="i18n-en">Bias exchangeability</span></div>
+    <div class="def"><span class="i18n-zh"><b>严谨定义：</b>在给定已测协变量的条件下，影响主估计的残留偏倚的分布 ≈ 支配负对照估计的偏倚分布。这是整个方法的关键假设，与它所诊断的"无未测量混杂"一样<b>无法用数据直接验证</b>。</span>
+    <span class="i18n-en"><b>Formal definition:</b> conditional on measured covariates, the distribution of residual bias affecting the primary estimate ≈ the bias distribution governing the negative-control estimates. This is the key assumption of the whole method and, like the "no unmeasured confounding" it diagnoses, <b>cannot be verified directly from data</b>.</span></div>
+    <div class="meta"><span class="i18n-zh">💡 <b>通俗比喻：</b>"同一把尺子"假设——负对照和主结局被<b>同一套</b>混杂机制污染。如果负对照的偏倚是"尺子 A"造成的，而主结局的偏倚来自"尺子 B"，校准就会用错尺子。</span>
+    <span class="i18n-en">💡 <b>Analogy:</b> the "same ruler" assumption — the controls and the primary outcome are contaminated by <b>one and the same</b> confounding mechanism. If the controls' bias comes from "ruler A" while the primary outcome's bias comes from "ruler B," calibration uses the wrong ruler.</span></div>
+  </div>
+</div>
+
+<h3><span class="i18n-zh">偏倚共享结构（交互式因果图）</span><span class="i18n-en">Shared bias structure (interactive causal diagram)</span> <span class="en">Shared bias structure</span></h3>
+<div class="card">
+<svg id="dag" viewBox="0 0 720 300" width="100%" style="height:auto;"></svg>
+<div class="figure-note">
+  <span class="i18n-zh">图中<b>带箭头的线</b>表示影响方向：实线箭头 = 因果路径；虚线箭头 = 偏倚路径；红叉 = 负对照假设"不存在"的治疗→对照因果路径。把鼠标移到节点上查看解释。<b>关键：U 同时指向 A、Y 与 N<sub>k</sub>——若未测量 U 存在，A 与 Y 之间的关联就会被偏倚污染；而 N<sub>k</sub> 上观察到的"假关联"正是这条偏倚路径的读数。</b></span>
+  <span class="i18n-en"><b>Arrows</b> show direction of influence: solid arrows = causal paths; dashed arrows = bias paths; the red cross = the treatment→control causal path that the negative-control assumption says <b>does not exist</b>. Hover over a node for an explanation. <b>Key point: U points to A, Y, and N<sub>k</sub> simultaneously — if unmeasured U exists, the A–Y association is contaminated by bias; and the "spurious association" observed on N<sub>k</sub> is exactly the readout of that bias pathway.</b></span>
+</div>
+</div>
+
+<h3><span class="i18n-zh">校准做什么</span><span class="i18n-en">What calibration does</span> <span class="en">What calibration does</span></h3>
+<p class="formula">
+  ψ̃ = ψ̂<sub>obs</sub> − μ̂<sub>B</sub>
+  <small><span class="i18n-zh">校准后（去偏倚）效应 = 观测估计 − 估计的系统偏倚（均在 log RR 尺度）</span><span class="i18n-en">Calibrated (de-biased) effect = observed estimate − estimated systematic bias (both on the log-RR scale)</span></small>
+</p>
+<p><span class="i18n-zh">负对照告诉我们研究设计平均会把估计向保护方向偏移多少（μ̂<sub>B</sub>）；校准就是从观测值中<b>减去这个系统偏移</b>，并把偏倚的不确定性（σ̂<sub>B</sub>）并入标准误：</span>
+<span class="i18n-en">Negative controls tell us how far the design shifts estimates in the protective direction on average (μ̂<sub>B</sub>); calibration <b>subtracts this systematic shift</b> from the observed value and folds the bias uncertainty (σ̂<sub>B</sub>) into the standard error:</span></p>
+<p class="formula">
+  σ̃ = <span class="radical"><span class="rtsym">√</span><span class="rtbody">σ̂<sub>obs</sub>² + σ̂<sub>B</sub>²</span></span>
+  <small><span class="i18n-zh">校准后标准误 = 抽样误差与系统误差不确定性的合成（根号下是两者的平方和）</span><span class="i18n-en">Calibrated SE = combination of sampling and systematic uncertainty (the square root of their sum of squares)</span></small>
+</p>
+</section>
+
+<!-- ============ ③ 负对照与经验零分布（动画详解） ============ -->
+<section id="nc-anim">
+<h2><span class="i18n-zh">③ 负对照与经验零分布（动画详解）</span><span class="i18n-en">③ Negative controls and the empirical null, animated</span> <span class="en">Negative controls and the empirical null, animated</span></h2>
+<p><span class="i18n-zh">这一节专门为临床读者准备：用四组动画把"负对照是什么、软件包算什么、经验零分布是什么、BF/BER 怎么算出来"讲透。每组动画都可以<b>自动播放</b>，也可以一步步手动看。</span>
+<span class="i18n-en">This section is written for clinical readers: four animations cover "what a negative control is, what the software package computes, what the empirical null distribution is, and how BF/BER are calculated." Each animation can <b>auto-play</b> or be stepped through manually.</span></p>
+
+<h3><span class="i18n-zh">动画 A · 负对照的原理：已知效应为零的结局</span><span class="i18n-en">Animation A · How a negative control works: an outcome known to have zero effect</span> <span class="en">How a negative control works</span></h3>
+<div class="card">
+  <svg id="anA" viewBox="0 0 780 320" width="100%" style="height:auto;"></svg>
+  <div class="anim-caption" id="capA"></div>
+  <div class="anim-controls">
+    <button class="astep" data-stepper="A" data-act="prev"><span class="i18n-zh">◀ 上一步</span><span class="i18n-en">◀ Back</span></button>
+    <button class="astep" data-stepper="A" data-act="play"><span class="i18n-zh">▶ 自动播放</span><span class="i18n-en">▶ Auto-play</span></button>
+    <button class="astep" data-stepper="A" data-act="next"><span class="i18n-zh">下一步 ▶</span><span class="i18n-en">Next ▶</span></button>
+  </div>
+</div>
+
+<h3><span class="i18n-zh">动画 B · EmpiricalCalibration 包在算什么</span><span class="i18n-en">Animation B · What the EmpiricalCalibration package computes</span> <span class="en">What the software package computes</span></h3>
+<div class="card">
+  <svg id="anB" viewBox="0 0 780 360" width="100%" style="height:auto;"></svg>
+  <div class="anim-caption" id="capB"></div>
+  <div class="anim-controls">
+    <button class="astep" data-stepper="B" data-act="prev"><span class="i18n-zh">◀ 上一步</span><span class="i18n-en">◀ Back</span></button>
+    <button class="astep" data-stepper="B" data-act="play"><span class="i18n-zh">▶ 自动播放</span><span class="i18n-en">▶ Auto-play</span></button>
+    <button class="astep" data-stepper="B" data-act="next"><span class="i18n-zh">下一步 ▶</span><span class="i18n-en">Next ▶</span></button>
+  </div>
+</div>
+
+<h3><span class="i18n-zh">动画 C · "经验零分布"到底是什么</span><span class="i18n-en">Animation C · What the empirical null distribution really is</span> <span class="en">What the empirical null distribution really is</span></h3>
+<div class="card">
+  <svg id="anC" viewBox="0 0 780 320" width="100%" style="height:auto;"></svg>
+  <div class="anim-caption" id="capC"></div>
+  <div class="anim-controls">
+    <button class="astep" data-stepper="C" data-act="prev"><span class="i18n-zh">◀ 上一步</span><span class="i18n-en">◀ Back</span></button>
+    <button class="astep" data-stepper="C" data-act="play"><span class="i18n-zh">▶ 自动播放</span><span class="i18n-en">▶ Auto-play</span></button>
+    <button class="astep" data-stepper="C" data-act="next"><span class="i18n-zh">下一步 ▶</span><span class="i18n-en">Next ▶</span></button>
+  </div>
+</div>
+
+<h3><span class="i18n-zh">动画 D · BF 与 BER 的计算链：软件包输出 → 指标</span><span class="i18n-en">Animation D · The BF/BER computation chain: from package outputs to the metric</span> <span class="en">From package outputs to BF and BER</span></h3>
+<div class="card">
+  <svg id="anD" viewBox="0 0 780 430" width="100%" style="height:auto;"></svg>
+  <div class="anim-caption" id="capD"></div>
+  <div class="anim-controls">
+    <button class="astep" data-stepper="D" data-act="prev"><span class="i18n-zh">◀ 上一步</span><span class="i18n-en">◀ Back</span></button>
+    <button class="astep" data-stepper="D" data-act="play"><span class="i18n-zh">▶ 自动播放</span><span class="i18n-en">▶ Auto-play</span></button>
+    <button class="astep" data-stepper="D" data-act="next"><span class="i18n-zh">下一步 ▶</span><span class="i18n-en">Next ▶</span></button>
+  </div>
+</div>
+
+<div class="card">
+<span class="i18n-zh"><b>BF 与 BER 是怎么"站在负对照的肩膀上"的（一句话总结）：</b>
+OHDSI 的 EmpiricalCalibration 包解决的是<b>"有没有偏倚"</b>（μ̂<sub>B</sub>）和<b>"扣除偏倚后还剩不剩效应"</b>（校准 p 值，二元判决）。BF/BER 不引入任何新数据，只是把包已经算出的两个量——<b>μ̂<sub>B</sub>（偏倚）</b>与 <b>ψ̃ = ψ̂<sub>obs</sub> − μ̂<sub>B</sub>（校准后残留效应）</b>——做成一个比值：<b>BF = |μ̂<sub>B</sub>| / (|μ̂<sub>B</sub>| + |ψ̃|)</b>（偏倚占校准后信号的几成，有界 0–1）、<b>BER = |μ̂<sub>B</sub>| / |ψ̃|</b>（偏倚是残留效应的几倍，无界）。这样就把"是/否"的判决，扩展成了<b>对未测量偏倚的连续量化</b>：偏倚有多大、剩下的效应有多大、二者谁占主导。</span>
+<span class="i18n-en"><b>How BF and BER "stand on the shoulders of" negative controls (one-sentence summary):</b>
+The OHDSI EmpiricalCalibration package answers <b>"is there bias"</b> (μ̂<sub>B</sub>) and <b>"does any effect survive calibration"</b> (the calibrated p-value, a binary verdict). BF/BER introduce no new data — they simply turn two quantities the package already computes — <b>μ̂<sub>B</sub> (bias)</b> and <b>ψ̃ = ψ̂<sub>obs</sub> − μ̂<sub>B</sub> (the calibrated residual effect)</b> — into ratios: <b>BF = |μ̂<sub>B</sub>| / (|μ̂<sub>B</sub>| + |ψ̃|)</b> (bias's share of the calibrated signal, bounded 0–1) and <b>BER = |μ̂<sub>B</sub>| / |ψ̃|</b> (bias as a multiple of the residual effect, unbounded). The yes/no verdict is thereby extended into <b>a continuous quantification of unmeasured bias</b>: how large the bias is, how large the remaining effect is, and which dominates.</span>
+</div>
+
+<div class="card">
+<span class="i18n-zh"><b>计算代码（R，与论文输出一致）：</b></span><span class="i18n-en"><b>Computation code (R, matching the paper's outputs):</b></span>
+<pre class="codeblock"># ① EmpiricalCalibration 包：用 12 个负对照估计"系统偏倚分布" | Fit the systematic-bias distribution from 12 negative controls
+null_fit &lt;- EmpiricalCalibration::fitNull(nc_log_rr, nc_se_log_rr)
+mu_b    &lt;- null_fit[1]   # 平均系统偏倚 μ̂_B = -0.190（log RR 尺度） | mean systematic bias
+sigma_b &lt;- null_fit[2]   # 对照间偏倚的异质性 σ̂_B = 0.068 | between-control heterogeneity
+
+# ② 校准主估计：从观测估计中减去系统偏倚 | Calibrate: subtract systematic bias from the observed estimate
+log_rr_cal &lt;- log_rr_uncal - mu_b        # ψ̃ = -0.184 - (-0.190) = +0.0063 → RR 1.006
+cal_p      &lt;- EmpiricalCalibration::calibrateP(null_fit, log_rr_uncal, se_log_rr)
+                                         # 校准 p = 0.943：扣除偏倚后与零无区别 | indistinguishable from null
+
+# ③ BF 与 BER（biasratio 包 v0.2.0；两个量互为变换，无需新数据） | BF and BER (biasratio v0.2.0; mutual transforms, no new data)
+bf  &lt;- abs(mu_b) / (abs(mu_b) + abs(log_rr_cal))   # = 0.906（bootstrap 中位数 | bootstrap median）
+ber &lt;- abs(mu_b) / abs(log_rr_cal)                 # = 30.4（原始比值；中位数 9.6 | raw ratio; median 9.6）
+
+# ④ 置信区间：只重抽样 12 个负对照 × 2000 次，logit（BF）/ log（BER）尺度取分位数
+#    CI: resample only the 12 negative controls × 2000; percentiles on the logit (BF) / log (BER) scale
+#    → BF 95% CI [0.74, 0.99]，整个区间 &gt; 0.5 → 偏倚主导区 | entire interval &gt; 0.5 → bias-dominated</pre>
+</div>
+</section>
+<!-- ============ ④ 指标词典 ============ -->
+<section id="metrics">
+<h2><span class="i18n-zh">④ 指标词典</span><span class="i18n-en">④ The metrics, defined and demystified</span> <span class="en">The metrics, defined and demystified</span></h2>
+<p><span class="i18n-zh">每个指标给出三件套：<b>严谨定义 → 数学符号 → 通俗解释（含比喻）</b>。所有指标都只需负对照估计与主估计两个输入，无需额外数据。</span>
+<span class="i18n-en">Each metric comes as a triple: <b>formal definition → mathematical notation → plain-language explanation (with an analogy)</b>. All metrics need only two inputs — the negative-control estimates and the primary estimate — and no additional data.</span></p>
+
+<div class="metric-grid">
+
+  <div class="metric bias">
+    <div class="name"><span class="i18n-zh">① 偏倚分数 <span class="en">Bias Fraction (BF)</span> —— 主指标</span><span class="i18n-en">① Bias Fraction (BF) — the primary metric</span></div>
+    <div class="def"><span class="i18n-zh"><b>严谨定义：</b>在"校准后总信号 = 偏倚 + 残留效应"中，系统偏倚所占的份额：</span>
+    <span class="i18n-en"><b>Formal definition:</b> within the "calibrated total signal = bias + residual effect", the share attributable to systematic bias:</span></div>
+    <div class="sym">BF = |μ̂<sub>B</sub>| / ( |μ̂<sub>B</sub>| + |ψ̃| ) &nbsp;∈&nbsp;[0, 1]</div>
+    <div class="def"><span class="i18n-zh">BF = 1 ⇔ 校准后效应恰为 0（信号完全由偏倚构成）；BF = 0 ⇔ 未估计到任何系统偏倚。BF 与偏倚效应比一一对应：<b>BF = BER / (1 + BER)</b>。</span>
+    <span class="i18n-en">BF = 1 ⇔ the calibrated effect is exactly 0 (the signal is entirely bias); BF = 0 ⇔ no systematic bias was estimated. BF is one-to-one with the bias-effect ratio: <b>BF = BER / (1 + BER)</b>.</span></div>
+    <div class="meta"><span class="i18n-zh">🍰 <b>通俗解释（蛋糕比喻）：</b>校准后剩下的信号是一块蛋糕，偏倚和残留效应各切一块。<b>BF 就是"偏倚切走了几成"。</b>BF = 0.91 意思是：这块蛋糕的九成一是偏倚，真正的"效应"只剩不到一成。BF 有界，永远不会爆出"无穷大"这种尴尬数字。</span>
+    <span class="i18n-en">🍰 <b>Plain language (cake analogy):</b> the surviving calibrated signal is a cake, split between bias and residual effect. <b>BF is "bias's slice of the cake."</b> BF = 0.91 means 91% of the cake is bias and the true "effect" gets less than a tenth. BF is bounded — it will never blow up into an embarrassing "infinity".</span></div>
+  </div>
+
+  <div class="metric purple">
+    <div class="name"><span class="i18n-zh">② 偏倚效应比 <span class="en">Bias-Effect Ratio (BER)</span> —— 辅助指标</span><span class="i18n-en">② Bias-Effect Ratio (BER) — the auxiliary metric</span></div>
+    <div class="def"><span class="i18n-zh"><b>严谨定义：</b>系统偏倚与校准后残留效应的大小之比（无界）：</span>
+    <span class="i18n-en"><b>Formal definition:</b> the ratio of systematic bias to the calibrated residual effect (unbounded):</span></div>
+    <div class="sym">BER = |μ̂<sub>B</sub>| / |ψ̃| = BF / (1 − BF) &nbsp;∈&nbsp;[0, ∞)</div>
+    <div class="meta"><span class="i18n-zh">⚖️ <b>通俗解释（倍数比喻）：</b>"偏倚是残留效应的多少倍"。BER = 9.6 读作"偏倚大约是残留效应的十倍"。倍数的好处是直观，坏处是当残留效应趋近 0 时它会爆炸（甚至 ∞），所以 v34 起<b>只作辅助展示</b>，分区判断全部交给有界的 BF。v35 模拟进一步给出了直接证据：在 48 个真实效应恰为零的条件（BF<sub>true</sub> = 1）下，BER 的相对偏倚<b>根本无定义</b>（真值是 ∞），而 BF 仍可正常估计（平均相对偏倚 −30.2%、RMSE 0.34，因 [0,1] 上限效应而向下收缩）——这正是论文选择 BF 作主指标的核心理由之一。</span>
+    <span class="i18n-en">⚖️ <b>Plain language (multiple analogy):</b> "how many times larger is the bias than the residual effect". BER = 9.6 reads as "bias is roughly ten times the residual effect". Multiples are intuitive, but they explode (to ∞) as the residual effect approaches zero — so from v34 onward BER is <b>an auxiliary display only</b>, and all zone classification is left to the bounded BF. The v35 simulation provides direct evidence: across the 48 conditions where the true effect is exactly zero (BF<sub>true</sub> = 1), BER's relative bias is <b>simply undefined</b> (the true value is ∞), whereas BF remains estimable (mean relative bias −30.2%, RMSE 0.34, attenuated downward by the [0,1] ceiling) — one of the core reasons the paper adopts BF as the primary metric.</span></div>
+  </div>
+
+  <div class="metric comp">
+    <div class="name"><span class="i18n-zh">③ 观测偏倚分数 <span class="en">Observed Bias Fraction (OBF)</span> —— 描述性对照</span><span class="i18n-en">③ Observed Bias Fraction (OBF) — a descriptive contrast</span></div>
+    <div class="def"><span class="i18n-zh"><b>严谨定义：</b>偏倚占<b>未校准（观测）</b>估计的份额：</span>
+    <span class="i18n-en"><b>Formal definition:</b> the bias's share of the <b>uncalibrated (observed)</b> estimate:</span></div>
+    <div class="sym">OBF = |μ̂<sub>B</sub>| / |ψ̂<sub>obs</sub>| &nbsp;∈&nbsp;[0, ∞)</div>
+    <div class="meta"><span class="i18n-zh">🔎 <b>通俗解释：</b>"论文里报告的那个 RR 里，偏倚占几成"。β 受体阻滞剂病例：OBF = 0.190 / 0.184 ≈ <b>1.03</b>——估计出的偏倚比整个观测关联还大一点，即"那个 0.83 的 RR 几乎可以被偏倚全盘解释"。OBF 无界，仅作描述。</span>
+    <span class="i18n-en">🔎 <b>Plain language:</b> "what share of the RR reported in the paper is bias". Beta-blocker case: OBF = 0.190 / 0.184 ≈ <b>1.03</b> — the estimated bias is slightly larger than the entire observed association, i.e., "the RR of 0.83 can be almost fully explained by bias". OBF is unbounded and purely descriptive.</span></div>
+  </div>
+
+  <div class="metric">
+    <div class="name"><span class="i18n-zh">④ 校准 p 值 <span class="en">Calibrated p-value</span></span><span class="i18n-en">④ Calibrated p-value</span></div>
+    <div class="def"><span class="i18n-zh"><b>严谨定义：</b>把观测估计对照<b>经验零分布</b>（而非标准正态）计算的双侧 p 值，检验"校准后效应是否可区分于零"。p &gt; 0.05 = 扣除偏倚后无证据支持真实效应；p &lt; 0.05 = 扣除偏倚后仍有可区分的效应。</span>
+    <span class="i18n-en"><b>Formal definition:</b> a two-sided p-value computed against the <b>empirical null distribution</b> (not the standard normal), testing "is the calibrated effect distinguishable from zero". p &gt; 0.05 = no evidence of a real effect after removing bias; p &lt; 0.05 = a distinguishable effect remains after removing bias.</span></div>
+    <div class="meta"><span class="i18n-zh">🚦 <b>通俗解释：</b>它是一个二元开关——只回答"扣除偏倚后是否有证据支持真实效应"。BF 则是一个连续刻度，量化偏倚占校准后信号的比例。两者互补：论文应<b>同时报告</b>。</span>
+    <span class="i18n-en">🚦 <b>Plain language:</b> it is a binary switch — it only answers "is there evidence of a real effect after bias removal". BF is a continuous gauge quantifying bias's share of the calibrated signal. The two are complementary: papers should <b>report both</b>.</span></div>
+  </div>
+
+  <div class="metric">
+    <div class="name"><span class="i18n-zh">⑤ 三区分类 <span class="en">Three-zone classification</span></span><span class="i18n-en">⑤ Three-zone classification</span></div>
+    <div class="def"><span class="i18n-zh"><b>严谨定义：</b>基于 BF（等价于 BER）的启发式分区，CI 跨区时取更谨慎的一侧：</span>
+    <span class="i18n-en"><b>Formal definition:</b> a heuristic zoning based on BF (equivalently BER); when the CI spans zones, take the more cautious side:</span></div>
+    <div class="zonelegend" style="font-size:15px;">
+      <span class="ed" style="color:var(--effect);"><span class="i18n-zh">效应主导 effect-dominated：BF &lt; 1/3（残留效应 ≥ 偏倚 2 倍）</span><span class="i18n-en">Effect-dominated: BF &lt; 1/3 (residual effect ≥ 2× bias)</span></span>
+      <span class="cp" style="color:var(--comp);"><span class="i18n-zh">混合区 mixed：1/3 ≤ BF ≤ 0.5（偏倚与效应混在一起，难分彼此）</span><span class="i18n-en">Mixed: 1/3 ≤ BF ≤ 0.5 (bias and effect intertwined)</span></span>
+      <span class="bd" style="color:var(--bias);"><span class="i18n-zh">偏倚主导 bias-dominated：BF &gt; 0.5</span><span class="i18n-en">Bias-dominated: BF &gt; 0.5</span></span>
+    </div>
+    <div class="meta"><span class="i18n-zh">🎯 <b>通俗解释（三色仪表盘）：</b>绿灯区（效应主导）"信号盖过噪声，可谈疗效"；黄灯区（混合）"偏倚与效应混在一起、势均力敌，必须谨慎 + 做敏感性分析"；红灯区（偏倚主导）"这份数据不足以支持因果结论"。<b>注意：红灯 ≠ 药物无效</b>，只是"这份数据里分不清效应与偏倚"。</span>
+    <span class="i18n-en">🎯 <b>Plain language (three-color dashboard):</b> green (effect-dominated) — "signal outweighs noise, efficacy can be discussed"; amber (mixed) — "bias and effect are intertwined and evenly matched; proceed with caution + sensitivity analyses"; red (bias-dominated) — "these data cannot support a causal conclusion". <b>Note: red ≠ the drug is ineffective</b>; it only means "these data cannot separate effect from bias".</span></div>
+  </div>
+
+  <div class="metric purple">
+    <div class="name"><span class="i18n-zh">⑥ Fieller 置信集 <span class="en">Fieller confidence set</span></span><span class="i18n-en">⑥ Fieller confidence set</span></div>
+    <div class="def"><span class="i18n-zh"><b>严谨定义：</b>对带符号比值 ρ = μ̂<sub>B</sub>/ψ̃ 的置信集，由不等式 (m₁−ρm₂)² ≤ z²<sub>α/2</sub>(v₁₁−2ρv₁₂+ρ²v₂₂) 定义。当分母 ψ̃ 太小时，它会<b>诚实地</b>退化为外集、空集或全直线。</span>
+    <span class="i18n-en"><b>Formal definition:</b> a confidence set for the signed ratio ρ = μ̂<sub>B</sub>/ψ̃, defined by the inequality (m₁−ρm₂)² ≤ z²<sub>α/2</sub>(v₁₁−2ρv₁₂+ρ²v₂₂). When the denominator ψ̃ is too small, it <b>honestly</b> degenerates into an exterior set, the empty set, or the whole line.</span></div>
+    <div class="meta"><span class="i18n-zh">🪞 <b>通俗解释：</b>普通区间在分母趋近 0 时可能给出误导性的有限区间；Fieller 集则对该比值给出诚实的置信区域——该多宽就多宽，该无界就无界。β 受体阻滞剂病例的 Fieller 集为 (−∞, −1.62]∪[1.45, ∞)，意思是"比值只能排除中间一小段，其余全都与数据相容"——这正是"校准后效应≈0"时该有的诚实回答。</span>
+    <span class="i18n-en">🪞 <b>Plain language:</b> a conventional interval can mislead with a spuriously finite interval when the denominator nears zero; the Fieller set gives the ratio an honest confidence region — as wide or as unbounded as it needs to be. In the beta-blocker case the Fieller set is (−∞, −1.62]∪[1.45, ∞), meaning "only a small middle segment of ratio values is excluded; everything else is compatible with the data" — exactly the honest answer when the calibrated effect ≈ 0.</span></div>
+  </div>
+
+  <div class="metric">
+    <div class="name"><span class="i18n-zh">⑦ bootstrap 中位数点估计 <span class="en">Bootstrap-median point estimate</span></span><span class="i18n-en">⑦ Bootstrap-median point estimate</span></div>
+    <div class="def"><span class="i18n-zh"><b>严谨定义：</b>在 logit（BF）/ log（BER）尺度取 bootstrap 分布的中位数再反变换。点估计与置信区间<b>出自同一个分布</b>，因此点估计<b>不可能落在自己的 CI 之外</b>。</span>
+    <span class="i18n-en"><b>Formal definition:</b> the median of the bootstrap distribution on the logit (BF) / log (BER) scale, back-transformed. The point estimate and the CI <b>come from the same distribution</b>, so the point estimate <b>can never fall outside its own CI</b>.</span></div>
+    <div class="meta"><span class="i18n-zh">🔧 <b>通俗解释：</b>v33 曾出现过"点估计 413.2 &gt; 自己的 CI 上限 204.8"的怪象（原始比值与 bootstrap 分布脱节）。改用中位数后，这种自相矛盾从机制上被消除。</span>
+    <span class="i18n-en">🔧 <b>Plain language:</b> v33 once produced the oddity "point estimate 413.2 &gt; its own CI upper limit 204.8" (the raw ratio detached from the bootstrap distribution). Switching to the median eliminates this self-contradiction by construction.</span></div>
+  </div>
+
+</div>
+
+<div class="callout">
+  <span class="i18n-zh"><b>三区阈值为什么是 1/3 和 1/2？</b>它们对应"残留效应 ≥ 偏倚的 2 倍"与"偏倚 ≥ 残留效应"两个可理解的界限（在 BER 尺度即 0.5 与 1）。这是<b>启发式</b>而非决策理论推导；且刻意不对称——观察性研究中<b>误认因果的代价 &gt; 过度谨慎的代价</b>，所以红灯区留得更宽。</span>
+  <span class="i18n-en"><b>Why thresholds at 1/3 and 1/2?</b> They correspond to the interpretable boundaries "residual effect ≥ 2× the bias" and "bias ≥ residual effect" (0.5 and 1 on the BER scale). This is a <b>heuristic</b>, not a decision-theoretic derivation; and it is deliberately asymmetric — in observational research <b>the cost of a false causal claim exceeds the cost of excess caution</b>, so the red zone is kept wider.</span>
+</div>
+</section>
+
+<!-- ============ ⑤ 互动实验室 ============ -->
+<section id="lab">
+<h2><span class="i18n-zh">⑤ 互动实验室</span><span class="i18n-en">⑤ Interactive lab: build your own BF</span> <span class="en">Interactive lab: build your own BF</span></h2>
+<p><span class="i18n-zh">拖动滑块，改变"估计出的系统偏倚"与"校准后残留效应"，实时观察 BF、BER 与三区落点。也可以点击预设场景。</span>
+<span class="i18n-en">Drag the sliders to change the "estimated systematic bias" and the "calibrated residual effect", and watch BF, BER, and the three-zone placement update in real time. You can also click a preset scenario.</span></p>
+
+<div class="lab">
+  <div class="controls">
+    <div class="slider-row">
+      <label><span class="i18n-zh">系统偏倚 |μ̂<sub>B</sub>|（log RR 尺度）</span><span class="i18n-en">Systematic bias |μ̂<sub>B</sub>| (log-RR scale)</span><span class="val" id="muVal">0.190</span></label>
+      <input type="range" id="muSlider" min="0" max="0.5" step="0.001" value="0.190">
+    </div>
+    <div class="slider-row">
+      <label><span class="i18n-zh">残留效应 |ψ̃| = |ψ̂<sub>obs</sub> − μ̂<sub>B</sub>|（log RR 尺度）</span><span class="i18n-en">Residual effect |ψ̃| = |ψ̂<sub>obs</sub> − μ̂<sub>B</sub>| (log-RR scale)</span><span class="val" id="psiVal">0.020</span></label>
+      <input type="range" id="psiSlider" min="0" max="0.5" step="0.001" value="0.020">
+    </div>
+    <div class="presets">
+      <button class="preset" data-mu="0.190" data-psi="0.020"><span class="i18n-zh">β 受体阻滞剂病例（≈BF 0.90）</span><span class="i18n-en">Beta-blocker case (≈BF 0.90)</span></button>
+      <button class="preset" data-mu="0.190" data-psi="0.247"><span class="i18n-zh">GDMT 对照（≈BF 0.44）</span><span class="i18n-en">GDMT contrast (≈BF 0.44)</span></button>
+      <button class="preset" data-mu="0" data-psi="0.25"><span class="i18n-zh">无偏倚（BF = 0）</span><span class="i18n-en">No bias (BF = 0)</span></button>
+      <button class="preset" data-mu="0.4" data-psi="0.001"><span class="i18n-zh">纯偏倚（BF → 1）</span><span class="i18n-en">Pure bias (BF → 1)</span></button>
+      <button class="preset" data-mu="0.1" data-psi="0.1"><span class="i18n-zh">势均力敌（BF = 0.5）</span><span class="i18n-en">Evenly matched (BF = 0.5)</span></button>
+      <button class="preset" data-mu="0.05" data-psi="0.15"><span class="i18n-zh">效应主导（BF = 1/4）</span><span class="i18n-en">Effect-dominated (BF = 1/4)</span></button>
+    </div>
+    <div class="readout">
+      <div class="row"><span><span class="i18n-zh">偏倚</span><span class="i18n-en">Bias</span> |μ̂<sub>B</sub>|</span><span id="oMu">0.190</span></div>
+      <div class="row"><span><span class="i18n-zh">残留效应</span><span class="i18n-en">Residual effect</span> |ψ̃|</span><span id="oPsi">0.020</span></div>
+      <div class="row"><span>BF = |μ̂<sub>B</sub>| / (|μ̂<sub>B</sub>|+|ψ̃|)</span><span class="big" id="oBf">0.905</span></div>
+      <div class="row"><span>BER = BF / (1−BF)</span><span id="oBer">9.50</span></div>
+      <div class="row"><span><span class="i18n-zh">解读</span><span class="i18n-en">Reading</span></span><span id="oRead">—</span></div>
+    </div>
+  </div>
+  <div class="display">
+    <svg id="labGauge" viewBox="0 0 560 140" width="100%" style="height:auto;"></svg>
+    <div class="figure-note"><span class="i18n-zh">仪表盘：绿 = 效应主导；黄 = 混合区；红 = 偏倚主导。黑色圆点为你的 BF；短线为（示意性）95% 置信区间。</span><span class="i18n-en">Dashboard: green = effect-dominated; amber = mixed; red = bias-dominated. The black dot is your BF; the short bar is an (illustrative) 95% CI.</span></div>
+  </div>
+</div>
+
+<div class="callout amber">
+  <span class="i18n-zh"><b>解读要诀（实验室通用）：</b>BF &gt; 0.5 读作"信号以偏倚为主"，<b>不读作</b>"效应为 0"；BF &lt; 1/3 读作"效应至少两倍于偏倚"，但仍受"非交换性来源的残留混杂"制约；1/3–0.5 之间是"分不清"的黄灯区（混合区）——按 v34 模拟，这个区的点估计分类准确率只有 41.8%，仅略高于随机猜测（33.3%），必须靠置信区间与敏感性分析。</span>
+  <span class="i18n-en"><b>Reading tips (apply throughout the lab):</b> read BF &gt; 0.5 as "the signal is mostly bias", <b>not</b> as "the effect is zero"; read BF &lt; 1/3 as "the effect is at least twice the bias", still subject to residual confounding from non-exchangeability sources; values between 1/3 and 0.5 form the "can't tell" amber (mixed) zone — per the v34 simulation, point-estimate classification accuracy there is only 41.8%, barely above chance (33.3%), so confidence intervals and sensitivity analyses are essential.</span>
+</div>
+</section>
+<!-- ============ ⑥ 病例研究 ============ -->
+<section id="case">
+<h2><span class="i18n-zh">⑥ 病例研究（MIMIC-IV）</span><span class="i18n-en">⑥ Case study (MIMIC-IV)</span> <span class="en">The beta-blocker case study</span></h2>
+
+<div class="callout">
+  <span class="i18n-zh"><b>先看这个案例有多"严谨"，再看它输出了什么：</b>这项病例研究按当前标准几乎无可挑剔——<b>设计层面</b>严格遵循 TARGET 指南（资格标准、治疗策略、分配、随访、结局、因果对比全部预先明确，完整模拟目标随机试验）；<b>分析层面</b>采用 TMLE，因果推断方法论前沿的双重稳健估计器，配合 SuperLearner 与 10 个基线协变量。然而校准诊断显示：<b>即便有这双重保障，估计仍被系统性偏移主导（BF = 0.91，校准后 RR = 1.01）</b>。两层含义：<b>其一</b>，"偏倚主导"的判决不可能被归咎于分析粗糙——它出自一个全流程规范的严格研究；<b>其二</b>，方法论上的最优配置并不能消除未测量混杂——设计规范与估计精良各自对付的是它们设计上能解决的威胁，经验性偏倚诊断不是对研究严谨性的否定，而是最佳实践的必要补充。</span>
+  <span class="i18n-en"><b>First see how rigorous this case study is, then see what it produced:</b> by current standards the study is close to impeccable — <b>at the design level</b> it strictly follows the TARGET guideline (eligibility, treatment strategy, assignment, follow-up, outcome, and causal contrast all specified up front, fully emulating the target randomized trial); <b>at the analysis level</b> it uses TMLE, a state-of-the-art doubly robust estimator at the frontier of causal inference, with SuperLearner and 10 baseline covariates. Yet the calibration diagnostic shows: <b>even under this dual safeguard, the estimate remained dominated by systematic shifting (BF = 0.91, calibrated RR = 1.01)</b>. Two lessons: <b>first</b>, the "bias-dominated" verdict cannot be attributed to a sloppy analysis — it came from a rigorous, protocol-conformant study; <b>second</b>, the best available methodology cannot remove unmeasured confounding — rigorous design and sophisticated estimation each address the threats they were built to address, and an empirical bias diagnostic is not a concession against rigor but a necessary complement to best practice.</span>
+</div>
+
+<h3><span class="i18n-zh">负对照的偏倚分布特征：漏斗图</span><span class="i18n-en">The negative-control fingerprint: funnel plot</span> <span class="en">The negative-control fingerprint</span></h3>
+<div class="card">
+  <div class="tabs">
+    <button class="tab active" data-tab="bb"><span class="i18n-zh">β 受体阻滞剂</span><span class="i18n-en">Beta-blocker</span></button>
+    <button class="tab" data-tab="gdmt"><span class="i18n-zh">GDMT（阳性对照）</span><span class="i18n-en">GDMT (positive control)</span></button>
+  </div>
+  <svg id="funnel" viewBox="0 0 820 470" width="100%" style="height:auto;"></svg>
+  <div class="figure-note">
+    <span class="i18n-zh">每个灰点是一个负对照（横轴 = 估计的 log RR，纵轴 = 标准误；横线 = 95% CI）。深色阴影带 = 拟合的经验零分布 95% 区域；虚线 = 平均偏倚 μ̂<sub>B</sub> = −0.190。<b>红菱形 = 未校准主估计，绿菱形 = 校准后主估计</b>（数值见右上角图例，悬停灰点可看每个负对照的细节）。注意 12 个负对照几乎全部落在 0 的左侧（保护性方向）：研究设计会系统性地把估计向保护方向偏移。</span>
+    <span class="i18n-en">Each gray dot is a negative control (x-axis = estimated log RR, y-axis = standard error; bars = 95% CI). The dark shaded band = the 95% region of the fitted empirical null; the dashed line = mean bias μ̂<sub>B</sub> = −0.190. <b>Red diamond = uncalibrated primary estimate; green diamond = calibrated estimate</b> (values in the top-right legend; hover a gray dot for each control's details). Note that nearly all 12 controls fall to the left of 0 (protective direction): the study design systematically shifts estimates toward protection.</span>
+  </div>
+</div>
+
+<h3><span class="i18n-zh">校准前后：效应去哪了？</span><span class="i18n-en">Before vs after calibration: where did the effect go?</span> <span class="en">Before vs after calibration</span></h3>
+<div class="card">
+  <div id="forest"></div>
+  <div class="figure-note">
+    <span class="i18n-zh">每一行是一个估计：深红 = 未校准（naive），深绿 = 校准后（calibrated）；点 = RR 点估计，横线 = 95% CI，虚线 = RR = 1（无效）。校准把 β 受体阻滞剂的 RR 从 0.83 移到 1.01（校准 p = 0.94）——"降低 17% 死亡"的保护性关联在校准后完全消失；而 GDMT 的 RR 0.65 校准后仍为 0.78（校准 p = 0.007），真实的多药获益经受住了同一套偏倚校准。这正是 BF 要量化的差别。</span>
+    <span class="i18n-en">Each row is one estimate: dark red = uncalibrated (naive), dark green = calibrated; dot = RR point estimate, bar = 95% CI, dashed line = RR = 1 (null). Calibration moved the beta-blocker RR from 0.83 to 1.01 (calibrated p = 0.94) — the "17% mortality reduction" vanished entirely after calibration; GDMT's RR 0.65 remained 0.78 after calibration (calibrated p = 0.007) — a genuine multi-drug benefit survived the same bias calibration. This contrast is exactly what BF quantifies.</span>
+  </div>
+</div>
+
+<h3><span class="i18n-zh">两个暴露的 BF 仪表盘</span><span class="i18n-en">BF gauges for the two exposures, side by side</span> <span class="en">BF gauges, side by side</span></h3>
+<div class="card">
+  <svg id="caseGauge" viewBox="0 0 780 320" width="100%" style="height:auto;"></svg>
+  <div class="figure-note">
+    <span class="i18n-zh">点 = bootstrap 中位数点估计；横线 = 95% bootstrap CI（logit 尺度）；每行右侧文字为该暴露的结论。β 受体阻滞剂：BF = 0.91 [0.74, 0.99]，<b>整个 CI 都在红灯区</b>；GDMT：BF = 0.45 [0.31, 0.53]，CI 跨越黄灯两侧边界，判"混合区"。</span>
+    <span class="i18n-en">Dots = bootstrap-median point estimates; bars = 95% bootstrap CIs (logit scale); the text at each row's right is that exposure's verdict. Beta-blocker: BF = 0.91 [0.74, 0.99], <b>the entire CI sits in the red zone</b>; GDMT: BF = 0.45 [0.31, 0.53], CI straddling both amber boundaries, classified as "mixed".</span>
+  </div>
+</div>
+
+<h3><span class="i18n-zh">稳健性：结论会因分析设定改变而翻转吗？</span><span class="i18n-en">Sensitivity checks: does the conclusion flip?</span> <span class="en">Sensitivity checks</span></h3>
+<table>
+  <tr><th><span class="i18n-zh">扰动方式</span><span class="i18n-en">Perturbation</span></th><th><span class="i18n-zh">结果</span><span class="i18n-en">Result</span></th><th><span class="i18n-zh">分区结论变化？</span><span class="i18n-en">Zone verdict changed?</span></th></tr>
+  <tr><td><span class="i18n-zh">留一法（逐一剔除 12 个负对照后重新校准）</span><span class="i18n-en">Leave-one-out (re-calibrate after dropping each of the 12 controls)</span></td><td><span class="i18n-zh">BF 范围 0.89–0.99</span><span class="i18n-en">BF range 0.89–0.99</span></td><td>❌ <span class="i18n-zh">无变化（全部留在红灯区）</span><span class="i18n-en">No change (all remain red)</span></td></tr>
+  <tr><td><span class="i18n-zh">SuperLearner 三配置（SL.glm / +SL.gam / +SL.xgboost）</span><span class="i18n-en">Three SuperLearner libraries (SL.glm / +SL.gam / +SL.xgboost)</span></td><td><span class="i18n-zh">BF = 0.90 / 0.90 / 0.92（CI 下界 0.72–0.75）</span><span class="i18n-en">BF = 0.90 / 0.90 / 0.92 (CI lower bounds 0.72–0.75)</span></td><td>❌ <span class="i18n-zh">无变化（注意：底层 BER 波动 20 倍，BF 只动了 0.02——有界尺度的优势）</span><span class="i18n-en">No change (note: the underlying BER moved 20-fold while BF moved only 0.02 — the bounded scale's advantage)</span></td></tr>
+  <tr><td><span class="i18n-zh">宽限期 3–14 天</span><span class="i18n-en">Grace period 3–14 days</span></td><td><span class="i18n-zh">校准 RR 0.995–1.049；BF 0.80–0.98</span><span class="i18n-en">Calibrated RR 0.995–1.049; BF 0.80–0.98</span></td><td>❌ <span class="i18n-zh">无变化</span><span class="i18n-en">No change</span></td></tr>
+  <tr><td><span class="i18n-zh">负对照正态性诊断</span><span class="i18n-en">Negative-control normality diagnostics</span></td><td><span class="i18n-zh">Shapiro-Wilk p = 0.168；最大标准化残差 2.32（痛风）</span><span class="i18n-en">Shapiro-Wilk p = 0.168; max standardized residual 2.32 (gout)</span></td><td>❌ <span class="i18n-zh">无变化</span><span class="i18n-en">No change</span></td></tr>
+</table>
+<div class="callout green">
+  <span class="i18n-zh"><b>这一节在问什么、答什么：</b>"偏倚主导"这个结论，会不会是某个具体设定的偶然产物——比如恰好某个负对照在捣乱、恰好某套模型库不合适、恰好宽限期选得不巧？<b>答案：不会，结论在这些扰动下保持稳定。</b>四种扰动（换掉任意一个对照、换模型库、换宽限期、检查对照的正态性）之下，β 受体阻滞剂的 BF 始终留在红灯区（0.80–0.99），分区结论一次都没有改变。因此"偏倚主导"的判定不是由某一特定设定导致的偶然结果，而是稳健的结论。</span>
+  <span class="i18n-en"><b>What this section asks and answers:</b> could the "bias-dominated" conclusion be an artifact of one particular specification — one misbehaving negative control, one ill-fitting model library, one unlucky grace period? <b>Answer: no — the conclusion is stable under all these perturbations.</b> Under all four (dropping any control, switching libraries, varying the grace period, checking control normality), the beta-blocker BF stayed in the red zone (0.80–0.99) and the zone verdict never changed. "Bias-dominated" is thus a robust conclusion, not an accident of one specification.</span>
+</div>
+</section>
+
+<!-- ============ ⑦ 模拟研究 ============ -->
+<section id="sim">
+<h2><span class="i18n-zh">⑦ 模拟研究：这个指标靠得住吗？</span><span class="i18n-en">⑦ Simulation: does the metric work?</span> <span class="en">Simulation: does the metric work?</span></h2>
+
+<div class="callout">
+  <span class="i18n-zh"><b>结论速览：靠得住——但只在其承诺的范围内。</b>模拟（336 条件 × 200 次重复 = 67,200 次分析）显示：BF 分类在<b>两端可靠</b>（红灯区 80.0%、绿灯区 95.1%），在<b>中间不可靠</b>（黄灯混合区仅 41.8%，仅略高于随机猜测（33.3%）。因此 v34 的规则是：<b>两端可以下结论，中间诚实地说"分不清"</b>——改用"CI 完全落进某区才判定"的选择性规则后，凡是能下结论的，正确率 86.8%（但只覆盖 47.6% 的情形）。换句话说：<b>它能可靠地认出"明显偏倚主导"和"明显效应主导"，对"中间地带"不强行判定。</b></span>
+  <span class="i18n-en"><b>Bottom line: it works — within what it promises.</b> The simulation (336 conditions × 200 replications = 67,200 analyses) shows BF classification is <b>reliable at the extremes</b> (red 80.0%, green 95.1%) and <b>unreliable in the middle</b> (amber mixed zone only 41.8%, barely above the 33.3% chance level). Hence the v34 rule: <b>conclude at the extremes, honestly say "can't tell" in the middle</b> — under the selective rule "classify only when the whole CI falls inside one zone", decisive calls are 86.8% accurate (but cover only 47.6% of cases). In other words: <b>it reliably recognizes "clearly bias-dominated" and "clearly effect-dominated", and refuses to force a verdict on the middle ground.</b></span>
+</div>
+
+<p><span class="i18n-zh"><b>设计：</b>析因模拟，五个因子：真实效应 ψ（7 档）、系统偏倚 μ<sub>B</sub>（6 档）、偏倚异质性 σ<sub>B</sub>（2 档）、负对照数 K（12/25）、偏倚交换性违反比例（0%/30%）。每次重复都拟合经验零、算 BF、做三区分类，并与 OHDSI 校准 p 值及"不校准"两种策略对照。</span>
+<span class="i18n-en"><b>Design:</b> a factorial simulation with five factors: true effect ψ (7 levels), systematic bias μ<sub>B</sub> (6 levels), bias heterogeneity σ<sub>B</sub> (2 levels), number of negative controls K (12/25), and exchangeability violation (0%/30%). Each replication fits the empirical null, computes BF, performs three-zone classification, and is compared against OHDSI calibrated p-values and the "no calibration" strategy.</span></p>
+
+<h3><span class="i18n-zh">三区分类准确率</span><span class="i18n-en">Zone classification accuracy</span> <span class="en">Zone classification accuracy</span></h3>
+<div class="card">
+  <svg id="zoneBar" viewBox="0 0 760 300" width="100%" style="height:auto;"></svg>
+  <div class="figure-note">
+    <span class="i18n-zh">三分类的随机猜测水平是 33.3%（虚线）。红灯区与绿灯区表现可靠；<b>黄灯混合区只有 41.8%</b>——这是比值类指标在"分母（校准后效应）接近 0"时的内在极限。v34 的应对：黄灯区不做点估计判断，改用"CI 完全落进某区才下结论"的选择性规则（见下）。</span>
+    <span class="i18n-en">The chance level for three-way classification is 33.3% (dashed line). Red and green zones perform reliably; <b>the amber mixed zone reaches only 41.8%</b> — the intrinsic limit of a ratio-type metric when the denominator (calibrated effect) approaches 0. The v34 remedy: no point-estimate verdict in the amber zone; instead the selective rule "classify only when the whole CI falls inside one zone" (below).</span>
+  </div>
+</div>
+
+<h3><span class="i18n-zh">有界尺度的红利：偏倚从 +319% 缩到 +2%</span><span class="i18n-en">The bounded-scale dividend: bias shrinks from +319% to +2%</span> <span class="en">Why the bounded scale matters</span></h3>
+<div class="card">
+  <svg id="biasBar" viewBox="0 0 760 260" width="100%" style="height:auto;"></svg>
+  <div class="figure-note">
+    <span class="i18n-zh">"相对偏倚"指估计值对真实值的平均偏离程度（0 = 无偏）。BER（无界比值）在交换性成立时高估 137%–319%；换成有界 BF 后只有 <b>+1.8%–2.3%</b>。代价：交换性被违反（30% 对照偏倚被平移 +0.15）时，BF 会向 0.5 衰减（−30% 左右）——方向是"乐观"的，所以<b>接近阈值的 BF 必须结合对照质量解读</b>。</span>
+    <span class="i18n-en">"Relative bias" is the average deviation of the estimate from the truth (0 = unbiased). The unbounded BER over-estimates by 137%–319% even under exchangeability; the bounded BF by only <b>+1.8%–2.3%</b>. The cost: when exchangeability is violated (30% of controls' bias shifted by +0.15), BF attenuates toward 0.5 (about −30%) — a flattering direction, so <b>BF values near a threshold must be read together with control quality</b>.</span>
+  </div>
+</div>
+
+<h3><span class="i18n-zh">分类准确率热图：坏区在"对角线"</span><span class="i18n-en">Accuracy heatmap: the bad zone sits on the diagonal</span> <span class="en">Accuracy heatmap</span></h3>
+<div class="card">
+  <div class="zonelegend" style="font-size:13px;">
+    <span class="i18n-zh" style="font-weight:400;">单元格 = 该 (真实效应 ψ, 系统偏倚 μ<sub>B</sub>) 组合在 8 个配置（σ<sub>B</sub>×K×违反）×200 次重复上的平均分类准确率（%）。悬停查看细节。</span>
+    <span class="i18n-en" style="font-weight:400;">Each cell = mean classification accuracy (%) for that (true effect ψ, systematic bias μ<sub>B</sub>) combination across 8 configurations (σ<sub>B</sub>×K×violation) × 200 replications. Hover for details.</span>
+  </div>
+  <div class="heat" id="heat"></div>
+  <div class="figure-note">
+    <span class="i18n-zh">沿对角线（|μ<sub>B</sub>| ≈ |ψ|，即 BF<sub>真</sub> ≈ 0.4–0.5）准确率跌到 14%–56%：<b>偏倚与效应混在一起时最难分</b>。远离对角线（要么偏倚碾压、要么效应碾压）准确率高——与直觉一致，也与三区条形图一致。</span>
+    <span class="i18n-en">Along the diagonal (|μ<sub>B</sub>| ≈ |ψ|, i.e., true BF ≈ 0.4–0.5) accuracy drops to 14%–56%: <b>hardest to separate when bias and effect are comparable</b>. Away from the diagonal (either bias or effect overwhelming) accuracy is high — consistent with intuition and with the three-zone bar chart.</span>
+  </div>
+</div>
+
+<h3><span class="i18n-zh">CI 启发式：选择性分类器</span><span class="i18n-en">The CI heuristic: a selective classifier</span> <span class="en">The CI-based selective classifier</span></h3>
+<div class="callout">
+  <span class="i18n-zh"><b>规则：</b>只有当整个 95% CI 完全落进红灯区或绿灯区才下"决定性"结论，否则一律判黄灯（"证据不足"）。<br>
+  <b>模拟结果：</b>67,200 次重复中仅 <b>47.6%</b> 能下决定性结论，但其中 <b>86.8%</b> 正确（黄灯区准确率升到 81.9%，红灯 57.5%、绿灯 75.5%）。K 从 12 增至 25，决定性比例从 43.7% 升到 51.6%。<br>
+  <b>临床含义：</b>黄灯 = "分不清"，不是"相等"。应报告"证据不足"，而不强行给出判定。</span>
+  <span class="i18n-en"><b>Rule:</b> issue a "decisive" verdict only when the entire 95% CI falls inside the red or the green zone; otherwise classify as amber ("insufficient evidence").<br>
+  <b>Simulation results:</b> only <b>47.6%</b> of 67,200 replications yielded a decisive verdict, but <b>86.8%</b> of those were correct (amber-zone accuracy rises to 81.9%; red 57.5%, green 75.5%). Raising K from 12 to 25 raises the decisive share from 43.7% to 51.6%.<br>
+  <b>Clinical implication:</b> amber = "can't tell", not "equal". Report "insufficient evidence" rather than forcing a verdict.</span>
+</div>
+
+<h3><span class="i18n-zh">与其他策略的对照</span><span class="i18n-en">Benchmarks against other strategies</span> <span class="en">Benchmarks</span></h3>
+<table>
+  <tr><th><span class="i18n-zh">策略</span><span class="i18n-en">Strategy</span></th><th><span class="i18n-zh">行为</span><span class="i18n-en">Behavior</span></th><th><span class="i18n-zh">要点</span><span class="i18n-en">Takeaway</span></th></tr>
+  <tr><td><span class="i18n-zh">BF 三区分类（点估计）</span><span class="i18n-en">BF three-zone classification (point estimate)</span></td><td><span class="i18n-zh">红灯 80.0% / 黄灯（混合）41.8% / 绿灯 95.1% / 总体 69.8%</span><span class="i18n-en">Red 80.0% / amber (mixed) 41.8% / green 95.1% / overall 69.8%</span></td><td><span class="i18n-zh">极端可靠，中间不可靠</span><span class="i18n-en">Reliable at the extremes, unreliable in the middle</span></td></tr>
+  <tr><td><span class="i18n-zh">OHDSI 校准 p &lt; 0.05</span><span class="i18n-en">OHDSI calibrated p &lt; 0.05</span></td><td><span class="i18n-zh">零效应条件下拒绝率 <b>3.3%</b>（名义 5%）</span><span class="i18n-en">Rejection rate under true null <b>3.3%</b> (nominal 5%)</span></td><td><span class="i18n-zh">I 类错误控制良好；违反交换性 + 低 σ<sub>B</sub> + K=12 时可升至 7.2%</span><span class="i18n-en">Good Type-I error control; can rise to 7.2% under exchangeability violation + low σ<sub>B</sub> + K=12</span></td></tr>
+  <tr><td><span class="i18n-zh">不校准（naive p &lt; 0.05）</span><span class="i18n-en">No calibration (naive p &lt; 0.05)</span></td><td><span class="i18n-zh">总体拒绝率 <b>92.1%</b></span><span class="i18n-en">Overall rejection rate <b>92.1%</b></span></td><td><span class="i18n-zh">系统性偏倚使"显著"泛滥——校准的必要性一目了然</span><span class="i18n-en">Systematic bias floods the field with "significance" — the need for calibration is self-evident</span></td></tr>
+</table>
+</section>
+<!-- ============ ⑧ 如何应用 ============ -->
+<section id="apply">
+<h2><span class="i18n-zh">⑧ 如何应用</span><span class="i18n-en">⑧ How to use it in practice</span> <span class="en">How to use it in practice</span></h2>
+
+<h3><span class="i18n-zh">四步读法</span><span class="i18n-en">A four-step reading</span> <span class="en">A four-step reading</span></h3>
+<div class="card">
+  <ol>
+    <li><span class="i18n-zh"><b>看负对照的分布特征：</b>负对照是否整体偏向一个方向？（是 → 系统偏倚存在；否或双向 → 谨慎，μ̂<sub>B</sub> 可能被稀释。）</span><span class="i18n-en"><b>Inspect the negative-control pattern:</b> do the controls lean in one direction overall? (Yes → systematic bias exists; no or both directions → caution, μ̂<sub>B</sub> may be diluted.)</span></li>
+    <li><span class="i18n-zh"><b>看校准后效应与校准 p：</b>校准后效应还剩多少？是否可区分于零？（校准 p &gt; 0.05 = 扣除偏倚后无证据支持真实效应；校准 p &lt; 0.05 = 仍有可区分的效应。）</span><span class="i18n-en"><b>Check the calibrated effect and calibrated p:</b> how much effect survives, and is it distinguishable from zero? (calibrated p &gt; 0.05 = no evidence of a real effect after bias removal; p &lt; 0.05 = a distinguishable effect remains.)</span></li>
+    <li><span class="i18n-zh"><b>看 BF 及其 CI：</b>CI 完全在红灯区（BF&gt;0.5）→ 不能作因果解读；完全在绿灯区（BF&lt;1/3）→ 信号盖过偏倚；跨区/黄灯 → 证据不足，不强行判定。</span><span class="i18n-en"><b>Read BF with its CI:</b> CI entirely in the red zone (BF&gt;0.5) → no causal interpretation; entirely in the green zone (BF&lt;1/3) → signal outweighs bias; straddling zones or amber → insufficient evidence, don't force a verdict.</span></li>
+    <li><span class="i18n-zh"><b>看敏感性：</b>留一法、模型设定、宽限期是否改变分区；Fieller 集是否无界（分母太小时必须诚实）。</span><span class="i18n-en"><b>Check sensitivity:</b> do leave-one-out, model specification, or grace-period changes alter the zone; is the Fieller set unbounded (mandatory honesty when the denominator is small).</span></li>
+  </ol>
+</div>
+
+<h3><span class="i18n-zh">论文报告模板</span><span class="i18n-en">A reporting template</span> <span class="en">A reporting template</span></h3>
+<div class="callout green">
+  <span class="i18n-zh">"在 12 个负对照结局的校准下，β 受体阻滞剂与 1 年全因死亡的<b>校准后</b> RR 为 1.01（95% CI 含 1；校准 p = 0.94，即扣除偏倚后无证据支持真实效应）。经验零分布的平均系统偏倚 μ̂<sub>B</sub> = −0.190（log RR 尺度），<b>偏倚分数 BF = 0.91（95% CI, 0.74–0.99）</b>，落入偏倚主导区——系统性偏倚约占校准后总信号的九成。该观测关联与"健康依从者混杂主导"一致；<b>本方法学示范不构成 β 受体阻滞剂对 1 年死亡无效的证据</b>。"</span>
+  <span class="i18n-en">"Calibrating against 12 negative control outcomes, the <b>calibrated</b> RR for beta-blockers and 1-year all-cause mortality was 1.01 (95% CI includes 1; calibrated p = 0.94, i.e., no evidence of a real effect after bias removal). The empirical null showed a mean systematic bias of μ̂<sub>B</sub> = −0.190 (log-RR scale), and a <b>bias fraction BF = 0.91 (95% CI, 0.74–0.99)</b>, placing the result in the bias-dominated zone — systematic bias accounts for roughly nine-tenths of the calibrated signal. The observed association is consistent with healthy-adherer confounding dominance; <b>this methodological demonstration does not constitute evidence that beta-blockers are ineffective for 1-year mortality</b>."</span>
+</div>
+
+<h3><span class="i18n-zh">使用禁区</span><span class="i18n-en">When NOT to use it</span> <span class="en">When NOT to use it</span></h3>
+<table>
+  <tr><th><span class="i18n-zh">情形</span><span class="i18n-en">Situation</span></th><th><span class="i18n-zh">后果</span><span class="i18n-en">Consequence</span></th></tr>
+  <tr><td><span class="i18n-zh">负对照 &lt; 5 个（推荐 ≥ 8–10 个）</span><span class="i18n-en">Fewer than 5 negative controls (≥ 8–10 recommended)</span></td><td><span class="i18n-zh">经验零估计太粗糙，CI 不可信</span><span class="i18n-en">Empirical-null estimate too coarse; CIs untrustworthy</span></td></tr>
+  <tr><td><span class="i18n-zh">负对照不具交换性（偏倚机制与主结局不同源）</span><span class="i18n-en">Controls lack exchangeability (bias mechanism differs from the primary outcome)</span></td><td><span class="i18n-zh">"用错尺子"，校准反而引入误导</span><span class="i18n-en">"Wrong ruler" — calibration itself misleads</span></td></tr>
+  <tr><td><span class="i18n-zh">负对照偏倚方向相反（部分保护、部分有害）</span><span class="i18n-en">Controls biased in opposite directions (some protective, some harmful)</span></td><td><span class="i18n-zh">μ̂<sub>B</sub> 向 0 稀释，BF 乐观偏小</span><span class="i18n-en">μ̂<sub>B</sub> diluted toward 0; BF optimistically small</span></td></tr>
+  <tr><td><span class="i18n-zh">校准后效应 ≈ 0（BF 接近 1）</span><span class="i18n-en">Calibrated effect ≈ 0 (BF near 1)</span></td><td><span class="i18n-zh">BF 数值本身不稳；读作"信号饱和"，配合 Fieller 集</span><span class="i18n-en">The BF value itself is unstable; read as "signal saturation" and pair with the Fieller set</span></td></tr>
+</table>
+
+<h3><span class="i18n-zh">常见误读清单</span><span class="i18n-en">Misreadings to avoid</span> <span class="en">Misreadings to avoid</span></h3>
+<div class="callout red">
+  <span class="i18n-zh">✗ "BF = 0.91 说明效应只剩 9%。"<b>错。</b>BF 的"份"是偏倚与残留效应<b>两者合计</b>的份，不是对真实效应的估计。<br>
+  ✗ "红灯区 = 药物无效。"<b>错。</b>红灯 = "这份观测数据不足以支持因果结论"。<br>
+  ✗ "BF 接近 1，所以偏倚精确占 97%。"<b>错。</b>接近 1 是"饱和"信号，数值只作数量级读。<br>
+  ✗ "黄灯（混合区）说明偏倚与效应真的各占一半。"<b>错。</b>黄灯 = "分不清"，不是"相等"。</span>
+  <span class="i18n-en">✗ "BF = 0.91 means only 9% of the effect remains." <b>Wrong.</b> BF's "share" is of <b>bias plus residual effect combined</b>, not an estimate of the true effect.<br>
+  ✗ "The red zone means the drug is ineffective." <b>Wrong.</b> Red = "these observational data cannot support a causal conclusion".<br>
+  ✗ "BF near 1 means bias is precisely 97%." <b>Wrong.</b> Near 1 is a "saturation" signal; read it as an order of magnitude.<br>
+  ✗ "Amber (mixed) means bias and effect are truly half-half." <b>Wrong.</b> Amber = "can't tell", not "equal".</span>
+</div>
+</section>
+
+<!-- ============ ⑨ 术语表 ============ -->
+<section id="glossary">
+<h2><span class="i18n-zh">⑨ 术语表</span><span class="i18n-en">⑨ Glossary</span> <span class="en">Glossary</span></h2>
+<dl class="gloss">
+  <dt><span class="i18n-zh">偏倚分数 · Bias Fraction (BF)</span><span class="i18n-en">Bias Fraction (BF)</span></dt><dd><span class="i18n-zh">|μ̂<sub>B</sub>| / (|μ̂<sub>B</sub>| + |ψ̃|) ∈ [0,1]。校准后总信号中系统偏倚所占份额。<span class="en">Share of the calibrated signal attributable to systematic bias.</span></span><span class="i18n-en">|μ̂<sub>B</sub>| / (|μ̂<sub>B</sub>| + |ψ̃|) ∈ [0,1]. The share of the calibrated signal attributable to systematic bias.</span></dd>
+  <dt><span class="i18n-zh">偏倚效应比 · Bias-Effect Ratio (BER)</span><span class="i18n-en">Bias-Effect Ratio (BER)</span></dt><dd><span class="i18n-zh">|μ̂<sub>B</sub>| / |ψ̃| = BF/(1−BF)。同一信息的无界比值形式。<span class="en">Bias expressed as a multiple of the residual effect.</span></span><span class="i18n-en">|μ̂<sub>B</sub>| / |ψ̃| = BF/(1−BF). The same information as an unbounded ratio.</span></dd>
+  <dt><span class="i18n-zh">观测偏倚分数 · Observed Bias Fraction (OBF)</span><span class="i18n-en">Observed Bias Fraction (OBF)</span></dt><dd><span class="i18n-zh">|μ̂<sub>B</sub>| / |ψ̂<sub>obs</sub>|。偏倚占未校准关联的份额。<span class="en">Bias as a share of the uncalibrated association.</span></span><span class="i18n-en">|μ̂<sub>B</sub>| / |ψ̂<sub>obs</sub>|. Bias as a share of the uncalibrated association.</span></dd>
+  <dt><span class="i18n-zh">三区分类 · Three-zone classification</span><span class="i18n-en">Three-zone classification</span></dt><dd><span class="i18n-zh">偏倚主导（BF&gt;0.5）/ 混合区（1/3–0.5）/ 效应主导（BF&lt;1/3）。<span class="en">bias-dominated / mixed / effect-dominated.</span></span><span class="i18n-en">Bias-dominated (BF&gt;0.5) / mixed (1/3–0.5) / effect-dominated (BF&lt;1/3).</span></dd>
+  <dt><span class="i18n-zh">负对照 · Negative control</span><span class="i18n-en">Negative control</span></dt><dd><span class="i18n-zh">共享混杂结构、但治疗无法因果影响的结局。<span class="en">An outcome that cannot be caused by the exposure but shares its confounding structure.</span></span><span class="i18n-en">An outcome that cannot be caused by the exposure but shares its confounding structure.</span></dd>
+  <dt><span class="i18n-zh">经验零分布 · Empirical null distribution</span><span class="i18n-en">Empirical null distribution</span></dt><dd><span class="i18n-zh">由负对照估计拟合的偏倚分布 N(μ̂<sub>B</sub>, τ̂<sub>k</sub>²+σ̂<sub>B</sub>²)。<span class="en">The bias distribution estimated from negative controls.</span></span><span class="i18n-en">The bias distribution N(μ̂<sub>B</sub>, τ̂<sub>k</sub>²+σ̂<sub>B</sub>²) estimated from negative controls.</span></dd>
+  <dt><span class="i18n-zh">偏倚交换性 · Bias exchangeability</span><span class="i18n-en">Bias exchangeability</span></dt><dd><span class="i18n-zh">主估计与负对照共享同一偏倚分布的假设。<span class="en">The assumption that the primary estimate and the controls share one bias-generating process.</span></span><span class="i18n-en">The assumption that the primary estimate and the controls share one bias-generating process.</span></dd>
+  <dt><span class="i18n-zh">校准 p 值 · Calibrated p-value</span><span class="i18n-en">Calibrated p-value</span></dt><dd><span class="i18n-zh">对照经验零分布（而非标准正态）计算的 p 值；p&gt;0.05 = 扣除偏倚后无证据支持真实效应。<span class="en">A p-value computed against the empirical null instead of the standard normal.</span></span><span class="i18n-en">A p-value computed against the empirical null instead of the standard normal; p&gt;0.05 = no evidence of a real effect after bias removal.</span></dd>
+  <dt><span class="i18n-zh">目标试验模拟 · Target trial emulation (TTE)</span><span class="i18n-en">Target trial emulation (TTE)</span></dt><dd><span class="i18n-zh">用观察数据显式模拟一个假想随机试验的设计。<span class="en">Designing an observational study to mimic a hypothetical randomized trial.</span></span><span class="i18n-en">Designing an observational study to explicitly mimic a hypothetical randomized trial.</span></dd>
+  <dt><span class="i18n-zh">TARGET 指南 · TARGET guideline</span><span class="i18n-en">TARGET guideline</span></dt><dd><span class="i18n-zh">目标试验模拟研究报告规范（Cash-Garza et al. 2025）；本病例研究在其指导下设计与报告。<span class="en">Reporting guideline for target trial emulation studies.</span></span><span class="i18n-en">The reporting guideline for target trial emulation studies (Cash-Garza et al. 2025); the case study was designed and reported under it.</span></dd>
+  <dt><span class="i18n-zh">TMLE</span><span class="i18n-en">TMLE</span></dt><dd><span class="i18n-zh">目标最大似然估计，双重稳健的半参数因果估计方法，代表因果推断方法论的前沿。<span class="en">Targeted maximum likelihood estimation; a state-of-the-art doubly robust causal estimator.</span></span><span class="i18n-en">Targeted maximum likelihood estimation; a state-of-the-art doubly robust semi-parametric causal estimator at the frontier of causal inference methodology.</span></dd>
+  <dt><span class="i18n-zh">Fieller 置信集 · Fieller confidence set</span><span class="i18n-en">Fieller confidence set</span></dt><dd><span class="i18n-zh">比值 μ̂<sub>B</sub>/ψ̃ 的置信集；分母近零时诚实地变为外集/无界。<span class="en">Confidence set for a ratio that degrades honestly when the denominator is near zero.</span></span><span class="i18n-en">Confidence set for the ratio μ̂<sub>B</sub>/ψ̃; degrades honestly to an exterior/unbounded set when the denominator is near zero.</span></dd>
+  <dt><span class="i18n-zh">健康依从者效应 · Healthy adherer effect</span><span class="i18n-en">Healthy adherer effect</span></dt><dd><span class="i18n-zh">依从治疗者结局更好、即使治疗本身无效的现象。<span class="en">Better outcomes among adherers regardless of treatment efficacy.</span></span><span class="i18n-en">Better outcomes among adherers regardless of treatment efficacy.</span></dd>
+</dl>
+</section>
+
+<footer>
+  <span class="i18n-zh">本讲解器基于论文 <b>"Quantifying Systematic Bias in Observational Causal Estimates Using Negative Controls: The Bias Fraction"</b>（manuscript v35, 2026-08-16）及其补充材料制作；配套 R 包 <b>biasratio v0.2.0</b>。所有数值均取自论文与可复现分析（MIMIC-IV 14,677 例 + 336 条件 × 200 次模拟）。<br>
+  数据来源：MIMIC-IV v2.2 + MIMIC-IV-ECG v1.0.1（PhysioNet）；校准引擎：OHDSI EmpiricalCalibration。本页面为教学演示，不构成任何临床建议。</span>
+  <span class="i18n-en">This explainer accompanies the paper <b>"Quantifying Systematic Bias in Observational Causal Estimates Using Negative Controls: The Bias Fraction"</b> (manuscript v35, 2026-08-16) and its supplement; companion R package <b>biasratio v0.2.0</b>. All numbers come from the paper and its reproducible analyses (MIMIC-IV, 14,677 patients + 336 conditions × 200 simulated replications).<br>
+  Data: MIMIC-IV v2.2 + MIMIC-IV-ECG v1.0.1 (PhysioNet); calibration engine: OHDSI EmpiricalCalibration. This page is an educational demonstration and does not constitute clinical advice.</span>
+</footer>
+
+</div>
+<div class="tooltip" id="tip"></div>
+<script>
+"use strict";
+/* ================= 数据（与 v35 论文/输出一致；v35 模拟与 v34 逐位复现） ================= */
+const NC = [
+  {name:{zh:"infection（感染复合）",en:"infection (composite)"},  ev:4705, lr:-0.2166, se:0.0254},
+  {name:{zh:"gi_bleed（消化道出血）",en:"gi_bleed (GI bleeding)"}, ev:1535, lr:-0.1988, se:0.0512},
+  {name:{zh:"fall（跌倒）",en:"fall"},          ev:83,   lr:-0.4084, se:0.2463},
+  {name:{zh:"uti_only（尿路感染）",en:"uti_only (UTI)"},  ev:3620, lr:-0.2001, se:0.0302},
+  {name:{zh:"cellulitis（蜂窝织炎）",en:"cellulitis"}, ev:1339, lr:-0.2325, se:0.0552},
+  {name:{zh:"cataract（白内障）",en:"cataract"},     ev:317,  lr:-0.2773, se:0.1196},
+  {name:{zh:"osteoarthritis（骨关节炎）",en:"osteoarthritis"}, ev:1502, lr:-0.1901, se:0.0516},
+  {name:{zh:"traffic_accident（交通事故）",en:"traffic accident"}, ev:77, lr:-0.1536, se:0.2459},
+  {name:{zh:"hemorrhoids（痔）",en:"hemorrhoids"},      ev:674,  lr:-0.3529, se:0.0821},
+  {name:{zh:"bph（良性前列腺增生）",en:"bph (benign prostatic hyperplasia)"}, ev:938, lr:-0.1031, se:0.0650},
+  {name:{zh:"gout（痛风）",en:"gout"},           ev:1847, lr:-0.0023, se:0.0443},
+  {name:{zh:"tendinitis（肌腱炎）",en:"tendinitis"},   ev:58,   lr:-0.5312, se:0.3022}
+];
+const MU_B = -0.1905, SIG_B = 0.0680;
+const CASES = {
+  bb:   {label:{zh:"β 受体阻滞剂 ≥50% 目标剂量 (beta-blocker)",en:"Beta-blocker ≥50% target dose"}, uncalLr:-0.1842, uncalSe:0.0561, uncalRR:0.832,
+         calLr:0.00627, calSe:Math.sqrt(0.0561*0.0561 + 0.0680*0.0680), calRR:1.006, calP:0.943,
+         bf:0.906, bfLo:0.740, bfHi:0.993, ber:9.6},
+  gdmt: {label:{zh:"GDMT ≥2/3 类药物 (guideline-directed medical therapy)",en:"GDMT ≥2 of 3 classes (guideline-directed medical therapy)"}, uncalLr:-0.4375, uncalSe:0.0605, uncalRR:0.646,
+         calLr:-0.2470, calSe:Math.sqrt(0.0605*0.0605 + 0.0680*0.0680), calRR:0.781, calP:0.0066,
+         bf:0.446, bfLo:0.312, bfHi:0.528, ber:0.80}
+};
+const HEAT = [
+  [35,67,85,95,100,100],
+  [15,49,71,87,99,100],
+  [14,29,49,71,96,100],
+  [85,28,45,51,87,99],
+  [94,23,45,56,71,96],
+  [99,94,26,55,69,71],
+  [100,99,94,28,82,69]
+];
+const PSI = [0,-0.05,-0.10,-0.15,-0.20,-0.30,-0.40];
+const MU  = [-0.05,-0.10,-0.15,-0.20,-0.30,-0.40];
+
+const C = {bias:"#A93226", comp:"#B07D00", effect:"#1F6F3F", blue:"#1F5E8F", purple:"#5B3FA8",
+           ink:"#21242B", muted:"#4A4F5A", grid:"#C9C4BC"};
+
+/* ================= i18n 基础设施 ================= */
+let LANG = "zh";
+try{ LANG = localStorage.getItem("bf-lang") === "en" ? "en" : "zh"; }catch(e){}
+function t(zh, en){ return LANG === "zh" ? zh : en; }
+function tt(obj){ return LANG === "zh" ? obj.zh : obj.en; }
+const RENDERERS = [];  // 语言切换时需重渲染的函数注册表
+const TITLE = {zh:"偏倚分数 BF 互动讲解器 · 用负对照校准观测性因果估计 | Bias Fraction Interactive Explainer (manuscript v35)",
+               en:"Bias Fraction (BF) Interactive Explainer · Calibrating Observational Causal Estimates with Negative Controls (manuscript v35)"};
+function applyLang(lang){
+  LANG = lang;
+  try{ localStorage.setItem("bf-lang", lang); }catch(e){}
+  document.body.classList.toggle("lang-en", lang === "en");
+  document.body.classList.toggle("lang-zh", lang === "zh");
+  document.documentElement.lang = (lang === "en") ? "en" : "zh-CN";
+  document.title = TITLE[lang];
+  RENDERERS.forEach(f=>{ try{ f(); }catch(e){ /* 单模块失败不影响其他模块 */ } });
+}
+(function initLang(){
+  document.title = TITLE[LANG];
+  ["langBtnHero","langBtnNav"].forEach(id=>{
+    const b = document.getElementById(id);
+    if(b) b.addEventListener("click", ()=>applyLang(LANG === "zh" ? "en" : "zh"));
+  });
+})();
+
+/* ================= 工具：提示框 ================= */
+const tip = document.getElementById("tip");
+function showTip(ev, html){ tip.innerHTML = html; tip.style.display="block";
+  const x = Math.min(ev.clientX + 14, window.innerWidth - 320);
+  const y = Math.min(ev.clientY + 16, window.innerHeight - 120);
+  tip.style.left = x+"px"; tip.style.top = y+"px"; }
+function hideTip(){ tip.style.display="none"; }
+
+/* ================= ② 交互式 DAG（带箭头的因果图） ================= */
+(function(){
+  const svg = document.getElementById("dag");
+  const N = {U:{x:250,y:150,label:{zh:"U 未测量混杂",en:"U unmeasured confounder"},sub:{zh:"unmeasured confounder",en:"unmeasured confounder"},c:C.bias},
+             A:{x:430,y:60,label:{zh:"A 治疗（β受体阻滞剂）",en:"A treatment (beta-blocker)"},sub:{zh:"treatment",en:"treatment"},c:C.blue},
+             Y:{x:430,y:240,label:{zh:"Y 主结局（1年死亡）",en:"Y outcome (1-yr mortality)"},sub:{zh:"primary outcome",en:"primary outcome"},c:C.ink},
+             Nk:{x:620,y:150,label:{zh:"N₁…Nₖ 负对照结局",en:"N₁…Nₖ negative controls"},sub:{zh:"negative controls",en:"negative controls"},c:C.purple}};
+  function arrow(x1,y1,x2,y2,color,dash){
+    const ang=Math.atan2(y2-y1,x2-x1), L=13;
+    const x3=x2-L*Math.cos(ang), y3=y2-L*Math.sin(ang);
+    const mk = color===C.bias ? "ah-bias" : (color===C.ink ? "ah-ink" : "ah-grey");
+    return `<line x1="${x1}" y1="${y1}" x2="${x3}" y2="${y3}" stroke="${color}" stroke-width="2.2" ${dash?'stroke-dasharray="6 4"':''}/>
+      <line x1="${x3}" y1="${y3}" x2="${x2}" y2="${y2}" stroke="${color}" stroke-width="2.2" marker-end="url(#${mk})"/>`;
+  }
+  function draw(){
+    let s = `<defs>
+        <marker id="ah-bias" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="${C.bias}"/></marker>
+        <marker id="ah-ink" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="${C.ink}"/></marker>
+        <marker id="ah-grey" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#7a756c"/></marker>
+      </defs>`;
+    // 偏倚路径（虚线带箭头）：U -> A、U -> Y、U -> N
+    s += arrow(N.U.x,N.U.y,N.A.x,N.A.y,C.bias,true);
+    s += arrow(N.U.x,N.U.y,N.Y.x,N.Y.y,C.bias,true);
+    s += arrow(N.U.x,N.U.y,N.Nk.x,N.Nk.y,C.bias,true);
+    // 待考察的因果效应（虚线带箭头）：A -> Y
+    s += arrow(N.A.x,N.A.y,N.Y.x,N.Y.y,C.ink,true);
+    // A -> Nk：假设不存在（虚线 + 红叉）
+    const x1=N.A.x+30,y1=N.A.y+28,x2=N.Nk.x-30,y2=N.Nk.y-28;
+    const ang=Math.atan2(y2-y1,x2-x1),L=13;
+    const x3=x2-L*Math.cos(ang), y3=y2-L*Math.sin(ang);
+    s += `<line x1="${x1}" y1="${y1}" x2="${x3}" y2="${y3}" stroke="#7a756c" stroke-width="2" stroke-dasharray="6 4"/>
+        <line x1="${x1+6}" y1="${y1-6}" x2="${x3-4}" y2="${y3-8}" stroke="${C.bias}" stroke-width="2.5"/>
+        <line x1="${x1-6}" y1="${y1+6}" x2="${x3-4}" y2="${y3+8}" stroke="${C.bias}" stroke-width="2.5"/>
+        <text x="${(x1+x2)/2+12}" y="${(y1+y2)/2-10}" font-size="10.5" fill="${C.bias}">${t("治疗不能因果影响负对照（假设）","treatment cannot causally affect controls (assumption)")}</text>`;
+    // 节点
+    for (const k in N){ const n=N[k];
+      s += `<g class="dnode" data-tip="${k}" style="cursor:pointer">
+      <ellipse cx="${n.x}" cy="${n.y}" rx="62" ry="26" fill="#fff" stroke="${n.c}" stroke-width="2.5"/>
+      <text x="${n.x}" y="${n.y-2}" font-size="11.5" text-anchor="middle" fill="${C.ink}" font-weight="700">${tt(n.label)}</text>
+      <text x="${n.x}" y="${n.y+14}" font-size="9.5" text-anchor="middle" fill="${C.muted}">${LANG==="zh"?n.sub.zh:""}</text></g>`;
+    }
+    s += `<text x="360" y="292" font-size="11" fill="${C.muted}" text-anchor="middle">${t("虚线箭头 = 偏倚路径（U → A、U → Y、U → N 共享同一条混杂通道）；实线箭头 = 因果路径","dashed arrows = bias paths (U → A, U → Y, U → N share one confounding channel); solid arrows = causal paths")}</text>`;
+    svg.innerHTML = s;
+    const tips = {
+      U: t("<b>U（未测量混杂）</b>：如疾病严重度、虚弱、社会经济状态、依从性人格。<b>它同时影响治疗 A、结局 Y 与所有负对照 N</b>，是偏倚的源头。若未测量，A–Y 关联被污染。",
+           "<b>U (unmeasured confounder)</b>: e.g., disease severity, frailty, socioeconomic status, adherence personality. <b>It affects treatment A, outcome Y, and all negative controls N simultaneously</b> — the source of bias. If unmeasured, the A–Y association is contaminated."),
+      A: t("<b>A（治疗）</b>：β 受体阻滞剂剂量达标（≥50% 目标剂量）。注意 A 也被 U 影响——谁能吃够药不是随机的。",
+           "<b>A (treatment)</b>: achieving the beta-blocker target dose (≥50%). Note A is itself affected by U — who reaches the dose is not random."),
+      Y: t("<b>Y（主结局）</b>：1 年全因死亡。A→Y 的虚线箭头是<b>待考察的因果效应</b>（可能为真，也可能为零）。",
+           "<b>Y (primary outcome)</b>: 1-year all-cause mortality. The dashed A→Y arrow is <b>the causal effect under investigation</b> (may be real or zero)."),
+      Nk: t("<b>N₁…Nₖ（负对照）</b>：白内障、痛风等 12 个治疗不可能影响的结局。<b>它们与 A 之间不允许有因果箭头（红叉）</b>；因此若观测到 A–N 关联，只能是 U 的偏倚所致——这就是校准的原料。",
+            "<b>N₁…Nₖ (negative controls)</b>: 12 outcomes the treatment cannot plausibly affect, e.g., cataract, gout. <b>No causal arrow from A is allowed (red cross)</b>; so any observed A–N association must come from U's bias — this is the raw material of calibration.")
+    };
+    svg.querySelectorAll(".dnode").forEach(g=>{
+      g.addEventListener("mousemove", e=>{ g.setAttribute("opacity","1");
+        document.querySelectorAll(".dnode").forEach(o=>{ if(o!==g) o.setAttribute("opacity","0.55"); });
+        showTip(e, tips[g.dataset.tip]); });
+      g.addEventListener("mouseleave", ()=>{ hideTip();
+        document.querySelectorAll(".dnode").forEach(o=>o.setAttribute("opacity","1")); });
+    });
+  }
+  draw();
+  RENDERERS.push(draw);
+})();
+/* ================= ④ 互动实验室 ================= */
+(function(){
+  const muS=document.getElementById("muSlider"), psiS=document.getElementById("psiSlider");
+  const gauge=document.getElementById("labGauge");
+  function fmt(x,d){ return x.toFixed(d); }
+  function update(){
+    const mu=+muS.value, psi=+psiS.value;
+    document.getElementById("muVal").textContent=fmt(mu,3);
+    document.getElementById("psiVal").textContent=fmt(psi,3);
+    document.getElementById("oMu").textContent=fmt(mu,3);
+    document.getElementById("oPsi").textContent=fmt(psi,3);
+    const bf = (mu===0 && psi===0) ? NaN : mu/(mu+psi);
+    const ber = (bf===0 || isNaN(bf)) ? (mu===0?0:Infinity) : bf/(1-bf);
+    document.getElementById("oBf").textContent = isNaN(bf) ? t("0/0 无定义","0/0 undefined") : fmt(bf,3);
+    document.getElementById("oBer").textContent = !isFinite(ber) ? t("∞（偏倚主导）","∞ (bias-dominated)") : fmt(ber,2);
+    let zone, zc, read;
+    if (isNaN(bf)) { zone=t("无定义","undefined"); zc=C.muted; read=t("偏倚与效应都为 0：没有任何信号可谈。","Both bias and effect are 0: there is no signal to discuss."); }
+    else if (bf>0.5){ zone=t("偏倚主导 bias-dominated","bias-dominated"); zc=C.bias; read=t("偏倚占了大半信号：这份数据不足以支持因果结论（但注意：≠ 效应为 0）。","Bias dominates the signal: these data cannot support a causal conclusion (note: ≠ effect is zero)."); }
+    else if (bf<1/3){ zone=t("效应主导 effect-dominated","effect-dominated"); zc=C.effect; read=t("残留效应至少是偏倚的两倍：信号盖过了偏倚（仍需常规的残余混杂考量）。","The residual effect is at least twice the bias: signal outweighs bias (routine residual-confounding caveats still apply)."); }
+    else { zone=t("混合区 mixed","mixed"); zc=C.comp; read=t("偏倚与效应混在一起、势均力敌：单靠点估计分不清，必须看置信区间与敏感性分析。","Bias and effect are intertwined and evenly matched: a point estimate alone cannot separate them — check CIs and sensitivity analyses."); }
+    document.getElementById("oRead").innerHTML = read;
+    const w=460, x=50, y=60;
+    let s = `<rect x="${x}" y="34" width="${w/3}" height="24" fill="rgba(31,111,63,.13)"/>
+      <rect x="${x+w/3}" y="34" width="${w/6}" height="24" fill="rgba(176,125,0,.16)"/>
+      <rect x="${x+w/2}" y="34" width="${w/2}" height="24" fill="rgba(169,50,38,.13)"/>
+      <line x1="${x+w/3}" y1="34" x2="${x+w/3}" y2="58" stroke="#8a8378" stroke-dasharray="4 3"/>
+      <line x1="${x+w/2}" y1="34" x2="${x+w/2}" y2="58" stroke="#8a8378" stroke-dasharray="4 3"/>
+      <text x="${x}" y="74" font-size="11" fill="${C.muted}">0</text>
+      <text x="${x+w/3}" y="74" font-size="11" fill="${C.muted}" text-anchor="middle">1/3</text>
+      <text x="${x+w/2}" y="74" font-size="11" fill="${C.muted}" text-anchor="middle">0.5</text>
+      <text x="${x+w}" y="74" font-size="11" fill="${C.muted}" text-anchor="end">1</text>`;
+    if (!isNaN(bf)) {
+      const px = x + Math.min(Math.max(bf,0),1)*w;
+      // 示意性 CI：± 相对 30%（对数尺度），仅为教学展示
+      const lo = bf/(bf+(1-bf)*Math.pow(10,0.30)), hi = bf/(bf+(1-bf)*Math.pow(10,-0.30));
+      s += `<line x1="${x+lo*w}" y1="${y}" x2="${x+hi*w}" y2="${y}" stroke="${zc}" stroke-width="3"/>
+        <circle cx="${px}" cy="${y}" r="7" fill="${zc}" stroke="#fff" stroke-width="1.5"/>
+        <text x="${px}" y="${y-12}" font-size="13" font-weight="800" fill="${zc}" text-anchor="middle"
+          style="paint-order:stroke;stroke:#fff;stroke-width:3;">BF=${fmt(bf,3)}</text>`;
+    }
+    s += `<text x="${x+w/2}" y="100" font-size="11.5" fill="${C.muted}" text-anchor="middle">
+      ${t("效应主导（BF&lt;1/3）　|　混合区（1/3–0.5）　|　偏倚主导（BF&gt;0.5）","effect-dominated (BF&lt;1/3)  |  mixed (1/3–0.5)  |  bias-dominated (BF&gt;0.5)")}</text>
+      <text x="${x+w/2}" y="124" font-size="13.5" font-weight="700" fill="${zc}" text-anchor="middle">${zone}</text>`;
+    gauge.innerHTML = s;
+  }
+  muS.addEventListener("input", update); psiS.addEventListener("input", update);
+  document.querySelectorAll(".preset").forEach(b=>{
+    b.addEventListener("click", ()=>{
+      muS.value=b.dataset.mu; psiS.value=b.dataset.psi;
+      document.querySelectorAll(".preset").forEach(o=>o.classList.remove("active"));
+      b.classList.add("active"); update();
+    });
+  });
+  update();
+  RENDERERS.push(update);
+})();
+
+/* ================= ⑤ 病例研究：漏斗图 + 森林图（共享 tab 状态） ================= */
+let CASE_TAB = "bb";
+(function(){
+  const svg=document.getElementById("funnel");
+  const X0=100, X1=700, Y0=50, Y1=400;
+  const yMax=0.35, xMin=-0.72, xMax=0.22;
+  const X=l=>X0+(l-xMin)/(xMax-xMin)*(X1-X0);
+  const Y=s=>Y0+(s/yMax)*(Y1-Y0);
+  function draw(caseKey){
+    const cs=CASES[caseKey];
+    let s=`<text x="${X0}" y="24" font-size="13.5" font-weight="700" fill="${C.ink}">${t("负对照偏倚分布特征：","Negative-control bias fingerprint: ")}${tt(cs.label)}</text>`;
+    // 右上角图例框（避免与图内文字重叠）
+    s+=`<rect x="620" y="44" width="200" height="74" rx="8" fill="#fff" stroke="${C.line||C.grid}" stroke-width="1"/>
+      <path d="M 632 60 L 641 64 L 632 68 L 623 64 Z" fill="${C.bias}"/>
+      <text x="648" y="65" font-size="11.5" fill="${C.ink}">${t("未校准","Uncalibrated")} RR = ${cs.uncalRR.toFixed(2)}</text>
+      <path d="M 632 84 L 641 88 L 632 92 L 623 88 Z" fill="${C.effect}"/>
+      <text x="648" y="89" font-size="11.5" fill="${C.ink}">${t("校准后","Calibrated")} RR = ${cs.calRR.toFixed(2)}</text>
+      <text x="648" y="108" font-size="11" fill="${C.muted}">${t("校准","calibrated")} p = ${cs.calP.toFixed(3)}</text>`;
+    // axes
+    s+=`<line x1="${X0}" y1="${Y1}" x2="${X1}" y2="${Y1}" stroke="${C.grid}" stroke-width="1.5"/>
+        <line x1="${X0}" y1="${Y0}" x2="${X0}" y2="${Y1}" stroke="${C.grid}" stroke-width="1.5"/>
+        <line x1="${X(0)}" y1="${Y0}" x2="${X(0)}" y2="${Y1}" stroke="#7a756c" stroke-dasharray="5 4"/>
+        <text x="${X(0)}" y="${Y1+18}" font-size="11.5" fill="${C.muted}" text-anchor="middle">${t("log RR = 0（无效）","log RR = 0 (null)")}</text>
+        <text x="${X0+30}" y="${Y1+18}" font-size="11.5" fill="${C.muted}">${t("← 保护方向","← protective")}</text>
+        <text x="${X1-30}" y="${Y1+18}" font-size="11.5" fill="${C.muted}" text-anchor="end">${t("有害方向 →","harmful →")}</text>
+        <text x="${X0-18}" y="${Y(0.16)}" font-size="11.5" fill="${C.muted}" transform="rotate(-90 ${X0-18} ${Y(0.16)})" text-anchor="middle">${t("标准误 SE","standard error SE")}</text>`;
+    // funnel band: mu ± 1.96*sqrt(se^2+sigma^2)
+    const seG=[]; for(let i2=0;i2<=60;i2++) seG.push(0.002+i2/60*(yMax-0.002));
+    const upPts=[], loPts=[];
+    seG.forEach(sv_=>{ const b=1.96*Math.sqrt(sv_*sv_+SIG_B*SIG_B);
+      upPts.push(`${X(MU_B+b)},${Y(sv_)}`); loPts.push(`${X(MU_B-b)},${Y(sv_)}`); });
+    const upStr=upPts.join(" "), loStr=loPts.join(" ");
+    s+=`<polygon points="${upStr} ${[...loPts].reverse().join(" ")}" fill="rgba(169,50,38,.07)" stroke="none"/>`;
+    s+=`<polyline points="${upStr}" fill="none" stroke="${C.bias}" stroke-width="1.4" stroke-dasharray="5 4" opacity=".55"/>
+        <polyline points="${loStr}" fill="none" stroke="${C.bias}" stroke-width="1.4" stroke-dasharray="5 4" opacity=".55"/>`;
+    s+=`<line x1="${X(MU_B)}" y1="${Y0}" x2="${X(MU_B)}" y2="${Y1}" stroke="${C.bias}" stroke-width="1.8" stroke-dasharray="7 4"/>
+        <text x="${X(MU_B)+6}" y="${Y0+14}" font-size="12" fill="${C.bias}" font-weight="700"
+          style="paint-order:stroke;stroke:#fff;stroke-width:3;">μ̂_B = −0.190${t("（平均系统偏倚）"," (mean systematic bias)")}</text>`;
+    // NC points（带白描边，避免与线重叠看不清）
+    NC.forEach(n=>{
+      const cx=X(n.lr), cy=Y(n.se);
+      s+=`<line x1="${X(n.lr-1.96*n.se)}" y1="${cy}" x2="${X(n.lr+1.96*n.se)}" y2="${cy}" stroke="#6b6f78" stroke-width="1.6" opacity=".75"/>
+          <circle cx="${cx}" cy="${cy}" r="5" fill="#4a4f5a" stroke="#fff" stroke-width="1.5"
+            class="ncpt" data-name="${tt(n.name)}" data-ev="${n.ev}" data-lr="${n.lr.toFixed(3)}" data-se="${n.se.toFixed(3)}" data-rr="${Math.exp(n.lr).toFixed(2)}"/>`;
+    });
+    // primary estimate diamonds（不带文字，数值在图例框）
+    s+=`<path d="M ${X(cs.uncalLr)} ${Y(cs.uncalSe)-9} L ${X(cs.uncalLr)+9} ${Y(cs.uncalSe)} L ${X(cs.uncalLr)} ${Y(cs.uncalSe)+9} L ${X(cs.uncalLr)-9} ${Y(cs.uncalSe)} Z" fill="${C.bias}" stroke="#fff" stroke-width="1.5"/>`;
+    s+=`<path d="M ${X(cs.calLr)} ${Y(cs.calSe)-9} L ${X(cs.calLr)+9} ${Y(cs.calSe)} L ${X(cs.calLr)} ${Y(cs.calSe)+9} L ${X(cs.calLr)-9} ${Y(cs.calSe)} Z" fill="${C.effect}" stroke="#fff" stroke-width="1.5"/>`;
+    svg.innerHTML=s;
+    svg.querySelectorAll(".ncpt").forEach(c=>{
+      c.addEventListener("mousemove", e=>showTip(e,
+        `<b>${c.dataset.name}</b><br>${t("事件数","events")} ${c.dataset.ev}<br>log RR = ${c.dataset.lr}（SE ${c.dataset.se}）<br>RR = ${c.dataset.rr}`.replace(`（SE ${c.dataset.se}）`,` (SE ${c.dataset.se})`)));
+      c.addEventListener("mouseleave", hideTip);
+    });
+  }
+  draw(CASE_TAB);
+  RENDERERS.push(()=>draw(CASE_TAB));
+})();
+
+/* ================= ⑤ 森林图（校准前后） ================= */
+(function(){
+  const div=document.getElementById("forest");
+  function draw(key){
+    const cs=CASES[key];
+    const lo1=Math.exp(cs.uncalLr-1.96*cs.uncalSe), hi1=Math.exp(cs.uncalLr+1.96*cs.uncalSe);
+    const lo2=Math.exp(cs.calLr-1.96*cs.calSe), hi2=Math.exp(cs.calLr+1.96*cs.calSe);
+    const xMin=Math.min(lo1,lo2)*0.9, xMax=Math.max(hi1,hi2)*1.15;
+    const X=v=>Math.log(v/xMin)/Math.log(xMax/xMin);
+    const W=760, H=200, L=205;
+    let s=`<svg viewBox="0 0 ${W} ${H}" width="100%" style="height:auto;">
+      <text x="10" y="24" font-size="13.5" font-weight="700" fill="${C.ink}">${tt(cs.label)}${t("：校准前后对比（RR，对数轴）",": before vs after calibration (RR, log axis)")}</text>
+      <line x1="${L}" y1="${H-30}" x2="${W-10}" y2="${H-30}" stroke="${C.grid}" stroke-width="1.5"/>
+      <line x1="${L+X(1)*(W-10-L)}" y1="44" x2="${L+X(1)*(W-10-L)}" y2="${H-30}" stroke="#7a756c" stroke-dasharray="5 4"/>
+      <text x="${L+X(1)*(W-10-L)}" y="${H-12}" font-size="11.5" fill="${C.muted}" text-anchor="middle">${t("RR = 1（无效）","RR = 1 (null)")}</text>`;
+    [0.5,0.7,0.8,1,1.25,1.5,2,3].forEach(v=>{
+      const tx=L+X(v)*(W-10-L);
+      if(tx>L-20 && tx<W-10){
+        s+=`<text x="${tx}" y="${H-12}" font-size="10.5" fill="${C.muted}" text-anchor="middle">${v}</text>`;}});
+    function row(y,lab,rr,lo,hi,col,extra){
+      s+=`<text x="8" y="${y+4}" font-size="12.5" fill="${C.ink}">${lab}</text>
+        <line x1="${L+X(lo)*(W-10-L)}" y1="${y}" x2="${L+X(hi)*(W-10-L)}" y2="${y}" stroke="${col}" stroke-width="3.5"/>
+        <circle cx="${L+X(rr)*(W-10-L)}" cy="${y}" r="6" fill="${col}" stroke="#fff" stroke-width="1.5"/>
+        <text x="${L+X(rr)*(W-10-L)+10}" y="${y-7}" font-size="12" font-weight="700" fill="${col}"
+          style="paint-order:stroke;stroke:#fff;stroke-width:3;">RR = ${rr.toFixed(2)}</text>
+        ${extra||""}`;
+    }
+    row(80,t("未校准 uncalibrated","Uncalibrated"),cs.uncalRR,lo1,hi1,C.bias,
+        `<text x="${W-10}" y="76" font-size="11" fill="${C.muted}" text-anchor="end">naive p &lt; 0.001</text>`);
+    row(150,t("校准后 calibrated","Calibrated"),cs.calRR,lo2,hi2,C.effect,
+        `<text x="${W-10}" y="146" font-size="11" fill="${C.muted}" text-anchor="end">calibrated p = ${cs.calP.toFixed(3)}</text>`);
+    s+=`</svg>`;
+    div.innerHTML=s;
+  }
+  draw(CASE_TAB);
+  RENDERERS.push(()=>draw(CASE_TAB));
+  document.querySelectorAll(".tab").forEach(tb=>{
+    tb.addEventListener("click", ()=>{
+      const k=tb.dataset.tab;
+      if(k==="bb"||k==="gdmt") CASE_TAB=k;
+    });
+  });
+})();
+
+/* ================= ⑤ 病例仪表盘（双行，标签固定右侧不截断） ================= */
+(function(){
+  const svg=document.getElementById("caseGauge");
+  const W=780, x=40, w=660, zh=26, zy1=46, y1=110, zy2=170, y2=234;
+  function draw(){
+    svg.innerHTML="";
+    [zy1,zy2].forEach(zy=>{
+      svg.innerHTML += `<rect x="${x}" y="${zy}" width="${w/3}" height="${zh}" fill="rgba(31,111,63,.13)"/>
+        <rect x="${x+w/3}" y="${zy}" width="${w/6}" height="${zh}" fill="rgba(176,125,0,.16)"/>
+        <rect x="${x+w/2}" y="${zy}" width="${w/2}" height="${zh}" fill="rgba(169,50,38,.13)"/>
+        <line x1="${x+w/3}" y1="${zy}" x2="${x+w/3}" y2="${zy+zh}" stroke="#8a8378" stroke-dasharray="4 3"/>
+        <line x1="${x+w/2}" y1="${zy}" x2="${x+w/2}" y2="${zy+zh}" stroke="#8a8378" stroke-dasharray="4 3"/>
+        <text x="${x}" y="${zy+zh+15}" font-size="10.5" fill="${C.muted}">0</text>
+        <text x="${x+w/3}" y="${zy+zh+15}" font-size="10.5" fill="${C.muted}" text-anchor="middle">1/3</text>
+        <text x="${x+w/2}" y="${zy+zh+15}" font-size="10.5" fill="${C.muted}" text-anchor="middle">0.5</text>
+        <text x="${x+w}" y="${zy+zh+15}" font-size="10.5" fill="${C.muted}" text-anchor="end">1</text>`;
+    });
+    function row(bf,lo,hi,y,col){
+      const px = x + bf*w;
+      svg.innerHTML += `<line x1="${x+lo*w}" y1="${y}" x2="${x+hi*w}" y2="${y}" stroke="${col}" stroke-width="3.5"/>
+        <circle cx="${px}" cy="${y}" r="7.5" fill="${col}" stroke="#fff" stroke-width="1.8"/>`;
+    }
+    row(CASES.bb.bf, CASES.bb.bfLo, CASES.bb.bfHi, y1, C.bias);
+    row(CASES.gdmt.bf, CASES.gdmt.bfLo, CASES.gdmt.bfHi, y2, C.comp);
+    // 结论标签固定贴右侧，绝不超出画布
+    svg.innerHTML += `<text x="${W-8}" y="${y1-16}" font-size="12.5" font-weight="800" fill="${C.bias}" text-anchor="end"
+        style="paint-order:stroke;stroke:#fff;stroke-width:3;">${t("β 受体阻滞剂　BF = 0.91 [0.74, 0.99]　偏倚主导","Beta-blocker  BF = 0.91 [0.74, 0.99]  bias-dominated")}</text>
+      <text x="${W-8}" y="${y2-16}" font-size="12.5" font-weight="800" fill="${C.comp}" text-anchor="end"
+        style="paint-order:stroke;stroke:#fff;stroke-width:3;">GDMT  BF = 0.45 [0.31, 0.53]  ${t("混合区","mixed")}</text>
+      <text x="${x+w/2}" y="292" font-size="11.5" fill="${C.muted}" text-anchor="middle">
+        ${t("效应主导（BF&lt;1/3）　|　混合区（1/3–0.5）　|　偏倚主导（BF&gt;0.5）","effect-dominated (BF&lt;1/3)  |  mixed (1/3–0.5)  |  bias-dominated (BF&gt;0.5)")}</text>`;
+  }
+  draw();
+  RENDERERS.push(draw);
+})();
+
+/* ================= ⑥ 分区条形图 ================= */
+(function(){
+  const svg=document.getElementById("zoneBar");
+  function draw(){
+    const data=[{z:{zh:"偏倚主导\nbias-dominated",en:"Bias-dominated"},v:80.0,c:C.bias,n:{zh:"168 条件",en:"168 conditions"}},
+                {z:{zh:"混合区\nmixed",en:"Mixed"},v:41.8,c:C.comp,n:{zh:"112 条件",en:"112 conditions"}},
+                {z:{zh:"效应主导\neffect-dominated",en:"Effect-dominated"},v:95.1,c:C.effect,n:{zh:"56 条件",en:"56 conditions"}},
+                {z:{zh:"总体\noverall",en:"Overall"},v:69.8,c:C.ink,n:{zh:"336 条件",en:"336 conditions"}}];
+    const W=760,H=300,X0=130,X1=700;
+    const Yv=v=>240-180*v/100;
+    let s=`<text x="30" y="26" font-size="13.5" font-weight="700" fill="${C.ink}">${t("三区分类准确率（%），随机猜测水平 = 33.3%","Three-zone classification accuracy (%); chance level = 33.3%")}</text>
+      <line x1="${X0}" y1="${Yv(0)}" x2="${X1}" y2="${Yv(0)}" stroke="${C.grid}" stroke-width="1.5"/>
+      <line x1="${X0}" y1="${Yv(33.3)}" x2="${X1}" y2="${Yv(33.3)}" stroke="#7a756c" stroke-dasharray="5 4"/>
+      <text x="${X1-4}" y="${Yv(33.3)-4}" font-size="11" fill="${C.muted}" text-anchor="end">${t("随机水平 33.3%","chance 33.3%")}</text>`;
+    [0,25,50,75,100].forEach(v=>{
+      s+=`<text x="${X0-8}" y="${Yv(v)+4}" font-size="11" fill="${C.muted}" text-anchor="end">${v}</text>
+          <line x1="${X0}" y1="${Yv(v)}" x2="${X1}" y2="${Yv(v)}" stroke="#e3ded4" stroke-width="1"/>`;});
+    const bw=Math.min(110,(X1-X0-80)/data.length);
+    data.forEach((d,i)=>{
+      const x=X0+70+i*((X1-X0-40)/data.length);
+      const h=180*d.v/100;
+      const ztxt=tt(d.z).split("\n");
+      s+=`<rect x="${x-bw/2}" y="${240-h}" width="${bw}" height="${h}" fill="${d.c}" opacity="0.9" rx="4"/>
+          <text x="${x}" y="${240-h-8}" font-size="14" font-weight="800" fill="${d.c}" text-anchor="middle">${d.v}%</text>
+          <text x="${x}" y="262" font-size="11.5" fill="${C.ink}" text-anchor="middle">${ztxt[0]}</text>
+          <text x="${x}" y="277" font-size="10.5" fill="${C.muted}" text-anchor="middle">${(ztxt[1]||ztxt[0])} · ${tt(d.n)}</text>`;
+    });
+    svg.innerHTML=s;
+  }
+  draw();
+  RENDERERS.push(draw);
+})();
+
+/* ================= ⑥ 偏倚尺度对比 ================= */
+(function(){
+  const svg=document.getElementById("biasBar");
+  function draw(){
+    let s=`<text x="30" y="26" font-size="13.5" font-weight="700" fill="${C.ink}">${t("相对偏倚对比（越小越好；虚线 = 0，即无偏）","Relative-bias comparison (smaller is better; dashed line = 0, unbiased)")}</text>
+      <line x1="150" y1="70" x2="700" y2="70" stroke="#7a756c" stroke-dasharray="5 4"/>
+      <text x="704" y="74" font-size="11" fill="${C.muted}">0</text>
+      <text x="150" y="55" font-size="11.5" fill="${C.muted}">${t("↑ 高估","↑ overestimate")}</text><text x="150" y="85" font-size="11.5" fill="${C.muted}">${t("↓ 低估","↓ underestimate")}</text>`;
+    s+=`<text x="60" y="118" font-size="12.5" font-weight="700" fill="${C.bias}">${t("BER（无界比值）","BER (unbounded ratio)")}</text>
+        <rect x="160" y="100" width="430" height="30" fill="${C.bias}" rx="4" opacity="0.9"/>
+        <text x="600" y="120" font-size="13" font-weight="800" fill="#fff">+137% ~ +319%</text>
+        <text x="160" y="150" font-size="11.5" fill="${C.muted}">${t("交换性成立（理想情形）下即已严重高估——\"30 倍\"这种数值不可靠","severely overestimated even under exchangeability (ideal case) — values like \"30×\" are unreliable")}</text>`;
+    s+=`<text x="60" y="195" font-size="12.5" font-weight="700" fill="${C.effect}">${t("BF（有界分数）","BF (bounded fraction)")}</text>
+        <rect x="160" y="177" width="18" height="30" fill="${C.effect}" rx="4"/>
+        <text x="184" y="197" font-size="13" font-weight="800" fill="${C.effect}">${t("+1.8% ~ +2.3%（交换性成立）","+1.8% ~ +2.3% (under exchangeability)")}</text>
+        <rect x="470" y="177" width="90" height="30" fill="${C.comp}" rx="4"/>
+        <text x="566" y="197" font-size="12" font-weight="800" fill="#fff">${t("−30%（违反）","−30% (violated)")}</text>
+        <text x="160" y="228" font-size="11.5" fill="${C.muted}">${t("交换性被违反时 BF 向 0.5 衰减（方向乐观）——接近阈值的 BF 需结合对照质量解读","under violation BF attenuates toward 0.5 (a flattering direction) — read near-threshold BF together with control quality")}</text>`;
+    svg.innerHTML=s;
+  }
+  draw();
+  RENDERERS.push(draw);
+})();
+
+/* ================= ⑥ 热图 ================= */
+(function(){
+  const heat=document.getElementById("heat");
+  function draw(){
+    let h=`<div class="hdr"></div>`+MU.map(m=>`<div class="hdr">μ<sub>B</sub>=${m.toFixed(2)}</div>`).join("");
+    PSI.forEach((p,i)=>{
+      h+=`<div class="hdr">ψ=${p.toFixed(2)}${p===0?t("（零）"," (null)"):""}</div>`;
+      MU.forEach((m,j)=>{
+        const a=HEAT[i][j];
+        const bfTrue = p===0 ? 1 : Math.abs(m)/(Math.abs(m)+Math.abs(p));
+        const bg = a>=85?`rgba(31,111,63,${(0.25+0.65*a/100).toFixed(3)})`:
+                    a>=60?`rgba(176,125,0,${(0.30+0.55*a/100).toFixed(3)})`:
+                          `rgba(169,50,38,${(0.18+0.7*a/100).toFixed(3)})`;
+        h+=`<div class="cell" style="background:${bg};color:${a>75?"#fff":C.ink}" data-p="${p}" data-m="${m}" data-a="${a}" data-bf="${bfTrue.toFixed(2)}">${a}</div>`;
+      });
+    });
+    heat.innerHTML=h;
+    heat.querySelectorAll(".cell").forEach(c=>{
+      c.addEventListener("mousemove", e=>showTip(e,
+        `<b>ψ = ${c.dataset.p}</b>${t("（真实效应 log RR）"," (true effect, log RR)")}<br><b>μ<sub>B</sub> = ${c.dataset.m}</b>${t("（系统偏倚）"," (systematic bias)")}<br>BF<sub>${t("真","true")}</sub> = ${c.dataset.bf}<br>${t("8 配置 × 200 次重复的平均准确率","Mean accuracy over 8 configurations × 200 replications")} = <b>${c.dataset.a}%</b>`));
+      c.addEventListener("mouseleave", hideTip);
+    });
+  }
+  draw();
+  RENDERERS.push(draw);
+})();
+/* ================= ③ 负对照与经验零分布（四组动画） ================= */
+(function(){
+  function bell(mu, sd, amp, X, baseY){
+    let d = "";
+    for (let x=-0.7; x<=0.22; x+=0.0125){
+      const y = baseY - amp*Math.exp(-0.5*((x-mu)/sd)*((x-mu)/sd));
+      d += (d? "L":"M") + X(x).toFixed(1) + " " + y.toFixed(1) + " ";
+    }
+    return d;
+  }
+  const MKB = '<defs><marker id="ah-bias" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#A93226"/></marker><marker id="ah-grey" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#7a756c"/></marker></defs>';
+  function createStepper(id, steps, speed){
+    const svg = document.getElementById("an"+id);
+    const cap = document.getElementById("cap"+id);
+    let i = 0, timer = null, playing = false;
+    const btns = () => document.querySelectorAll('.astep[data-stepper="'+id+'"]');
+    function render(){
+      const st = steps[i];
+      const scene = typeof st.scene === "function" ? st.scene() : st.scene;
+      svg.innerHTML = MKB + scene;
+      cap.innerHTML = '<span class="step-no">'+t(`第 ${i+1} / ${steps.length} 步`,`Step ${i+1} / ${steps.length}`)+'</span> '+tt(st.text);
+      if (st.hook) st.hook(svg);
+      btns().forEach(b=>{ if(b.dataset.act==="play") b.textContent = playing ? t("⏸ 暂停","⏸ Pause") : t("▶ 自动播放","▶ Auto-play"); });
+    }
+    function stop(){ if(timer){clearInterval(timer); timer=null;} playing=false; render(); }
+    function go(n){ i = Math.max(0, Math.min(steps.length-1, n)); stop(); render(); }
+    function play(){
+      if(playing){ stop(); return; }
+      playing = true; if(i >= steps.length-1) i = 0; render();
+      timer = setInterval(()=>{ i++; if(i >= steps.length-1){ stop(); } else render(); }, speed);
+    }
+    btns().forEach(b=>{
+      b.addEventListener("click", ()=>{
+        const a = b.dataset.act;
+        if(a==="prev") go(i-1);
+        if(a==="next") go(i+1);
+        if(a==="play") play();
+      });
+    });
+    render();
+    RENDERERS.push(render);   // 语言切换时重渲染当前步（不重置进度）
+  }
+
+  /* ---------- 动画 A：负对照的原理 ---------- */
+  {
+    function patients(x, y, n, col){
+      let s="";
+      for(let r=0;r<2;r++) for(let c=0;c<n/2;c++)
+        s += `<circle cx="${x+c*16}" cy="${y+r*14}" r="5.5" fill="${col}"/>`;
+      return s;
+    }
+    const grp1 = () => `<rect x="120" y="26" width="180" height="76" rx="8" fill="#EEF4F9" stroke="${C.blue}" stroke-width="1.5"/>
+      <text x="210" y="48" font-size="13" font-weight="700" fill="${C.blue}" text-anchor="middle">${t("达标组 A=1（剂量≥50%）","On-target A=1 (dose ≥50%)")}</text>` + patients(140,58,16,"#5B8FA8");
+    const grp2 = () => `<rect x="480" y="26" width="180" height="76" rx="8" fill="#F4F1EC" stroke="${C.muted}" stroke-width="1.5"/>
+      <text x="570" y="48" font-size="13" font-weight="700" fill="${C.ink}" text-anchor="middle">${t("未达标组 A=0（&lt;50%）","Below-target A=0 (&lt;50%)")}</text>` + patients(500,58,16,"#8a8378");
+    function bar(x, label, val, col){
+      const h = val*15;
+      return `<rect x="${x}" y="${300-h}" width="70" height="${h}" fill="${col}" opacity="0.9"/>
+        <text x="${x+35}" y="${300-h-6}" font-size="12.5" font-weight="800" fill="${col}" text-anchor="middle">${val}%</text>
+        <text x="${x+35}" y="316" font-size="11.5" fill="${C.ink}" text-anchor="middle">${label}</text>`;
+    }
+    const lblOn = ()=>t("达标组","On-target"), lblOff = ()=>t("未达标组","Below-target");
+    function panel(x0, title){
+      return `<text x="${x0+120}" y="150" font-size="13" font-weight="700" fill="${C.ink}" text-anchor="middle">${title}</text>
+        <line x1="${x0+10}" y1="300" x2="${x0+240}" y2="300" stroke="${C.grid}" stroke-width="1.5"/>`;
+    }
+    const uBox = ()=>`<rect x="330" y="90" width="120" height="34" rx="8" fill="#F9EDEB" stroke="${C.bias}" stroke-width="1.5"/>
+      <text x="390" y="112" font-size="13" font-weight="700" fill="${C.bias}" text-anchor="middle">${t("U 未测量混杂","U unmeasured confounding")}</text>
+      <line x1="360" y1="124" x2="160" y2="100" stroke="${C.bias}" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#ah-bias)"/>
+      <line x1="420" y1="124" x2="560" y2="100" stroke="${C.bias}" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#ah-bias)"/>`;
+    createStepper("A", [
+      { text:{zh:"<b>设定：</b>回顾论文病例——心衰住院患者，按出院前是否达到 ≥50% 目标剂量分成两组。每组各有一些患者，观察 1 年结局。",
+              en:"<b>Setup:</b> recall the paper's case — hospitalized heart-failure patients split by whether they achieved ≥50% of the target dose before discharge. Each arm has a cohort of patients followed for 1 year."},
+        scene: ()=> grp1() + grp2() + `<text x="390" y="70" font-size="12" fill="${C.muted}" text-anchor="middle">${t("（14,677 名患者，7 天宽限期后开始随访）","(14,677 patients; follow-up starts after a 7-day grace period)")}</text>` },
+      { text:{zh:"<b>先看主结局（1 年死亡）：</b>达标组死亡率 8.3%，未达标组 10.0%，RR = 0.83——看起来 β 受体阻滞剂把死亡降低了 17%。",
+              en:"<b>First the primary outcome (1-year mortality):</b> 8.3% in the on-target arm vs 10.0% below-target, RR = 0.83 — apparently a 17% mortality reduction from beta-blockers."},
+        scene: ()=> grp1() + grp2() + panel(60,t("主结局 Y：1 年全因死亡","Primary outcome Y: 1-yr mortality")) + panel(470,"")
+          + bar(90,lblOn(),8.3,C.blue) + bar(190,lblOff(),10.0,"#8a8378")
+          + `<text x="330" y="180" font-size="13" font-weight="800" fill="${C.blue}">RR = 0.83</text>
+             <text x="330" y="200" font-size="12" fill="${C.ink}">${t("看似有效","apparently effective")}</text>` },
+      { text:{zh:"<b>但别忘了：</b>谁能吃够药，不是随机的。病更重、更虚弱、更贫困的患者更可能达不到剂量——一个未测量的混杂 U 同时决定了分组与结局。",
+              en:"<b>But remember:</b> who reaches the dose is not random. Sicker, frailer, poorer patients are more likely to fall short — an unmeasured confounder U jointly determines assignment and outcome."},
+        scene: ()=> grp1() + grp2() + panel(60,t("主结局 Y：1 年全因死亡","Primary outcome Y: 1-yr mortality")) + panel(470,"")
+          + bar(90,lblOn(),8.3,C.blue) + bar(190,lblOff(),10.0,"#8a8378") + uBox() },
+      { text:{zh:"<b>关键实验（负对照）：</b>再看一个药物不可能影响的结局——白内障。达标组白内障率竟然也低：3.2% vs 4.2%，RR = 0.76。<b>药物不可能预防白内障，所以这个保护性关联只能由混杂造成</b>——主结局里同样存在这种混杂。",
+              en:"<b>The key experiment (negative control):</b> now look at an outcome the drug cannot plausibly affect — cataract. The on-target arm has a lower cataract rate too: 3.2% vs 4.2%, RR = 0.76. <b>A beta-blocker cannot prevent cataracts, so this protective association can only be confounding</b> — and the same confounding is present in the primary outcome."},
+        scene: ()=> grp1() + grp2() + panel(60,t("主结局 Y：1 年全因死亡","Primary outcome Y: 1-yr mortality")) + panel(470,t("负对照 N：白内障（药物不可能影响）","Negative control N: cataract (drug cannot affect)"))
+          + bar(90,lblOn(),8.3,C.blue) + bar(190,lblOff(),10.0,"#8a8378")
+          + bar(500,lblOn(),3.2,C.bias) + bar(600,lblOff(),4.2,"#8a8378")
+          + uBox()
+          + `<text x="740" y="180" font-size="13" font-weight="800" fill="${C.bias}">RR = 0.76</text>
+             <text x="740" y="200" font-size="12" fill="${C.bias}">${t("不可能由药物引起","cannot be caused by the drug")}</text>` },
+      { text:{zh:"<b>结论：</b>负对照的真实效应已知为零。若治疗与负对照出现关联，该关联只能来自系统偏倚；12 个负对照全部呈保护性关联，说明系统偏倚明确存在。",
+              en:"<b>Conclusion:</b> a negative control's true effect is known to be zero. Any treatment–control association can only come from systematic bias; all 12 controls show protective associations, so systematic bias demonstrably exists."},
+        scene: ()=> grp1() + grp2() + panel(60,t("主结局 Y：1 年全因死亡","Primary outcome Y: 1-yr mortality")) + panel(470,t("负对照 N：白内障（药物不可能影响）","Negative control N: cataract (drug cannot affect)"))
+          + bar(90,lblOn(),8.3,C.blue) + bar(190,lblOff(),10.0,"#8a8378")
+          + bar(500,lblOn(),3.2,C.bias) + bar(600,lblOff(),4.2,"#8a8378")
+          + `<rect x="70" y="236" width="640" height="46" rx="10" fill="#EDF5EF" stroke="${C.effect}" stroke-width="1.6"/>
+             <text x="390" y="255" font-size="13" font-weight="800" fill="${C.effect}" text-anchor="middle">${t("负对照效应已知为零：治疗与负对照的关联只能来自系统偏倚","A control's true effect is zero: any treatment–control association must be systematic bias")}</text>
+             <text x="390" y="273" font-size="11.5" fill="${C.muted}" text-anchor="middle">${t("下一步：把 12 个负对照的估计值交给软件包，估计系统性偏倚的大小","Next: hand the 12 control estimates to the software package to estimate the size of systematic bias")}</text>` }
+    ], 3000);
+  }
+
+  /* ---------- 动画 B：EmpiricalCalibration 包在算什么 ---------- */
+  {
+    const X = l => 90 + (l+0.7)/0.9*600;
+    const NC2 = [
+      {lr:-0.5312,se:0.3022},{lr:-0.4084,se:0.2463},{lr:-0.3529,se:0.0821},
+      {lr:-0.2773,se:0.1196},{lr:-0.2325,se:0.0552},{lr:-0.2166,se:0.0254},
+      {lr:-0.2001,se:0.0302},{lr:-0.1988,se:0.0512},{lr:-0.1901,se:0.0516},
+      {lr:-0.1536,se:0.2459},{lr:-0.1031,se:0.0650},{lr:-0.0023,se:0.0443}
+    ];
+    function points(){
+      let s = "";
+      NC2.forEach((n,i)=>{
+        const y = 105 + (i%6)*34;
+        s += `<line x1="${X(n.lr-1.96*n.se)}" y1="${y}" x2="${X(n.lr+1.96*n.se)}" y2="${y}" stroke="#6b6f78" stroke-width="1.6" opacity="0.8"/>
+              <circle cx="${X(n.lr)}" cy="${y}" r="4.5" fill="#4a4f5a" stroke="#fff" stroke-width="1.2"/>`;
+      });
+      return s;
+    }
+    const axis = ()=>`<line x1="${X(-0.7)}" y1="330" x2="${X(0.22)}" y2="330" stroke="${C.grid}" stroke-width="1.5"/>
+      <line x1="${X(0)}" y1="330" x2="${X(0)}" y2="100" stroke="#7a756c" stroke-dasharray="5 4"/>
+      <text x="${X(0)}" y="348" font-size="12" fill="${C.muted}" text-anchor="middle">${t("0（真实效应为零）","0 (true effect is zero)")}</text>
+      <text x="${X(-0.7)+6}" y="348" font-size="12" fill="${C.muted}">${t("← 保护","← protective")}</text>
+      <text x="${X(0.22)-6}" y="348" font-size="12" fill="${C.muted}" text-anchor="end">${t("有害 →","harmful →")}</text>`;
+    createStepper("B", [
+      { text:{zh:"<b>输入：</b>把 12 个负对照结局各自经 TMLE 得到的 (log RR, 标准误) 交给软件包。每个点 = 一个负对照的估计值，横线 = 95% CI。",
+              en:"<b>Input:</b> hand the package the (log RR, SE) that TMLE produced for each of the 12 negative-control outcomes. Each dot = one control's estimate; bars = 95% CIs."},
+        scene: ()=> axis() + points()
+          + `<text x="390" y="28" font-size="14" font-weight="700" fill="${C.ink}" text-anchor="middle">${t("EmpiricalCalibration 包的输入：12 个负对照估计 (γ̂ₖ, τ̂ₖ)","Input to EmpiricalCalibration: 12 negative-control estimates (γ̂ₖ, τ̂ₖ)")}</text>` },
+      { text:{zh:"<b>对照标准：</b>如果研究设计没有系统偏倚，12 个点应该围绕 0 对称散布（灰色虚线钟形 = 无偏倚时的期望）。",
+              en:"<b>Benchmark:</b> if the design had no systematic bias, the 12 points would scatter symmetrically around 0 (gray dashed bell = the expectation without bias)."},
+        scene: ()=> axis() + points()
+          + `<path d="${bell(0, 0.11, 80, X, 330)}" fill="none" stroke="#8a8378" stroke-width="2" stroke-dasharray="7 5"/>
+             <text x="330" y="200" font-size="11.5" fill="${C.muted}">${t("无偏倚时的期望：围绕 0 对称","Expected without bias: symmetric around 0")}</text>` },
+      { text:{zh:"<b>实际却几乎全部落在 0 的左侧（保护方向）。</b>包的 fitNull() 函数用最大似然拟合出一个钟形：均值 μ̂_B = −0.190（平均系统偏倚），宽度 σ̂_B = 0.068（对照间偏倚的异质性）。",
+              en:"<b>In reality nearly all fall to the left of 0 (protective direction).</b> The package's fitNull() fits a bell by maximum likelihood: mean μ̂_B = −0.190 (mean systematic bias), spread σ̂_B = 0.068 (between-control heterogeneity)."},
+        scene: ()=> axis() + points()
+          + `<path d="${bell(0, 0.11, 80, X, 330)}" fill="none" stroke="#8a8378" stroke-width="1.6" stroke-dasharray="7 5"/>
+             <path d="${bell(-0.1905, 0.068, 118, X, 330)}" fill="rgba(169,50,38,.14)" stroke="${C.bias}" stroke-width="2.4"/>
+             <line x1="${X(-0.1905)}" y1="330" x2="${X(-0.1905)}" y2="205" stroke="${C.bias}" stroke-width="1.8" stroke-dasharray="7 4"/>
+             <text x="${X(-0.1905)+6}" y="222" font-size="12.5" font-weight="800" fill="${C.bias}">μ̂_B = −0.190</text>
+             <text x="330" y="250" font-size="11.5" fill="${C.bias}">${t("fitNull() 拟合的经验零分布 N(μ̂_B, σ̂_B=0.068)","empirical null fitted by fitNull(): N(μ̂_B, σ̂_B=0.068)")}</text>` },
+      { text:{zh:"<b>结论：这个钟形的中心不在 0，偏离了 0.190（log RR 尺度）。</b>研究设计会系统性地把估计向保护方向偏移 0.19——这就是要扣除的系统偏倚。",
+              en:"<b>Conclusion: the bell is not centered at 0 — it is shifted by 0.190 (log-RR scale).</b> The design systematically shifts estimates 0.19 toward protection — this is the systematic bias to be subtracted."},
+        scene: ()=> axis() + points()
+          + `<path d="${bell(-0.1905, 0.068, 118, X, 330)}" fill="rgba(169,50,38,.14)" stroke="${C.bias}" stroke-width="2.4"/>
+             <line x1="${X(-0.1905)}" y1="330" x2="${X(-0.1905)}" y2="205" stroke="${C.bias}" stroke-width="1.8" stroke-dasharray="7 4"/>
+             <line x1="${X(0)}" y1="240" x2="${X(-0.1905)}" y2="240" stroke="${C.bias}" stroke-width="2.5"/>
+             <text x="${X(-0.095)}" y="230" font-size="12.5" font-weight="800" fill="${C.bias}" text-anchor="middle">${t("系统偏倚 = 0.190","systematic bias = 0.190")}</text>` },
+      { text:{zh:"<b>包还输出什么？</b>① 校准 p 值 calibrateP()——把主估计放进这个钟形检验；② 校准图 plotCalibration()——就是本页病例研究里的漏斗图（阴影带 = 经验零 95% 区域，虚线 = p=0.05 边界）；③ 校准置信区间 calibrateConfidenceInterval()。",
+              en:"<b>What else does the package output?</b> ① the calibrated p-value calibrateP() — testing the primary estimate against this bell; ② the calibration plot plotCalibration() — the funnel plot in the case-study section (shaded band = 95% region of the empirical null, dashed = p=0.05 boundary); ③ a calibrated confidence interval calibrateConfidenceInterval()."},
+        scene: ()=> axis() + points()
+          + `<path d="${bell(-0.1905, 0.068, 118, X, 330)}" fill="rgba(169,50,38,.14)" stroke="${C.bias}" stroke-width="2.4"/>
+             <line x1="${X(-0.1905)}" y1="330" x2="${X(-0.1905)}" y2="205" stroke="${C.bias}" stroke-width="1.8" stroke-dasharray="7 4"/>
+             <rect x="60" y="28" width="660" height="56" rx="10" fill="#EEF4F9" stroke="${C.blue}" stroke-width="1.5"/>
+             <text x="390" y="50" font-size="12.5" font-weight="700" fill="${C.blue}" text-anchor="middle">${t("包的三件套输出：μ̂_B / σ̂_B（fitNull）· 校准 p 值（calibrateP）· 漏斗校准图（plotCalibration）","The package's three outputs: μ̂_B / σ̂_B (fitNull) · calibrated p (calibrateP) · funnel calibration plot (plotCalibration)")}</text>
+             <text x="390" y="70" font-size="11.5" fill="${C.muted}" text-anchor="middle">${t("BF 与 BER 只需要前两者，不引入任何新数据","BF and BER need only the first two — no new data")}</text>` }
+    ], 3200);
+  }
+
+  /* ---------- 动画 C：经验零分布到底是什么 ---------- */
+  {
+    const X = l => 90 + (l+0.7)/0.9*600;
+    const pt = (x0,y) => `<path d="M ${x0} ${y-9} L ${x0+9} ${y} L ${x0} ${y+9} L ${x0-9} ${y} Z" fill="#1B2A41" stroke="#fff" stroke-width="1.2"/>`;
+    createStepper("C", [
+      { text:{zh:"<b>第一步，先回忆常规做法：</b>把主估计 ψ̂_obs = −0.184 与<b>标准零分布</b> N(0, se=0.056) 比较——它落在钟形外侧很远 → naive p &lt; 0.001，判定为显著。",
+              en:"<b>Step 1, recall the conventional approach:</b> compare the primary estimate ψ̂_obs = −0.184 with the <b>standard null</b> N(0, se=0.056) — it lands far in the tail → naive p &lt; 0.001, declared significant."},
+        scene: ()=> `<text x="390" y="28" font-size="14" font-weight="700" fill="${C.ink}" text-anchor="middle">${t("标准零分布：假设真实效应为 0 且研究设计无系统偏倚","Standard null: assumes a zero true effect AND no systematic bias in the design")}</text>
+          <line x1="${X(-0.7)}" y1="290" x2="${X(0.22)}" y2="290" stroke="${C.grid}" stroke-width="1.5"/>
+          <line x1="${X(0)}" y1="290" x2="${X(0)}" y2="80" stroke="#7a756c" stroke-dasharray="5 4"/>
+          <text x="${X(0)}" y="308" font-size="12" fill="${C.muted}" text-anchor="middle">0</text>
+          <path d="${bell(0, 0.056, 95, X, 290)}" fill="rgba(31,94,143,.13)" stroke="${C.blue}" stroke-width="2.2"/>
+          ${pt(X(-0.184),288)}
+          <text x="${X(-0.184)+12}" y="150" font-size="12.5" font-weight="800" fill="${C.bias}">${t("ψ̂_obs = −0.184 落在尾巴上","ψ̂_obs = −0.184 sits in the tail")}</text>
+          <text x="${X(-0.184)+12}" y="168" font-size="13" font-weight="800" fill="${C.bias}">${t("naive p &lt; 0.001 → 判定显著","naive p &lt; 0.001 → declared significant")}</text>` },
+      { text:{zh:"<b>第二步，换成经验零分布：</b>同样一个点，放进由 12 个负对照拟合出的钟形 N(−0.190, σ̃=0.088)——它恰好落在钟形<b>正中央</b> → 校准 p = 0.94，与零没有任何可区分的差别。",
+              en:"<b>Step 2, switch to the empirical null:</b> the same point placed against the bell fitted from the 12 controls, N(−0.190, σ̃=0.088) — it lands <b>dead center</b> → calibrated p = 0.94, indistinguishable from zero."},
+        scene: ()=> `<text x="390" y="28" font-size="14" font-weight="700" fill="${C.ink}" text-anchor="middle">${t("经验零分布：已知真实效应为 0 的结局上，估计值实际长什么样","Empirical null: what estimates actually look like on outcomes known to have zero effect")}</text>
+          <line x1="${X(-0.7)}" y1="290" x2="${X(0.22)}" y2="290" stroke="${C.grid}" stroke-width="1.5"/>
+          <line x1="${X(0)}" y1="290" x2="${X(0)}" y2="80" stroke="#7a756c" stroke-dasharray="5 4"/>
+          <text x="${X(0)}" y="308" font-size="12" fill="${C.muted}" text-anchor="middle">0</text>
+          <path d="${bell(-0.1905, 0.088, 105, X, 290)}" fill="rgba(31,111,63,.13)" stroke="${C.effect}" stroke-width="2.2"/>
+          ${pt(X(-0.184),288)}
+          <text x="${X(-0.184)+12}" y="150" font-size="12.5" font-weight="800" fill="${C.effect}">${t("ψ̂_obs = −0.184 恰在钟形中央","ψ̂_obs = −0.184 sits at the bell's center")}</text>
+          <text x="${X(-0.184)+12}" y="168" font-size="13" font-weight="800" fill="${C.effect}">${t("校准 p = 0.94 → 无证据支持效应","calibrated p = 0.94 → no evidence of effect")}</text>` },
+      { text:{zh:"<b>为什么结论会翻转？</b>因为两个钟形的中心相差 μ̂_B = 0.190——这就是负对照揭示出的系统偏倚。所谓校准，就是把判决的参照系从“理想情形”换成“数据揭示的实际情形”。",
+              en:"<b>Why does the verdict flip?</b> Because the two bells' centers differ by μ̂_B = 0.190 — precisely the systematic bias revealed by the negative controls. Calibration simply swaps the reference frame of the verdict from \"the ideal case\" to \"what the data reveal about this design\"."},
+        scene: ()=> `<text x="390" y="28" font-size="14" font-weight="700" fill="${C.ink}" text-anchor="middle">${t("同一估计、两个零参照：中心之差 = 系统偏倚","One estimate, two null references: the gap between centers = systematic bias")}</text>
+          <line x1="${X(-0.7)}" y1="290" x2="${X(0.22)}" y2="290" stroke="${C.grid}" stroke-width="1.5"/>
+          <line x1="${X(0)}" y1="290" x2="${X(0)}" y2="80" stroke="#7a756c" stroke-dasharray="5 4"/>
+          <path d="${bell(0, 0.056, 95, X, 290)}" fill="rgba(31,94,143,.10)" stroke="${C.blue}" stroke-width="2" stroke-dasharray="7 5"/>
+          <path d="${bell(-0.1905, 0.088, 105, X, 290)}" fill="rgba(31,111,63,.12)" stroke="${C.effect}" stroke-width="2.2"/>
+          <line x1="${X(0)}" y1="110" x2="${X(-0.1905)}" y2="110" stroke="${C.bias}" stroke-width="2.5" marker-end="url(#ah-bias)"/>
+          <text x="${X(-0.095)}" y="100" font-size="12.5" font-weight="800" fill="${C.bias}" text-anchor="middle">${t("μ̂_B = 0.190（系统偏倚）","μ̂_B = 0.190 (systematic bias)")}</text>
+          ${pt(X(-0.184),288)}
+          <text x="600" y="150" font-size="11.5" fill="${C.blue}" font-weight="700">${t("蓝虚线：标准零（理想情形）","blue dashed: standard null (ideal case)")}</text>
+          <text x="600" y="168" font-size="11.5" fill="${C.effect}" font-weight="700">${t("绿实线：经验零（实际数据）","green solid: empirical null (actual data)")}</text>` }
+    ], 3200);
+  }
+
+  /* ---------- 动画 D：BF 与 BER 的计算链 ---------- */
+  {
+    function box(y, title, lines, col, hl){
+      let s = `<rect x="60" y="${y}" width="660" height="${hl?72:64}" rx="10" fill="#fff" stroke="${col}" stroke-width="${hl?2.6:1.6}"/>
+        <text x="80" y="${y+24}" font-size="13.5" font-weight="800" fill="${col}">${title}</text>`;
+      lines.forEach((ln,i)=>{
+        s += `<text x="80" y="${y+44+i*18}" font-size="12.5" fill="${C.ink}">${ln}</text>`;
+      });
+      return s;
+    }
+    const arrow = y => `<line x1="390" y1="${y}" x2="390" y2="${y+14}" stroke="#8a8378" stroke-width="2" marker-end="url(#ah-grey)"/>`;
+    function step(k){
+      const cols = ["#1F5E8F","#A93226","#1F6F3F","#5B3FA8","#B07D00","#21242B"];
+      let s = `<text x="390" y="24" font-size="14" font-weight="700" fill="${C.ink}" text-anchor="middle">${t("BF / BER 计算链：每一步只用到上一步的输出（数值 = 论文病例）","BF / BER computation chain: each step uses only the previous step's output (values = the paper's case)")}</text>`;
+      const defs = [
+        [t("① 主估计（TMLE 输出）","① Primary estimate (TMLE output)"),
+          [t("ψ̂_obs = −0.184（log RR 尺度，RR = 0.83）","ψ̂_obs = −0.184 (log-RR scale; RR = 0.83)"),
+           t("标准误 se = 0.056","standard error se = 0.056")]],
+        ["② EmpiricalCalibration::fitNull("+t("12 个负对照","12 negative controls")+")",
+          [t("拟合经验零分布 → μ̂_B = −0.190，σ̂_B = 0.068","fit the empirical null → μ̂_B = −0.190, σ̂_B = 0.068"),
+           t("= 系统性偏倚及其异质性（软件包核心输出）","= systematic bias and its heterogeneity (the package's core output)")]],
+        [t("③ 校准估计：ψ̃ = ψ̂_obs − μ̂_B","③ Calibrated estimate: ψ̃ = ψ̂_obs − μ̂_B"),
+          ["= −0.184 − (−0.190) = +0.0063",
+           t("→ 校准后 RR = 1.006（基本为零）","→ calibrated RR = 1.006 (essentially zero)")]],
+        ["④ EmpiricalCalibration::calibrateP()",
+          [t("把 ψ̂_obs 放进经验零分布检验","test ψ̂_obs against the empirical null"),
+           t("→ 校准 p = 0.943（扣除偏倚后无证据支持效应）","→ calibrated p = 0.943 (no evidence of effect after bias removal)")]],
+        [t("⑤ 构造比值（BF 主指标 / BER 辅助）","⑤ Form the ratios (BF primary / BER auxiliary)"),
+          ["BF = |−0.190| / (|−0.190| + |0.0063|) = 0.906",
+           t("BER = 0.190 / 0.0063 = 30.4（原始比值；bootstrap 中位数 9.6）","BER = 0.190 / 0.0063 = 30.4 (raw; bootstrap median 9.6)")]],
+        [t("⑥ 不确定性与分区（biasratio 包）","⑥ Uncertainty and zoning (biasratio package)"),
+          [t("只重抽样 12 个负对照 × 2000 次（logit / log 尺度）","resample only the 12 controls × 2000 (logit / log scale)"),
+           t("BF 95% CI [0.74, 0.99] 全部 &gt; 0.5 → 偏倚主导区","BF 95% CI [0.74, 0.99] entirely &gt; 0.5 → bias-dominated zone")]]
+      ];
+      const ys = [44, 140, 236, 332, 428, 524];
+      ys.forEach((y,i)=>{
+        if (i < k) s += box(y, defs[i][0], defs[i][1], cols[i], i===k-1);
+        if (i < k-1) s += arrow(y+64);
+      });
+      return s;
+    }
+    createStepper("D", [
+      { text:{zh:"<b>起点：</b>一切从主估计开始——这是普通分析已经会报告的数字（本例来自 TMLE）。",
+              en:"<b>Starting point:</b> everything begins with the primary estimate — a number any conventional analysis would already report (here from TMLE)."},
+        scene: ()=> step(1) + `<text x="390" y="404" font-size="12" fill="${C.muted}" text-anchor="middle">${t("（后续步骤依次点亮）","(subsequent steps light up in turn)")}</text>` },
+      { text:{zh:"<b>软件包的核心一步：</b>fitNull() 把 12 个负对照的估计拟合成一个钟形，输出 μ̂_B（平均系统偏倚）与 σ̂_B（异质性）。BF/BER 的分子 |μ̂_B| 就来自这里。",
+              en:"<b>The package's core step:</b> fitNull() fits a bell to the 12 control estimates and outputs μ̂_B (mean systematic bias) and σ̂_B (heterogeneity). The numerator of BF/BER, |μ̂_B|, comes from here."},
+        scene: ()=>step(2) },
+      { text:{zh:"<b>校准：</b>从观测估计中减去系统偏倚，得到校准后效应 ψ̃——BF/BER 的分母。本例 ψ̃ 只剩 0.0063，几乎为零。",
+              en:"<b>Calibration:</b> subtract the systematic bias from the observed estimate to get the calibrated effect ψ̃ — the denominator of BF/BER. Here ψ̃ is only 0.0063, essentially zero."},
+        scene: ()=>step(3) },
+      { text:{zh:"<b>二元判决：</b>calibrateP() 给出校准 p = 0.94：扣除偏倚后，效应与零无可区分。但它说不出“偏倚多大、效应多大”。",
+              en:"<b>The binary verdict:</b> calibrateP() gives calibrated p = 0.94: after bias removal the effect is indistinguishable from zero. But it cannot say \"how large the bias, how large the effect\"."},
+        scene: ()=>step(4) },
+      { text:{zh:"<b>BF/BER 的扩展：</b>把包的输出 μ̂_B 与 ψ̃ 做比值——BF = 0.906 回答“偏倚占校准后信号的九成”，BER = 30.4 回答“偏倚是残留效应的 30 倍”。这就是从“是/否”到“连续量化”的扩展。",
+              en:"<b>The BF/BER extension:</b> form the ratio of the package's outputs μ̂_B and ψ̃ — BF = 0.906 answers \"bias is nine-tenths of the calibrated signal\"; BER = 30.4 answers \"bias is 30× the residual effect\". This is the extension from yes/no to continuous quantification."},
+        scene: ()=>step(5) },
+      { text:{zh:"<b>收尾：</b>bootstrap（只重抽样负对照）给出 CI 与三区判定。BF 的 95% CI [0.74, 0.99] 完全高于 0.5 → 偏倚主导区：这份观测关联不足以支持因果结论（但不等于药物无效）。",
+              en:"<b>Finishing up:</b> the bootstrap (resampling only the controls) gives the CI and the zone verdict. BF's 95% CI [0.74, 0.99] lies entirely above 0.5 → bias-dominated: this observed association cannot support a causal conclusion (but that does not mean the drug is ineffective)."},
+        scene: ()=>step(6) }
+    ], 3600);
+  }
+})();
+
+
+</script>
+</body>
+</html>

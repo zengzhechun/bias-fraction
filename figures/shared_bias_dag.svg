@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 1050" font-family="'Helvetica Neue', Arial, sans-serif">
+  <defs>
+    <!-- Arrow markers -->
+    <marker id="arrow-causal" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#1E40AF"/>
+    </marker>
+    <marker id="arrow-bias-main" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#6B7280"/>
+    </marker>
+    <marker id="arrow-bias-nc-out" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#6B7280"/>
+    </marker>
+    <marker id="arrow-bias-nc-exp" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#6B7280"/>
+    </marker>
+    <marker id="arrow-nocausal" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#9CA3AF"/>
+    </marker>
+    <!-- Drop shadow -->
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="2"/>
+      <feOffset dx="1" dy="1.5"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.15"/></feComponentTransfer>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1400" height="1050" fill="#FFFFFF"/>
+
+  <!-- ===================== PANEL A: DAG ===================== -->
+  <text x="700" y="38" text-anchor="middle" font-size="22" font-weight="700" fill="#111827">Panel A. Directed Acyclic Graph of Shared Bias Structure</text>
+
+  <!-- U node (unmeasured confounder) -->
+  <g filter="url(#shadow)">
+    <ellipse cx="700" cy="120" rx="80" ry="42" fill="#4B5563" stroke="#374151" stroke-width="2"/>
+    <text x="700" y="115" text-anchor="middle" font-size="20" font-weight="700" fill="#FFFFFF">U</text>
+    <text x="700" y="138" text-anchor="middle" font-size="11" fill="#E5E7EB">unmeasured confounder</text>
+  </g>
+
+  <!-- Four terminal nodes -->
+  <!-- A_NC (negative control exposure) -->
+  <g filter="url(#shadow)">
+    <rect x="170" y="340" width="180" height="70" rx="12" fill="#F97316" stroke="#C2410C" stroke-width="2"/>
+    <text x="260" y="370" text-anchor="middle" font-size="16" font-weight="700" fill="#FFFFFF">A_NC</text>
+    <text x="260" y="392" text-anchor="middle" font-size="11" fill="#FFF7ED">NC exposure</text>
+  </g>
+
+  <!-- A (exposure) -->
+  <g filter="url(#shadow)">
+    <rect x="450" y="340" width="180" height="70" rx="12" fill="#2563EB" stroke="#1E40AF" stroke-width="2"/>
+    <text x="540" y="370" text-anchor="middle" font-size="16" font-weight="700" fill="#FFFFFF">A</text>
+    <text x="540" y="392" text-anchor="middle" font-size="11" fill="#DBEAFE">exposure (β-blocker)</text>
+  </g>
+
+  <!-- Y (outcome) -->
+  <g filter="url(#shadow)">
+    <rect x="770" y="340" width="180" height="70" rx="12" fill="#DC2626" stroke="#991B1B" stroke-width="2"/>
+    <text x="860" y="370" text-anchor="middle" font-size="16" font-weight="700" fill="#FFFFFF">Y</text>
+    <text x="860" y="392" text-anchor="middle" font-size="11" fill="#FEE2E2">outcome (mortality)</text>
+  </g>
+
+  <!-- Y_NC (negative control outcome) -->
+  <g filter="url(#shadow)">
+    <rect x="1050" y="340" width="180" height="70" rx="12" fill="#059669" stroke="#047857" stroke-width="2"/>
+    <text x="1140" y="370" text-anchor="middle" font-size="16" font-weight="700" fill="#FFFFFF">Y_NC</text>
+    <text x="1140" y="392" text-anchor="middle" font-size="11" fill="#D1FAE5">NC outcome</text>
+  </g>
+
+  <!-- ===== Edges from U ===== -->
+  <!-- U → A_NC (orange bias path) -->
+  <line x1="650" y1="150" x2="300" y2="338" stroke="#6B7280" stroke-width="2" stroke-dasharray="6,4" marker-end="url(#arrow-bias-nc-exp)"/>
+  <circle cx="475" cy="244" r="6" fill="#F97316" stroke="#C2410C" stroke-width="1"/>
+  <text x="430" y="232" font-size="11" font-weight="600" fill="#C2410C">b_NC,exp</text>
+
+  <!-- U → A (blue + orange shared) -->
+  <line x1="670" y1="155" x2="540" y2="338" stroke="#6B7280" stroke-width="2" stroke-dasharray="6,4" marker-end="url(#arrow-bias-main)"/>
+  <circle cx="605" cy="246" r="6" fill="#2563EB" stroke="#1E40AF" stroke-width="1"/>
+  <text x="555" y="232" font-size="11" font-weight="600" fill="#1E40AF">b</text>
+  <circle cx="618" cy="270" r="6" fill="#F97316" stroke="#C2410C" stroke-width="1" opacity="0.85"/>
+
+  <!-- U → Y (red + green shared) -->
+  <line x1="730" y1="155" x2="860" y2="338" stroke="#6B7280" stroke-width="2" stroke-dasharray="6,4" marker-end="url(#arrow-bias-main)"/>
+  <circle cx="795" cy="246" r="6" fill="#2563EB" stroke="#1E40AF" stroke-width="1"/>
+  <text x="810" y="232" font-size="11" font-weight="600" fill="#1E40AF">b</text>
+  <circle cx="782" cy="270" r="6" fill="#059669" stroke="#047857" stroke-width="1" opacity="0.85"/>
+
+  <!-- U → Y_NC (green bias path) -->
+  <line x1="750" y1="150" x2="1100" y2="338" stroke="#6B7280" stroke-width="2" stroke-dasharray="6,4" marker-end="url(#arrow-bias-nc-out)"/>
+  <circle cx="925" cy="244" r="6" fill="#059669" stroke="#047857" stroke-width="1"/>
+  <text x="930" y="232" font-size="11" font-weight="600" fill="#047857">b_NC,out</text>
+
+  <!-- ===== Causal edge A → Y (θ) ===== -->
+  <line x1="632" y1="375" x2="768" y2="375" stroke="#1E40AF" stroke-width="3" marker-end="url(#arrow-causal)"/>
+  <rect x="672" y="352" width="52" height="24" rx="4" fill="#FFFFFF" stroke="#1E40AF" stroke-width="1.5"/>
+  <text x="698" y="369" text-anchor="middle" font-size="14" font-weight="700" fill="#1E40AF" font-style="italic">θ</text>
+  <text x="700" y="338" text-anchor="middle" font-size="10" fill="#1E40AF" font-weight="600">causal effect</text>
+
+  <!-- ===== NC assumption: no causal edge A_NC → Y ===== -->
+  <line x1="350" y1="358" x2="768" y2="358" stroke="#9CA3AF" stroke-width="1.5" stroke-dasharray="2,4" opacity="0.5"/>
+  <text x="560" y="308" text-anchor="middle" font-size="10" fill="#9CA3AF" font-style="italic">no causal effect (NC assumption)</text>
+  <line x1="350" y1="306" x2="768" y2="306" stroke="#9CA3AF" stroke-width="1.5" stroke-dasharray="2,4" opacity="0.5"/>
+
+  <!-- ===== NC assumption: no causal edge A → Y_NC ===== -->
+  <line x1="632" y1="392" x2="1048" y2="392" stroke="#9CA3AF" stroke-width="1.5" stroke-dasharray="2,4" opacity="0.5"/>
+  <text x="840" y="412" text-anchor="middle" font-size="10" fill="#9CA3AF" font-style="italic">no causal effect (NC assumption)</text>
+  <line x1="632" y1="414" x2="1048" y2="414" stroke="#9CA3AF" stroke-width="1.5" stroke-dasharray="2,4" opacity="0.5"/>
+
+  <!-- ===== Legend ===== -->
+  <g transform="translate(60, 470)">
+    <rect x="0" y="0" width="560" height="105" rx="8" fill="#F9FAFB" stroke="#E5E7EB" stroke-width="1"/>
+    <text x="280" y="22" text-anchor="middle" font-size="12" font-weight="700" fill="#374151">Legend</text>
+
+    <!-- Solid arrow = causal -->
+    <line x1="20" y1="45" x2="55" y2="45" stroke="#1E40AF" stroke-width="3" marker-end="url(#arrow-causal)"/>
+    <text x="65" y="49" font-size="11" fill="#374151">Causal effect (θ)</text>
+
+    <!-- Dashed arrow = bias -->
+    <line x1="20" y1="68" x2="55" y2="68" stroke="#6B7280" stroke-width="2" stroke-dasharray="6,4" marker-end="url(#arrow-bias-main)"/>
+    <text x="65" y="72" font-size="11" fill="#374151">Backdoor path through U (bias)</text>
+
+    <!-- Colored dots = bias path identifiers -->
+    <circle cx="37" cy="91" r="5" fill="#2563EB"/>
+    <text x="48" y="95" font-size="11" fill="#374151">Main estimate bias (b)</text>
+    <circle cx="217" cy="91" r="5" fill="#F97316"/>
+    <text x="228" y="95" font-size="11" fill="#374151">NC-exposure bias (b_NC,exp)</text>
+    <circle cx="400" cy="91" r="5" fill="#059669"/>
+    <text x="411" y="95" font-size="11" fill="#374151">NC-outcome bias (b_NC,out)</text>
+
+    <!-- Shared note -->
+    <text x="280" y="5" text-anchor="middle" font-size="9" fill="#9CA3AF" font-style="italic"></text>
+  </g>
+
+  <!-- Shared bias annotation -->
+  <g transform="translate(680, 470)">
+    <rect x="0" y="0" width="660" height="105" rx="8" fill="#FFFBEB" stroke="#FCD34D" stroke-width="1.5"/>
+    <text x="330" y="24" text-anchor="middle" font-size="13" font-weight="700" fill="#92400E">Shared Bias Mechanism</text>
+    <text x="20" y="48" font-size="12" fill="#78350F">When U is a common cause of (A, Y), (A, Y_NC), and (A_NC, Y), all three</text>
+    <text x="20" y="66" font-size="12" fill="#78350F">backdoor paths traverse the <tspan font-weight="700">same U</tspan>, producing <tspan font-weight="700">structurally identical bias b</tspan>.</text>
+    <text x="20" y="86" font-size="12" fill="#78350F">Under exchangeability: <tspan font-style="italic">b</tspan> ≈ <tspan font-style="italic">b</tspan><tspan font-size="9" baseline-shift="sub">NC,exp</tspan> ≈ <tspan font-style="italic">b</tspan><tspan font-size="9" baseline-shift="sub">NC,out</tspan>  →  bias is <tspan font-weight="700">"shared"</tspan> across estimates.</text>
+  </g>
+
+  <!-- ===================== PANEL B: Bias Decomposition ===================== -->
+  <text x="700" y="615" text-anchor="middle" font-size="22" font-weight="700" fill="#111827">Panel B. Bias Decomposition and BER Calibration</text>
+
+  <!-- Main estimate box -->
+  <g transform="translate(50, 645)">
+    <rect x="0" y="0" width="400" height="180" rx="10" fill="#EFF6FF" stroke="#2563EB" stroke-width="2"/>
+    <rect x="0" y="0" width="400" height="32" rx="10" fill="#2563EB"/>
+    <rect x="0" y="22" width="400" height="10" fill="#2563EB"/>
+    <text x="200" y="22" text-anchor="middle" font-size="13" font-weight="700" fill="#FFFFFF">Main Estimate</text>
+
+    <text x="200" y="60" text-anchor="middle" font-size="14" fill="#1E3A5F">Path: A ← U → Y</text>
+    <text x="200" y="95" text-anchor="middle" font-size="18" font-weight="600" fill="#1E40AF">θ̂ = θ + b</text>
+    <text x="200" y="120" text-anchor="middle" font-size="12" fill="#6B7280">true effect + bias</text>
+    <text x="200" y="150" text-anchor="middle" font-size="11" fill="#9CA3AF" font-style="italic">e.g., β-blocker → mortality</text>
+    <circle cx="30" cy="165" r="6" fill="#2563EB"/>
+  </g>
+
+  <!-- NC exposure estimate box -->
+  <g transform="translate(490, 645)">
+    <rect x="0" y="0" width="400" height="180" rx="10" fill="#FFF7ED" stroke="#F97316" stroke-width="2"/>
+    <rect x="0" y="0" width="400" height="32" rx="10" fill="#F97316"/>
+    <rect x="0" y="22" width="400" height="10" fill="#F97316"/>
+    <text x="200" y="22" text-anchor="middle" font-size="13" font-weight="700" fill="#FFFFFF">NC Exposure Estimate</text>
+
+    <text x="200" y="60" text-anchor="middle" font-size="14" fill="#9A3412">Path: A_NC ← U → Y</text>
+    <text x="200" y="95" text-anchor="middle" font-size="18" font-weight="600" fill="#C2410C">θ̂_NC,exp = 0 + b</text>
+    <text x="200" y="120" text-anchor="middle" font-size="12" fill="#6B7280">no effect + bias (= b̂)</text>
+    <text x="200" y="150" text-anchor="middle" font-size="11" fill="#9CA3AF" font-style="italic">e.g., unrelated exposure → mortality</text>
+    <circle cx="30" cy="165" r="6" fill="#F97316"/>
+  </g>
+
+  <!-- NC outcome estimate box -->
+  <g transform="translate(930, 645)">
+    <rect x="0" y="0" width="400" height="180" rx="10" fill="#ECFDF5" stroke="#059669" stroke-width="2"/>
+    <rect x="0" y="0" width="400" height="32" rx="10" fill="#059669"/>
+    <rect x="0" y="22" width="400" height="10" fill="#059669"/>
+    <text x="200" y="22" text-anchor="middle" font-size="13" font-weight="700" fill="#FFFFFF">NC Outcome Estimate</text>
+
+    <text x="200" y="60" text-anchor="middle" font-size="14" fill="#065F46">Path: A ← U → Y_NC</text>
+    <text x="200" y="95" text-anchor="middle" font-size="18" font-weight="600" fill="#047857">θ̂_NC,out = 0 + b</text>
+    <text x="200" y="120" text-anchor="middle" font-size="12" fill="#6B7280">no effect + bias (= b̂)</text>
+    <text x="200" y="150" text-anchor="middle" font-size="11" fill="#9CA3AF" font-style="italic">e.g., β-blocker → unrelated outcome</text>
+    <circle cx="30" cy="165" r="6" fill="#059669"/>
+  </g>
+
+  <!-- Arrows from NC boxes converging to calibration -->
+  <line x1="690" y1="830" x2="540" y2="870" stroke="#F97316" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.6"/>
+  <line x1="1130" y1="830" x2="860" y2="870" stroke="#059669" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.6"/>
+
+  <!-- Calibration / BER formula box -->
+  <g transform="translate(350, 865)">
+    <rect x="0" y="0" width="700" height="120" rx="10" fill="#F5F3FF" stroke="#7C3AED" stroke-width="2"/>
+    <rect x="0" y="0" width="700" height="30" rx="10" fill="#7C3AED"/>
+    <rect x="0" y="20" width="700" height="10" fill="#7C3AED"/>
+    <text x="350" y="21" text-anchor="middle" font-size="13" font-weight="700" fill="#FFFFFF">Calibration via Shared Bias</text>
+
+    <text x="350" y="62" text-anchor="middle" font-size="16" fill="#5B21B6">Step 1:  b̂ = θ̂_NC   (bias estimated from negative controls)</text>
+    <text x="350" y="88" text-anchor="middle" font-size="16" fill="#5B21B6">Step 2:  θ̂_cal = θ̂ − b̂   (calibrated estimate)</text>
+    <text x="350" y="112" text-anchor="middle" font-size="18" font-weight="700" fill="#5B21B6">BER = θ̂ ⁄ b̂   (Bias Effect Ratio — empirical credibility)</text>
+  </g>
+
+  <!-- Figure caption -->
+  <text x="700" y="1020" text-anchor="middle" font-size="11" fill="#6B7280" font-style="italic">
+    Figure. Shared bias DAG and BER calibration. U = unmeasured confounder; A = exposure; Y = outcome; A_NC = negative control exposure; Y_NC = negative control outcome.
+  </text>
+  <text x="700" y="1038" text-anchor="middle" font-size="11" fill="#6B7280" font-style="italic">
+    Dashed gray arrows denote backdoor paths through U; the solid blue arrow denotes the causal effect θ. Colored dots identify which bias path each edge belongs to.
+  </text>
+</svg>

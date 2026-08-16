@@ -1,0 +1,257 @@
+---
+title: "Quantifying Systematic Bias in Observational Causal Estimates Using Negative Controls: The Bias Fraction"
+author:
+  - name: Zeng Zhechun
+    degrees: MD, MPH
+    affiliation: "1,2"
+    email: zengzhechun@icloud.com
+    corresponding: true
+  - name: Wang Jinwen
+    degrees: MD, PhD
+    affiliation: "1,2"
+  - name: Zuo Huijuan
+    degrees: MD, MPH
+    affiliation: "1,2"
+  - name: Shu Lixia
+    degrees: PhD
+    affiliation: "1,2"
+date: "2026-08-16"
+bibliography: references.bib
+csl: american-medical-association.csl
+format:
+  docx:
+    toc: false
+    number-sections: false
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+^1^ Beijing Anzhen Hospital, Capital Medical University, Beijing, China
+
+^2^ Beijing Institute of Heart, Lung and Blood Vessel Diseases, Beijing, China
+
+**Corresponding Author:** Zeng Zhechun, MD, MPH, Beijing Anzhen Hospital, Capital Medical University, Tongzhou Campus, No. 225 Songzhuang South 1st Street, Tongzhou District, Beijing 101149, China (zengzhechun@icloud.com).
+
+**Author Contributions:** Dr Zeng had full access to all of the data in the study and takes responsibility for the integrity of the data and the accuracy of the data analysis. Dr Zeng conceived the study, designed the credibility metric, implemented the analysis code, conducted the simulation study, and drafted the manuscript. Dr Wang contributed to the methodological design and reviewed the statistical approach. Dr Zuo contributed to the clinical interpretation of the negative control selection and reviewed the manuscript. Dr Shu contributed to the study design and critically revised the manuscript for important intellectual content. All authors read and approved the final manuscript.
+
+**Conflict of Interest Disclosures:** All authors reported no conflict of interest disclosures.
+
+**Funding/Support:** This research received no specific grant from any funding agency in the public, commercial, or not-for-profit sectors.
+
+**Role of the Funder/Sponsor:** Not applicable.
+
+**Data Sharing Statement:** The MIMIC-IV database (v2.2) is available through PhysioNet (https://physionet.org/content/mimiciv/) and the MIMIC-IV-ECG extension (v1.0.1) at (https://physionet.org/content/mimic-iv-ecg/1.0.1/) to credentialed users. All analysis code is available at https://github.com/zengzhechun/Empirical-Credibility-Metric-Paper.
+
+**Additional Contributions:** The authors thank the MIMIC-IV team for making the database publicly available and the OHDSI/EmpiricalCalibration R package developers for the empirical calibration tools upon which this work builds.
+
+**Artificial Intelligence Use Disclosure:** The authors used artificial intelligence tools (Claude Code, DeepSeek V4 Pro, Trae Work, Kimi Work, Qoder Work, ChatGPT) for manuscript editing and language polishing during the revision process. All AI-assisted content was critically reviewed and revised by the authors, who take full responsibility for the content of this manuscript.
+
+```{r setup, include=FALSE}
+source("../../../R/00_config.R")
+source("../../../R/01_bsr_core.R")
+library(EmpiricalCalibration)
+
+bsr_res <- readRDS(file.path(OUT_DIR, "data", "bsr_results_v35.rds"))
+sim     <- readRDS(file.path(SIM_DIR, "simulation_merged_v35.rds"))
+ci_sim  <- readRDS(file.path(SIM_DIR, "ci_simulation_merged.rds"))
+nc      <- readRDS(file.path(DATA_DIR, "negative_controls_expanded.rds"))
+bb      <- bsr_res$bb
+gdmt    <- bsr_res$gdmt
+
+bd_idx <- sim$bsr_true > 1 | is.infinite(sim$bsr_true)
+cp_idx <- sim$bsr_true >= 0.5 & sim$bsr_true <= 1
+sd_idx <- sim$bsr_true < 0.5
+bd0_idx  <- bd_idx & (abs(sim$true_log_rr) < 1e-9)
+bdnz_idx <- bd_idx & (abs(sim$true_log_rr) >= 1e-9)
+
+bb_bf <- bb$boot$bf_median
+bb_lo <- bb$boot$bf_ci_lo
+bb_hi <- bb$boot$bf_ci_hi
+gdmt_bf <- gdmt$boot$bf_median
+gdmt_lo <- gdmt$boot$bf_ci_lo
+gdmt_hi <- gdmt$boot$bf_ci_hi
+
+overall_acc <- mean(sim$bsr_class_accuracy) * 100
+bd_acc <- mean(sim$bsr_class_accuracy[bd_idx]) * 100
+bd0_acc <- mean(sim$bsr_class_accuracy[bd0_idx]) * 100
+bdnz_acc <- mean(sim$bsr_class_accuracy[bdnz_idx]) * 100
+cp_acc <- mean(sim$bsr_class_accuracy[cp_idx]) * 100
+sd_acc <- mean(sim$bsr_class_accuracy[sd_idx]) * 100
+ohdsi_rej_null <- mean(sim$ohdsi_rejection_rate[sim$true_log_rr == 0]) * 100
+exv0_acc <- mean(sim$bsr_class_accuracy[sim$ex_violation == 0]) * 100
+exv3_acc <- mean(sim$bsr_class_accuracy[sim$ex_violation == 0.3]) * 100
+exv0_null <- mean(sim$ohdsi_rejection_rate[sim$ex_violation == 0 & sim$true_log_rr == 0]) * 100
+exv3_null <- mean(sim$ohdsi_rejection_rate[sim$ex_violation == 0.3 & sim$true_log_rr == 0]) * 100
+finite_idx <- is.finite(sim$bsr_true)
+bf_relbias_exv0 <- 100 * mean(sim$bf_rel_bias[finite_idx & sim$ex_violation == 0])
+bf_relbias_exv3 <- 100 * mean(sim$bf_rel_bias[finite_idx & sim$ex_violation == 0.3])
+# v35 (review M4): per-configuration BER relative bias range for inline reporting
+ber_agg <- aggregate(bsr_rel_bias ~ ex_violation + n_nc + bias_sigma,
+  data = sim[finite_idx, ], FUN = mean, na.rm = TRUE)
+ber_relbias_exv0_range <- range(100 * ber_agg$bsr_rel_bias[ber_agg$ex_violation == 0])
+
+ci_reps <- ci_sim$reps
+ci_decisive <- !is.na(ci_reps$ci_class) & ci_reps$ci_class != "competitive"
+ci_decisive_rate <- 100 * mean(ci_decisive)
+ci_decisive_acc <- 100 * mean(ci_reps$ci_class[ci_decisive] == ci_reps$true_class[ci_decisive])
+
+sl_bf <- bsr_res$sl$bf
+gp <- bsr_res$grace_period_sensitivity
+gp_cal_range <- range(gp$cal_rr)
+gp_bf_range <- range(gp$bf)
+```
+
+**Key Points**
+
+- **Question**: Can negative control calibration quantify the share of systematic bias in an observational causal estimate?
+
+- **Findings**: In a simulation study of 336 conditions and a target trial emulation of 14,677 patients, bias fraction (BF) classification achieved 80.0% bias-dominated and 95.1% effect-dominated accuracy. The beta-blocker mortality estimate was bias-dominated (BF = `r round(bb_bf, 2)`), indicating the observed association was consistent with systematic confounding. This methodological demonstration does not establish that beta-blockers are ineffective.
+
+- **Meaning**: BF provides a bounded complement to the calibrated p-value for assessing the credibility of observational treatment effect estimates.
+
+**Abstract**
+
+**Importance**: Observational comparative effectiveness studies rely on the no-unmeasured-confounding assumption; only 30.8% of 237 target trial emulation (TTE) studies addressed it. Negative control calibration detects residual bias but returns only a binary p-value, without quantifying the magnitude of bias relative to the effect that survives calibration.
+
+**Objective**: To develop and evaluate the bias fraction (BF), a bounded credibility metric quantifying the share of systematic bias in a calibrated observational effect estimate.
+
+**Design, Setting, and Participants**: A factorial simulation (336 conditions; 200 repetitions each) assessed classification accuracy. The metric was demonstrated in a TTE of beta-blocker therapy and 1-year all-cause mortality using MIMIC-IV (14,677 hospitalized heart failure patients).
+
+**Exposures**: Achievement of at least 50% of guideline-recommended target beta-blocker dose during index hospitalization vs less than 50%.
+
+**Main Outcomes and Measures**: $\mathrm{BF} = |\hat{\mu}_B| / (|\hat{\mu}_B| + |\tilde{\psi}|)$, with $\hat{\mu}_B$ the systematic bias estimated from negative controls and $\tilde{\psi}$ the bias-corrected (calibrated) estimate. Three-zone classification (bias-dominated, BF > 0.5; mixed, 1/3 to 0.5; effect-dominated, BF < 1/3) was compared with OHDSI empirical calibration.
+
+**Results**: Three-zone classification achieved 80.0% (bias-dominated) and 95.1% (effect-dominated) accuracy, but only 41.8% in the mixed zone (overall 69.8%). OHDSI calibration maintained a 3.3% null-rejection rate. All 12 negative controls showed systematic protective associations. Although the case study was designed under the TARGET guideline and analyzed with doubly robust TMLE, after calibration the bias-corrected beta-blocker estimate was indistinguishable from the null (calibrated RR, `r round(bb$bsr$rr_true, 2)`; BF, `r round(bb_bf, 2)` [95% CI, `r round(bb_lo, 2)`-`r round(bb_hi, 2)`]). Guideline-directed medical therapy (GDMT) served as an illustrative known-effect comparison (BF, `r round(gdmt_bf, 2)` [95% CI, `r round(gdmt_lo, 2)`-`r round(gdmt_hi, 2)`]).
+
+**Conclusions and Relevance**: BF quantifies the share of systematic bias in the total calibrated signal, providing a bounded, continuous complement to the binary calibrated p-value. Even a case study conducted under the TARGET guideline with a state-of-the-art doubly robust estimator proved bias-dominated, indicating that methodological rigor alone cannot substitute for an empirical bias diagnostic. This methodological demonstration does not constitute evidence of drug ineffectiveness.
+
+# Introduction
+
+Modern causal inference methods, target trial emulation (TTE) [@hernan2016bigdata] and targeted maximum likelihood estimation (TMLE) [@vanderlaan2012ltmle; @vanderlaan2011targeted] among them, have narrowed the gap between observational and randomized evidence, yet cannot eliminate the threat of unmeasured confounding. A cross-sectional survey of 237 TTE studies found that only 30.8% used statistical methods to assess unmeasured confounding [@ren2026tte]. The healthy adherer effect, in which patients who adhere to therapy experience better outcomes even for outcomes the therapy cannot plausibly affect, exemplifies the threat in pharmacoepidemiology [@simpson2006healthy; @shrank2011healthy].
+
+Negative control outcomes offer a direct empirical approach to detecting residual bias [@lipsitch2010negative]. Calibrating the observed treatment-outcome association against the empirical null distribution estimated from negative controls recovers a bias-corrected estimate [@schuemie2014interpreting; @schuemie2018empirical]. Existing calibration methods, however, answer only whether the calibrated p-value rejects the null; they do not report how large the estimated bias is relative to the effect that survives calibration. A calibrated estimate near the null could reflect either a genuinely null treatment effect or an estimate overwhelmed by bias.
+
+We propose the bias fraction (BF), an empirical credibility metric derived from negative control calibration. BF reports the share of the total calibrated signal, bias plus residual effect, attributable to bias, on a bounded [0,1] scale. It is computed directly from quantities produced by the OHDSI empirical calibration pipeline using the EmpiricalCalibration R package, requiring no additional data. We develop a three-zone heuristic classification (bias-dominated, mixed, effect-dominated), assess its operating characteristics through simulation across 336 conditions, and demonstrate the approach through a TTE of beta-blocker therapy in 14,677 heart failure patients from MIMIC-IV [@johnson2023mimic]. A directed acyclic graph illustrating the shared bias structure is provided in eFigure 1 in the Supplement.
+
+# Methods
+
+## The credibility metric
+
+Consider an observational study estimating the effect of a binary treatment $A$ on an outcome $Y$, with target estimand $\psi = \log \text{RR}_{\text{true}}$. After applying an estimator $\hat{\psi}$ (eg, TMLE with SuperLearner), we obtain $\hat{\psi}_{\text{obs}}$ with standard error $\hat{\sigma}_{\text{obs}}$. Suppose $K$ negative control outcomes $N_1, \ldots, N_K$ are available, each sharing the confounding structure of $Y$ but not causally affected by $A$. For each control, the same estimator yields $\hat{\gamma}_k$ with standard error $\hat{\tau}_k$.
+
+The key assumption is **bias exchangeability**: conditional on measured covariates, the distribution of residual bias affecting $\hat{\psi}_{\text{obs}}$ is approximately the same as that governing the negative control estimates $\hat{\gamma}_1, \ldots, \hat{\gamma}_K$. Like the no-unmeasured-confounding assumption it is meant to diagnose, this assumption cannot be directly verified; its plausibility must be assessed through domain knowledge and sensitivity analyses.
+
+Under bias exchangeability, the mean systematic bias $\mu_B$ is estimated by fitting an empirical null distribution to $\{(\hat{\gamma}_k, \hat{\tau}_k)\}_{k=1}^K$ using the `fitNull` function of the EmpiricalCalibration R package [@schuemie2014interpreting], yielding $\hat{\mu}_B$ and between-control heterogeneity $\hat{\sigma}_B$. The bias-corrected estimate is $\tilde{\psi} = \hat{\psi}_{\text{obs}} - \hat{\mu}_B$, with calibrated standard error $\tilde{\sigma} = \sqrt{\hat{\sigma}_{\text{obs}}^2 + \hat{\sigma}_B^2}$.
+
+We define:
+
+$$\mathrm{BF} = \frac{|\hat{\mu}_B|}{|\hat{\mu}_B| + |\tilde{\psi}|} = \frac{|\hat{\mu}_B|}{|\hat{\mu}_B| + |\hat{\psi}_{\text{obs}} - \hat{\mu}_B|}.$$
+
+BF answers: of the signal that survives calibration, how much is bias? Values near 1 indicate bias saturation; values near 0 indicate a substantial residual effect. The metric is scale-invariant and bounded, in the spirit of how the E-value summarizes sensitivity analysis in a single number [@vanderweele2017evalue]. BF is a one-to-one transformation of the unbounded bias-effect ratio, $\mathrm{BF} = \mathrm{BER}/(1+\mathrm{BER})$; we retain BER as an auxiliary display (eTable 1 in the Supplement).
+
+A 95% CI for BF is constructed through nonparametric bootstrap ($B = 2000$ resamples of the negative controls, holding $\hat{\psi}_{\text{obs}}$ fixed), taking the 2.5th and 97.5th percentiles on the logit scale. The point estimate is the bootstrap median on the logit scale, back-transformed, so point estimate and CI come from the same distribution. Fieller's theorem supplies a robustness check for the underlying ratio [@fieller1954interval] (eAppendix 1).
+
+## Three-zone classification
+
+BF values are grouped into three heuristic zones: **bias-dominated** (BF > 0.5, with CI lower bound > 0.5), where systematic bias accounts for more than half of the calibrated signal; **effect-dominated** (BF < 1/3, with CI upper bound < 1/3), where the residual effect is at least twice the bias; and **mixed** (1/3 ≤ BF ≤ 0.5, or CI crossing a boundary), where bias and residual effect are comparable. The threshold 0.5 marks bias and residual effect of equal magnitude (BER = 1); the threshold 1/3 marks a residual effect twice the bias (BER = 0.5). When the CI crosses a boundary, the estimate is assigned to the more cautious zone.
+
+## Simulation study
+
+We conducted a factorial simulation following the ADEMP framework [@morris2019simulation], varying true effect size (7 levels: 0 to logRR = −0.40), systematic bias (6 levels: −0.05 to −0.40), bias heterogeneity (2 levels), number of negative controls ($K$ = 12 or 25), and exchangeability violation (0% or 30%), yielding 336 conditions with 200 repetitions each. Three strategies were evaluated: (1) BF point-estimate classification; (2) OHDSI empirical calibration (calibrated p < 0.05); (3) uncalibrated (naive p < 0.05). A companion simulation evaluated the full CI-based heuristic. Complete design details are in eTable 2 in the Supplement.
+
+## Case study design
+
+The case study was designed and conducted under the TARGET guideline [@cashin2025target], which specifies the protocol elements an observational analysis must articulate to emulate its target trial with rigor. Within that framework, we emulated the target trial of beta-blocker therapy in heart failure using MIMIC-IV (v2.2) with the ECG extension (v1.0.1) [@johnson2023mimic]. Eligible patients were adults hospitalized with heart failure not on beta-blockers at admission. The treatment strategy was achieving at least 50% of guideline-recommended target beta-blocker dose during index hospitalization vs less than 50%, with a 7-day grace period to avoid immortal time bias [@suissa2008immortal], yielding 14,677 patients. The primary outcome was all-cause mortality within 1 year (days 8-365).
+
+The causal estimand was estimated using targeted maximum likelihood estimation (TMLE), a state-of-the-art doubly robust estimator at the current frontier of causal inference methodology, with SuperLearner (SL.glm) incorporating 10 baseline covariates: age, sex, heart rate, QRS duration, QTc interval, atrial fibrillation, left bundle branch block, creatinine, estimated glomerular filtration rate, and potassium. Twelve negative control outcomes were selected across seven clinical domains (Table 2), each with at least 50 events and no plausible pharmacological mechanism for beta-blockade effects. For each negative control, an independent TMLE was fitted using the same covariate set. The same calibration procedure was applied to a second exposure, achievement of at least 2 of 3 guideline-directed medical therapy (GDMT) classes vs fewer than 2, expected to carry genuine treatment effects [@merithf1999; @cibis1999; @packer2001carvedilol; @mcmurray2019dapagliflozin]. This comparison is illustrative, not a formal validation.
+
+The study is reported following RECORD-PE guidelines [@langan2018recordpe]; a TARGET checklist [@cashin2025target] is provided in the Supplement. Because this is a methodological study using de-identified, publicly available data, institutional review board approval was not required.
+
+# Results
+
+## Simulation results
+
+```{r tbl-sim}
+sim_domain <- data.frame(
+  Domain = c("Bias-dominated (BF>0.5), total", "  Null (psi=0, BF=1)", "  Non-null (finite BF>0.5)",
+             "Mixed (1/3<=BF<=0.5)", "Effect-dominated (BF<1/3)",
+             "Overall", "Exchangeability violation 0%", "Exchangeability violation 30%"),
+  N = c(sum(bd_idx), sum(bd0_idx), sum(bdnz_idx), sum(cp_idx), sum(sd_idx), nrow(sim),
+        sum(sim$ex_violation == 0), sum(sim$ex_violation == 0.3)),
+  BF_Acc = c(
+    mean(sim$bsr_class_accuracy[bd_idx]),
+    mean(sim$bsr_class_accuracy[bd0_idx]),
+    mean(sim$bsr_class_accuracy[bdnz_idx]),
+    mean(sim$bsr_class_accuracy[cp_idx]),
+    mean(sim$bsr_class_accuracy[sd_idx]),
+    mean(sim$bsr_class_accuracy),
+    mean(sim$bsr_class_accuracy[sim$ex_violation == 0]),
+    mean(sim$bsr_class_accuracy[sim$ex_violation == 0.3])) * 100,
+  OHDSI_Rej = c(
+    mean(sim$ohdsi_rejection_rate[bd_idx]),
+    mean(sim$ohdsi_rejection_rate[bd0_idx]),
+    mean(sim$ohdsi_rejection_rate[bdnz_idx]),
+    mean(sim$ohdsi_rejection_rate[cp_idx]),
+    mean(sim$ohdsi_rejection_rate[sd_idx]),
+    mean(sim$ohdsi_rejection_rate),
+    mean(sim$ohdsi_rejection_rate[sim$ex_violation == 0]),
+    mean(sim$ohdsi_rejection_rate[sim$ex_violation == 0.3])) * 100
+)
+knitr::kable(sim_domain, digits = 1,
+  col.names = c("Domain", "No. of conditions", "BF accuracy, %", "OHDSI calibrated p<.05, %"),
+  caption = "Simulation classification accuracy and OHDSI calibrated p-value rejection rates by zone. The OHDSI rejection rate is the proportion of repetitions where the calibrated p-value was below .05. At the null (true effect = 0), the 3.3% rejection rate reflects appropriate Type I error control.")
+```
+
+The metric achieved `r round(overall_acc, 1)`% overall classification accuracy across 336 conditions (Table 1). In bias-dominated conditions (BF_true > 0.5), accuracy was `r round(bd_acc, 1)`%, including `r round(bdnz_acc, 1)`% for non-trivial finite-BF conditions where the true effect was small but non-zero. Effect-dominated accuracy was `r round(sd_acc, 1)`%. Mixed-zone accuracy was only `r round(cp_acc, 1)`%, reflecting instability of the underlying ratio when the denominator (calibrated estimate) is near zero. OHDSI calibration maintained a `r round(ohdsi_rej_null, 1)`% null-rejection rate, consistent with appropriate Type I error control. Exchangeability violation (30%) reduced accuracy from `r round(exv0_acc, 1)`% to `r round(exv3_acc, 1)`%, while the average null-rejection rate remained near nominal (`r round(exv0_null, 1)`% to `r round(exv3_null, 1)`%). Under bias exchangeability the BF estimator was nearly unbiased (mean relative bias, `r sprintf("%.1f", bf_relbias_exv0)`%), in contrast to the unbounded ratio, whose relative bias reached +`r sprintf("%.0f", ber_relbias_exv0_range[1])`% to +`r sprintf("%.0f", ber_relbias_exv0_range[2])`% in the same conditions (eTable 7 in the Supplement); under violation, BF was attenuated toward 0.5 (mean relative bias, `r sprintf("%.1f", bf_relbias_exv3)`%), the direction that flatters the estimate. The CI-based heuristic issued a decisive classification in `r round(ci_decisive_rate, 1)`% of repetitions, with `r round(ci_decisive_acc, 1)`% accuracy among decisive calls (eTable 3 in the Supplement).
+
+## Calibration results
+
+```{r tbl-nc}
+nc_tab <- nc$estimates
+nc_tab$rr_ci <- sprintf("%.2f [%.2f, %.2f]",
+  nc_tab$rr, nc_tab$rr * exp(-1.96 * nc_tab$seLogRr),
+  nc_tab$rr * exp(1.96 * nc_tab$seLogRr))
+nc_tab$domain <- c("Infectious", "Gastrointestinal", "Trauma", "Infectious",
+  "Dermatologic", "Ophthalmologic", "Rheumatologic", "Trauma",
+  "Gastrointestinal", "Genitourinary", "Rheumatologic", "Rheumatologic")
+knitr::kable(nc_tab[, c("outcome", "domain", "n_events", "rr_ci")],
+  col.names = c("Outcome", "Clinical domain", "Events", "RR [95% CI]"),
+  digits = 2,
+  caption = "Negative control outcomes across seven clinical domains with estimated relative risks. All 12 controls showed protective associations (RR < 1), consistent with a pervasive healthy-adherer effect.")
+```
+
+The empirical null model estimated $\hat{\mu}_B = `r round(bb$bsr$mu_bias, 3)`$ and $\hat{\sigma}_B = `r round(bb$bsr$sigma_bias, 3)`$. All 12 negative controls showed protective associations (Table 2), consistent with a pervasive healthy-adherer effect.
+
+```{r fig1-calibration, fig.cap="Empirical calibration plots for beta-blocker (left) and guideline-directed medical therapy (GDMT) (right). Each panel shows negative control estimates (circles with horizontal 95% CI bars), the fitted empirical null distribution (dark shaded region centered on the estimated mean systematic bias), the dashed p = .05 boundary curves (funnel-shaped lines defining the 95% acceptance region), the uncalibrated estimate (red diamond), and the calibrated estimate (green diamond).", out.width="100%"}
+knitr::include_graphics(file.path(FIG_DIR, "fig01_calibration_plot.png"))
+```
+
+Calibrating the beta-blocker estimate produced a corrected log RR of `r round(bb$bsr$log_rr_true, 3)` (RR, `r round(bb$bsr$rr_true, 2)`; calibrated p = `r round(bb$bsr$cal_p, 3)`), indistinguishable from the null. BF = `r round(bb_bf, 2)` (95% CI, `r round(bb_lo, 2)`-`r round(bb_hi, 2)`) placed the beta-blocker estimate in the **bias-dominated** zone (Figure 1 and Figure 2). Systematic bias accounted for an estimated `r round(bb_bf * 100, 0)`% of the calibrated signal; the observed protective association was consistent with being dominated by systematic healthy-adherer confounding. This verdict emerged despite a dual safeguard: a TARGET-conformant design at the protocol level and a doubly robust TMLE estimator at the analysis level. Neither safeguard, by construction, addresses unmeasured confounding.
+
+```{r fig2-BF-main, fig.cap="Bias fraction (BF) for beta-blocker and guideline-directed medical therapy (GDMT). Shaded zones indicate the three classification regions (effect-dominated, mixed, bias-dominated). Points show BF estimates; horizontal bars show 95% bootstrap CIs. Dashed lines at BF = 1/3 and BF = 0.5 denote zone boundaries.", out.width="100%"}
+knitr::include_graphics(file.path(FIG_DIR, "fig02_BF_main.png"))
+```
+
+## Sensitivity analyses
+
+Leave-one-out analysis showed all `r nrow(bsr_res$loo)` exclusion iterations remained bias-dominated (BF range, `r round(min(bsr_res$loo$bf), 2)`-`r round(max(bsr_res$loo$bf), 2)`; eFigure 4 and eTable 4 in the Supplement). The SuperLearner sensitivity analysis produced BF values of `r round(sl_bf[1], 2)`, `r round(sl_bf[2], 2)`, and `r round(sl_bf[3], 2)` across three library configurations, all remaining bias-dominated (eTable 5 in the Supplement). The underlying ratio varied 20-fold across these configurations, while BF moved by 0.02. Varying the grace period (3-14 days) did not change the qualitative conclusion (eTable 6 in the Supplement). Negative control diagnostics (Shapiro-Wilk p = `r round(bsr_res$diagnostics$shapiro_p, 3)`) are presented in eFigure 5 in the Supplement.
+
+## GDMT known-effect comparison
+
+The GDMT analysis produced a mortality RR of `r round(gdmt$bsr$rr_uncal, 2)` (uncalibrated). After calibration, the corrected RR was `r round(gdmt$bsr$rr_true, 2)` (calibrated p = `r round(gdmt$bsr$cal_p, 3)`), with BF = `r round(gdmt_bf, 2)` (95% CI, `r round(gdmt_lo, 2)`-`r round(gdmt_hi, 2)`), in the **mixed** zone. The calibrated GDMT estimate retained a meaningful residual effect, and the calibrated p-value indicated the effect remained distinguishable from the null. The GDMT CI spanned both zone boundaries, reflecting limited precision with $K = 12$ negative controls; the Fieller confidence set for the underlying signed ratio was bounded, [`r round(gdmt$fieller$lo, 2)`, `r round(gdmt$fieller$hi, 2)`], and also straddled the ratio threshold of 1 (eAppendix 1 in the Supplement).
+
+# Discussion
+
+This study proposes BF, an empirical credibility metric that extends negative control calibration from a binary significance test to a bounded, continuous diagnostic. The simulation demonstrated reliable classification at the extremes (80.0% bias-dominated, 95.1% effect-dominated accuracy) but substantial instability in the mixed zone (41.8%), where the underlying ratio divides by a calibrated estimate near zero. The CI-based heuristic addresses this limitation as a selective classifier: it issued decisive calls with `r round(ci_decisive_acc, 1)`% accuracy, but only `r round(ci_decisive_rate, 1)`% of the time. The bounded scale also removes two defects of the unbounded ratio: its large upward bias under exchangeability (relative bias +`r sprintf("%.0f", ber_relbias_exv0_range[1])`% to +`r sprintf("%.0f", ber_relbias_exv0_range[2])`%, versus `r sprintf("%.1f", bf_relbias_exv0)`% for BF) and its infinite values at the null.
+
+The case study illustrated the metric's interpretive value, and it did so through an analysis that was rigorous by current standards: designed and reported under the TARGET guideline and analyzed with TMLE, a state-of-the-art doubly robust estimator. The beta-blocker analysis produced an uncalibrated `r round((1 - bb$bsr$rr_uncal) * 100, 0)`% reduction in 1-year mortality, superficially compatible with randomized trial evidence, yet BF = `r round(bb_bf, 2)` revealed that systematic bias accounted for an estimated `r round(bb_bf * 100, 0)`% of the calibrated signal. Two lessons follow. The rigor of the case study means the bias-dominated verdict cannot be dismissed as an artifact of a weak analysis; and even this level of methodological excellence did not prevent systematic bias from dominating, because design rigor and estimation sophistication address the threats they are built for—unmeasured confounding is not among them. An empirical bias diagnostic is therefore a necessary complement to best-practice design and estimation, not a concession of weakness. The GDMT comparison demonstrated the complementary scenario: when a genuine treatment effect exists, BF is compatible with a meaningful residual effect surviving calibration. BF and the calibrated p-value address different questions and should be reported jointly. The calibrated p-value tests whether the bias-corrected estimate is distinguishable from the null; BF quantifies the magnitude of bias relative to the residual effect, distinguishing "no effect because bias was removed" from "no effect because bias overwhelmed a real effect."
+
+This study has several limitations. The simulation, while covering 336 conditions, simplifies real-world data structures. The case study uses a single-center database with a limited covariate set; the healthy-adherer confounding detected may partly reflect unmeasured comorbidity. The BF value near 1 should be read as signal saturation by bias, not as a precise fraction. Some negative controls share overlapping definitions, and the "fall" control may have a causal pathway through beta-blocker-induced bradycardia, though its observed protective association suggests confounding dominance. This methodological demonstration does not constitute evidence that beta-blockers are ineffective for 1-year mortality.
+
+# Conclusions
+
+The bias fraction (BF) extends negative control calibration from a binary significance test to a bounded, continuous diagnostic. Classification is reliable at the extremes but unstable in the mixed zone. Even a case study conducted under the TARGET guideline with a state-of-the-art doubly robust estimator proved bias-dominated, showing that empirical bias diagnostics complement—rather than compete with—rigorous design and estimation. We recommend reporting BF alongside the calibrated p-value and confidence interval, with explicit acknowledgment of its limitations, particularly when the CI spans zone boundaries. External validation in multi-center databases would establish generalizability.
+
+# References

@@ -1,0 +1,11 @@
+# Protected clinical data — MIMIC-IV requires credentialed PhysioNet access; never commit
+output/data/
+
+# OS / editor junk
+.DS_Store
+*.swp
+*~
+*.tmp
+
+# Local helper scripts used during repo assembly (not part of the release)
+patch_docx.py
