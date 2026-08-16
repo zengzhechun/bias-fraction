@@ -14,8 +14,11 @@ binary calibrated *p*-value — it does **not** say how large the bias is relati
 survives calibration. A calibrated estimate near the null could mean a genuinely null treatment
 effect *or* an estimate overwhelmed by bias.
 
-We propose the **Bias Fraction (BF)**, a bounded credibility metric derived from negative-control
-calibration:
+We propose the **Bias Fraction (BF)** — together with its auxiliary form, the **Bias-Effect Ratio
+(BER)** — as **new metrics introduced by this work**. They build on, but are *not part of*, the
+pre-existing OHDSI empirical calibration framework (Schuemie et al., 2014/2018) and its
+`EmpiricalCalibration` R package; rather, they extend that framework from a binary significance
+test to a bounded, continuous diagnostic:
 
 $$
 \mathrm{BF} = \frac{|\hat{\mu}_B|}{|\hat{\mu}_B| + |\tilde{\psi}|}

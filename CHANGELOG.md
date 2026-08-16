@@ -73,3 +73,21 @@
 | `互动讲解器_BF_simulator_v35.html` | ① 背景卡片、⑥ 病例研究开篇 callout、术语表，共 3 处 | "严格遵循 TARGET 指南…TMLE 因果推断方法论前沿的双重稳健估计器"；"即便有这双重保障，估计仍被系统性偏移主导（BF = 0.91）…经验性偏倚诊断不是对研究严谨性的否定，而是最佳实践的必要补充"；术语表新增 TARGET 指南词条 |
 
 渲染产物已同步更新：`manuscript_v35.docx`、`manuscript_jama_v35.docx`（docx 抽查 5 个关键短语全部命中；HTML div/ul 标签平衡校验通过）。
+
+## 2026-08-17 — Provenance clarification (origin attribution)
+
+Clarified the originality boundary across all documents (both manuscripts, both supplements,
+cover letter, simulator, README):
+
+- BF and BER are explicitly stated as **new metrics proposed by this work** (first appearance in
+  the Abstract/Introduction, in the metric definitions, in the Discussion, and in the Data
+  Sharing statements).
+- Empirical calibration is explicitly attributed as **pre-existing methodology by Schuemie et al.**,
+  implemented in the OHDSI `EmpiricalCalibration` R package (with citations), and not a
+  contribution of this paper.
+- Added explicit boundary sentences (e.g., "does not include BF or BER", "not an existing output
+  of the calibration software") to preclude any reading that BF/BER are package-native metrics.
+- Positioned BF/BER as **strengthening and extending** the existing framework's metrics (from a
+  binary calibrated p-value to a bounded, continuous diagnostic).
+- Simulator: bilingual (zh/en) provenance statements added at hero, framework section, animation
+  B/D steps, metric dictionary, glossary (new EmpiricalCalibration entry), and footer.

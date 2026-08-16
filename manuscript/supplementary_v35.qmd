@@ -53,7 +53,7 @@ ci_decisive_acc <- 100 * mean(ci_reps$ci_class[ci_decisive] == ci_reps$true_clas
 
 ## Observed bias fraction
 
-The main text defines the bias fraction as the share of the *total calibrated signal* attributable to bias. A companion quantity, the observed bias fraction (OBF), divides the estimated bias by the *uncalibrated* estimate:
+The main text introduces the bias fraction (BF) as the new metric proposed by this work, defined as the share of the *total calibrated signal* attributable to bias. A companion quantity, likewise defined in this work, is the observed bias fraction (OBF), which divides the estimated bias by the *uncalibrated* estimate:
 
 $$\mathrm{OBF} = \frac{|\hat{\mu}_B|}{|\hat{\psi}_{\text{obs}}|}.$$
 

@@ -124,11 +124,12 @@
   <div class="wrap" style="padding:0;">
     <h1><span class="i18n-zh">偏倚分数 BF：用负对照量化观察性因果估计中的系统性偏倚</span><span class="i18n-en">The Bias Fraction: Quantifying Systematic Bias in Observational Causal Estimates with Negative Controls</span></h1>
     <div class="sub">
-      <span class="i18n-zh">用<b>负对照（negative controls）</b>校准观察性研究中的系统性偏倚，并用一个介于 0 与 1 之间的数——<b>偏倚分数（bias fraction, BF）</b>——回答：<br><b>"校准之后剩下的信号里，到底有多少是真实效应，有多少是偏倚？"</b></span>
-      <span class="i18n-en">Calibrate systematic bias in observational studies with <b>negative controls</b>, and use a single number between 0 and 1 — the <b>bias fraction (BF)</b> — to answer:<br><b>"Of the signal that survives calibration, how much is real effect and how much is bias?"</b></span>
+      <span class="i18n-zh">本论文提出<b>偏倚分数（bias fraction, BF）</b>与辅助形式<b>偏倚效应比（BER）</b>两个新指标：用<b>负对照（negative controls）</b>校准观察性研究中的系统性偏倚，并用一个介于 0 与 1 之间的数回答：<br><b>"校准之后剩下的信号里，到底有多少是真实效应，有多少是偏倚？"</b></span>
+      <span class="i18n-en">This paper introduces two new metrics — the <b>bias fraction (BF)</b> and its auxiliary form, the <b>bias-effect ratio (BER)</b>: calibrate systematic bias in observational studies with <b>negative controls</b>, and use a single number between 0 and 1 to answer:<br><b>"Of the signal that survives calibration, how much is real effect and how much is bias?"</b></span>
     </div>
     <div class="badges">
       <span class="badge"><span class="i18n-zh">论文版本 manuscript v35（2026-08-16）</span><span class="i18n-en">Manuscript v35 (2026-08-16)</span></span>
+      <span class="badge"><span class="i18n-zh">BF / BER：<b>本论文原创指标</b>（扩展 OHDSI 已有框架）</span><span class="i18n-en">BF / BER: <b>new metrics introduced by this paper</b> (extending the existing OHDSI framework)</span></span>
       <span class="badge"><span class="i18n-zh">目标读者：方法学专家 + 临床医生</span><span class="i18n-en">Audience: methodologists + clinicians</span></span>
       <span class="badge"><span class="i18n-zh">数据：MIMIC-IV（14,677 例心衰住院患者）+ 336 条件模拟研究</span><span class="i18n-en">Data: MIMIC-IV (14,677 HF patients) + 336-condition simulation</span></span>
       <span class="badge">R <span class="i18n-zh">包</span><span class="i18n-en">package</span>: biasratio v0.2.0</span>
@@ -186,8 +187,8 @@
 </div>
 
 <h3><span class="i18n-zh">现有校准方法（校准 p 值）的局限</span><span class="i18n-en">The limitation of existing calibration (the calibrated p-value)</span></h3>
-<p><span class="i18n-zh">OHDSI 的<b>经验校准（empirical calibration）</b>框架（Schuemie et al. 2014, 2018）的做法分两步：<b>第一步</b>，用负对照估计出系统偏倚的分布（均值 μ̂<sub>B</sub> 和波动 σ̂<sub>B</sub>）；<b>第二步</b>，把观测估计放进这个"偏倚分布"里重新检验，得到一个<b>校准 p 值（calibrated p-value）</b>。</span>
-<span class="i18n-en">The OHDSI <b>empirical calibration</b> framework (Schuemie et al. 2014, 2018) proceeds in two steps: <b>step 1</b>, estimate the distribution of systematic bias from negative controls (mean μ̂<sub>B</sub> and spread σ̂<sub>B</sub>); <b>step 2</b>, re-test the observed estimate against this "bias distribution," yielding a <b>calibrated p-value</b>.</span></p>
+<p><span class="i18n-zh">OHDSI 的<b>经验校准（empirical calibration）</b>框架（Schuemie et al. 2014, 2018；实现于 EmpiricalCalibration R 包）是<b>已有的方法与软件</b>，并非本论文的原创工作。它的做法分两步：<b>第一步</b>，用负对照估计出系统偏倚的分布（均值 μ̂<sub>B</sub> 和波动 σ̂<sub>B</sub>）；<b>第二步</b>，把观测估计放进这个"偏倚分布"里重新检验，得到一个<b>校准 p 值（calibrated p-value）</b>。本论文的贡献（BF 与 BER）正是建立在这一已有框架之上——见后文动画 D。</span>
+<span class="i18n-en">The OHDSI <b>empirical calibration</b> framework (Schuemie et al. 2014, 2018; implemented in the EmpiricalCalibration R package) is <b>pre-existing methodology and software</b>, not an original contribution of this paper. It proceeds in two steps: <b>step 1</b>, estimate the distribution of systematic bias from negative controls (mean μ̂<sub>B</sub> and spread σ̂<sub>B</sub>); <b>step 2</b>, re-test the observed estimate against this "bias distribution," yielding a <b>calibrated p-value</b>. The contribution of this paper — BF and BER — is built on top of that existing framework; see Animation D below.</span></p>
 
 <div class="card">
   <span class="i18n-zh"><b>校准 p 值到底在说什么？（划重点）</b></span><span class="i18n-en"><b>What the calibrated p-value actually says (key point)</b></span>
@@ -203,11 +204,11 @@
   <span class="i18n-zh"><b>"校准后不显著"的两种含义：</b><br>
   ① <b>效应被偏倚淹没</b>——真实效应存在，但偏倚太大，校准后信号被抹平；<br>
   ② <b>本来就无效</b>——校准正确地移除了偏倚，剩下一个真实的零效应。<br>
-  校准 p 值<b>无法区分</b>这两种情况。<b>BF 正是为区分它们而设计的连续量</b>：它直接报告"偏倚占校准后信号的几成"。</span>
+  校准 p 值<b>无法区分</b>这两种情况。<b>BF——本论文提出的连续量——正是为区分它们而设计</b>：它直接报告"偏倚占校准后信号的几成"。</span>
   <span class="i18n-en"><b>Two meanings of "not significant after calibration":</b><br>
   ① <b>The effect was swamped by bias</b> — a real effect exists, but the bias was so large that the calibrated signal vanished; <br>
   ② <b>Truly null</b> — calibration correctly removed the bias, leaving a genuine zero effect.<br>
-  The calibrated p-value <b>cannot distinguish</b> the two. <b>BF is designed as the continuous quantity that separates them</b>: it directly reports "what share of the calibrated signal is bias."</span>
+  The calibrated p-value <b>cannot distinguish</b> the two. <b>BF — the continuous metric introduced by this paper — is designed precisely to separate them</b>: it directly reports "what share of the calibrated signal is bias."</span>
 </div>
 </section>
 <!-- ============ ② 核心概念 ============ -->
@@ -312,9 +313,9 @@
 
 <div class="card">
 <span class="i18n-zh"><b>BF 与 BER 是怎么"站在负对照的肩膀上"的（一句话总结）：</b>
-OHDSI 的 EmpiricalCalibration 包解决的是<b>"有没有偏倚"</b>（μ̂<sub>B</sub>）和<b>"扣除偏倚后还剩不剩效应"</b>（校准 p 值，二元判决）。BF/BER 不引入任何新数据，只是把包已经算出的两个量——<b>μ̂<sub>B</sub>（偏倚）</b>与 <b>ψ̃ = ψ̂<sub>obs</sub> − μ̂<sub>B</sub>（校准后残留效应）</b>——做成一个比值：<b>BF = |μ̂<sub>B</sub>| / (|μ̂<sub>B</sub>| + |ψ̃|)</b>（偏倚占校准后信号的几成，有界 0–1）、<b>BER = |μ̂<sub>B</sub>| / |ψ̃|</b>（偏倚是残留效应的几倍，无界）。这样就把"是/否"的判决，扩展成了<b>对未测量偏倚的连续量化</b>：偏倚有多大、剩下的效应有多大、二者谁占主导。</span>
+OHDSI 的 EmpiricalCalibration 包（Schuemie 等的<b>已有方法与软件</b>）解决的是<b>"有没有偏倚"</b>（μ̂<sub>B</sub>）和<b>"扣除偏倚后还剩不剩效应"</b>（校准 p 值，二元判决）。<b>BF 与 BER 是本论文提出的两个新指标</b>，它们不在 EmpiricalCalibration 包的输出之列，而是把包已经算出的两个量——<b>μ̂<sub>B</sub>（偏倚）</b>与 <b>ψ̃ = ψ̂<sub>obs</sub> − μ̂<sub>B</sub>（校准后残留效应）</b>——做成一个比值，从而对已有框架形成强化与扩展：<b>BF = |μ̂<sub>B</sub>| / (|μ̂<sub>B</sub>| + |ψ̃|)</b>（偏倚占校准后信号的几成，有界 0–1）、<b>BER = |μ̂<sub>B</sub>| / |ψ̃|</b>（偏倚是残留效应的几倍，无界）。这样就把"是/否"的判决，扩展成了<b>对未测量偏倚的连续量化</b>：偏倚有多大、剩下的效应有多大、二者谁占主导。</span>
 <span class="i18n-en"><b>How BF and BER "stand on the shoulders of" negative controls (one-sentence summary):</b>
-The OHDSI EmpiricalCalibration package answers <b>"is there bias"</b> (μ̂<sub>B</sub>) and <b>"does any effect survive calibration"</b> (the calibrated p-value, a binary verdict). BF/BER introduce no new data — they simply turn two quantities the package already computes — <b>μ̂<sub>B</sub> (bias)</b> and <b>ψ̃ = ψ̂<sub>obs</sub> − μ̂<sub>B</sub> (the calibrated residual effect)</b> — into ratios: <b>BF = |μ̂<sub>B</sub>| / (|μ̂<sub>B</sub>| + |ψ̃|)</b> (bias's share of the calibrated signal, bounded 0–1) and <b>BER = |μ̂<sub>B</sub>| / |ψ̃|</b> (bias as a multiple of the residual effect, unbounded). The yes/no verdict is thereby extended into <b>a continuous quantification of unmeasured bias</b>: how large the bias is, how large the remaining effect is, and which dominates.</span>
+The OHDSI EmpiricalCalibration package (<b>pre-existing methodology and software</b> by Schuemie et al.) answers <b>"is there bias"</b> (μ̂<sub>B</sub>) and <b>"does any effect survive calibration"</b> (the calibrated p-value, a binary verdict). <b>BF and BER are two new metrics introduced by this paper</b> — they are not outputs of the EmpiricalCalibration package. They strengthen and extend the existing framework by turning two quantities the package already computes — <b>μ̂<sub>B</sub> (bias)</b> and <b>ψ̃ = ψ̂<sub>obs</sub> − μ̂<sub>B</sub> (the calibrated residual effect)</b> — into ratios: <b>BF = |μ̂<sub>B</sub>| / (|μ̂<sub>B</sub>| + |ψ̃|)</b> (bias's share of the calibrated signal, bounded 0–1) and <b>BER = |μ̂<sub>B</sub>| / |ψ̃|</b> (bias as a multiple of the residual effect, unbounded). The yes/no verdict is thereby extended into <b>a continuous quantification of unmeasured bias</b>: how large the bias is, how large the remaining effect is, and which dominates.</span>
 </div>
 
 <div class="card">
@@ -329,7 +330,8 @@ log_rr_cal &lt;- log_rr_uncal - mu_b        # ψ̃ = -0.184 - (-0.190) = +0.0063
 cal_p      &lt;- EmpiricalCalibration::calibrateP(null_fit, log_rr_uncal, se_log_rr)
                                          # 校准 p = 0.943：扣除偏倚后与零无区别 | indistinguishable from null
 
-# ③ BF 与 BER（biasratio 包 v0.2.0；两个量互为变换，无需新数据） | BF and BER (biasratio v0.2.0; mutual transforms, no new data)
+# ③ BF 与 BER（本论文提出的两个新指标，不在 EmpiricalCalibration 包内；实现于 biasratio 包 v0.2.0）
+#    BF and BER (new metrics introduced by this paper, NOT part of EmpiricalCalibration; implemented in biasratio v0.2.0)
 bf  &lt;- abs(mu_b) / (abs(mu_b) + abs(log_rr_cal))   # = 0.906（bootstrap 中位数 | bootstrap median）
 ber &lt;- abs(mu_b) / abs(log_rr_cal)                 # = 30.4（原始比值；中位数 9.6 | raw ratio; median 9.6）
 
@@ -347,7 +349,7 @@ ber &lt;- abs(mu_b) / abs(log_rr_cal)                 # = 30.4（原始比值；
 <div class="metric-grid">
 
   <div class="metric bias">
-    <div class="name"><span class="i18n-zh">① 偏倚分数 <span class="en">Bias Fraction (BF)</span> —— 主指标</span><span class="i18n-en">① Bias Fraction (BF) — the primary metric</span></div>
+    <div class="name"><span class="i18n-zh">① 偏倚分数 <span class="en">Bias Fraction (BF)</span> —— 主指标（本论文提出）</span><span class="i18n-en">① Bias Fraction (BF) — the primary metric (introduced by this paper)</span></div>
     <div class="def"><span class="i18n-zh"><b>严谨定义：</b>在"校准后总信号 = 偏倚 + 残留效应"中，系统偏倚所占的份额：</span>
     <span class="i18n-en"><b>Formal definition:</b> within the "calibrated total signal = bias + residual effect", the share attributable to systematic bias:</span></div>
     <div class="sym">BF = |μ̂<sub>B</sub>| / ( |μ̂<sub>B</sub>| + |ψ̃| ) &nbsp;∈&nbsp;[0, 1]</div>
@@ -358,7 +360,7 @@ ber &lt;- abs(mu_b) / abs(log_rr_cal)                 # = 30.4（原始比值；
   </div>
 
   <div class="metric purple">
-    <div class="name"><span class="i18n-zh">② 偏倚效应比 <span class="en">Bias-Effect Ratio (BER)</span> —— 辅助指标</span><span class="i18n-en">② Bias-Effect Ratio (BER) — the auxiliary metric</span></div>
+    <div class="name"><span class="i18n-zh">② 偏倚效应比 <span class="en">Bias-Effect Ratio (BER)</span> —— 辅助指标（本论文提出）</span><span class="i18n-en">② Bias-Effect Ratio (BER) — the auxiliary metric (introduced by this paper)</span></div>
     <div class="def"><span class="i18n-zh"><b>严谨定义：</b>系统偏倚与校准后残留效应的大小之比（无界）：</span>
     <span class="i18n-en"><b>Formal definition:</b> the ratio of systematic bias to the calibrated residual effect (unbounded):</span></div>
     <div class="sym">BER = |μ̂<sub>B</sub>| / |ψ̃| = BF / (1 − BF) &nbsp;∈&nbsp;[0, ∞)</div>
@@ -624,8 +626,9 @@ ber &lt;- abs(mu_b) / abs(log_rr_cal)                 # = 30.4（原始比值；
 <section id="glossary">
 <h2><span class="i18n-zh">⑨ 术语表</span><span class="i18n-en">⑨ Glossary</span> <span class="en">Glossary</span></h2>
 <dl class="gloss">
-  <dt><span class="i18n-zh">偏倚分数 · Bias Fraction (BF)</span><span class="i18n-en">Bias Fraction (BF)</span></dt><dd><span class="i18n-zh">|μ̂<sub>B</sub>| / (|μ̂<sub>B</sub>| + |ψ̃|) ∈ [0,1]。校准后总信号中系统偏倚所占份额。<span class="en">Share of the calibrated signal attributable to systematic bias.</span></span><span class="i18n-en">|μ̂<sub>B</sub>| / (|μ̂<sub>B</sub>| + |ψ̃|) ∈ [0,1]. The share of the calibrated signal attributable to systematic bias.</span></dd>
-  <dt><span class="i18n-zh">偏倚效应比 · Bias-Effect Ratio (BER)</span><span class="i18n-en">Bias-Effect Ratio (BER)</span></dt><dd><span class="i18n-zh">|μ̂<sub>B</sub>| / |ψ̃| = BF/(1−BF)。同一信息的无界比值形式。<span class="en">Bias expressed as a multiple of the residual effect.</span></span><span class="i18n-en">|μ̂<sub>B</sub>| / |ψ̃| = BF/(1−BF). The same information as an unbounded ratio.</span></dd>
+  <dt><span class="i18n-zh">偏倚分数 · Bias Fraction (BF)</span><span class="i18n-en">Bias Fraction (BF)</span></dt><dd><span class="i18n-zh"><b>本论文提出的新指标。</b>|μ̂<sub>B</sub>| / (|μ̂<sub>B</sub>| + |ψ̃|) ∈ [0,1]。校准后总信号中系统偏倚所占份额。<span class="en">Share of the calibrated signal attributable to systematic bias.</span></span><span class="i18n-en"><b>A new metric introduced by this paper.</b> |μ̂<sub>B</sub>| / (|μ̂<sub>B</sub>| + |ψ̃|) ∈ [0,1]. The share of the calibrated signal attributable to systematic bias.</span></dd>
+  <dt><span class="i18n-zh">偏倚效应比 · Bias-Effect Ratio (BER)</span><span class="i18n-en">Bias-Effect Ratio (BER)</span></dt><dd><span class="i18n-zh"><b>本论文提出的新指标（BF 的辅助形式）。</b>|μ̂<sub>B</sub>| / |ψ̃| = BF/(1−BF)。同一信息的无界比值形式。<span class="en">Bias expressed as a multiple of the residual effect.</span></span><span class="i18n-en"><b>A new metric introduced by this paper (auxiliary form of BF).</b> |μ̂<sub>B</sub>| / |ψ̃| = BF/(1−BF). The same information as an unbounded ratio.</span></dd>
+  <dt><span class="i18n-zh">EmpiricalCalibration 包 · EmpiricalCalibration R package</span><span class="i18n-en">EmpiricalCalibration R package</span></dt><dd><span class="i18n-zh">OHDSI 的经验校准 R 包（Schuemie et al. 2014, 2018），<b>已有方法与软件</b>，提供 fitNull（经验零拟合）与 calibrateP（校准 p 值）。本论文的 BF/BER 建立其上，但<b>不在该包输出之列</b>。<span class="en">The pre-existing OHDSI empirical calibration package; BF/BER build on it but are not part of it.</span></span><span class="i18n-en">The OHDSI empirical calibration R package (Schuemie et al. 2014, 2018), <b>pre-existing methodology and software</b> providing fitNull (empirical null fitting) and calibrateP (calibrated p-value). The BF/BER metrics of this paper build on it but are <b>not outputs of the package</b>.</span></dd>
   <dt><span class="i18n-zh">观测偏倚分数 · Observed Bias Fraction (OBF)</span><span class="i18n-en">Observed Bias Fraction (OBF)</span></dt><dd><span class="i18n-zh">|μ̂<sub>B</sub>| / |ψ̂<sub>obs</sub>|。偏倚占未校准关联的份额。<span class="en">Bias as a share of the uncalibrated association.</span></span><span class="i18n-en">|μ̂<sub>B</sub>| / |ψ̂<sub>obs</sub>|. Bias as a share of the uncalibrated association.</span></dd>
   <dt><span class="i18n-zh">三区分类 · Three-zone classification</span><span class="i18n-en">Three-zone classification</span></dt><dd><span class="i18n-zh">偏倚主导（BF&gt;0.5）/ 混合区（1/3–0.5）/ 效应主导（BF&lt;1/3）。<span class="en">bias-dominated / mixed / effect-dominated.</span></span><span class="i18n-en">Bias-dominated (BF&gt;0.5) / mixed (1/3–0.5) / effect-dominated (BF&lt;1/3).</span></dd>
   <dt><span class="i18n-zh">负对照 · Negative control</span><span class="i18n-en">Negative control</span></dt><dd><span class="i18n-zh">共享混杂结构、但治疗无法因果影响的结局。<span class="en">An outcome that cannot be caused by the exposure but shares its confounding structure.</span></span><span class="i18n-en">An outcome that cannot be caused by the exposure but shares its confounding structure.</span></dd>
@@ -642,9 +645,9 @@ ber &lt;- abs(mu_b) / abs(log_rr_cal)                 # = 30.4（原始比值；
 
 <footer>
   <span class="i18n-zh">本讲解器基于论文 <b>"Quantifying Systematic Bias in Observational Causal Estimates Using Negative Controls: The Bias Fraction"</b>（manuscript v35, 2026-08-16）及其补充材料制作；配套 R 包 <b>biasratio v0.2.0</b>。所有数值均取自论文与可复现分析（MIMIC-IV 14,677 例 + 336 条件 × 200 次模拟）。<br>
-  数据来源：MIMIC-IV v2.2 + MIMIC-IV-ECG v1.0.1（PhysioNet）；校准引擎：OHDSI EmpiricalCalibration。本页面为教学演示，不构成任何临床建议。</span>
+  数据来源：MIMIC-IV v2.2 + MIMIC-IV-ECG v1.0.1（PhysioNet）；校准引擎：OHDSI EmpiricalCalibration（Schuemie et al. 的<b>已有方法与 R 包</b>）。<b>BF 与 BER 为本论文提出的原创指标</b>，是对该已有框架的强化与扩展。本页面为教学演示，不构成任何临床建议。</span>
   <span class="i18n-en">This explainer accompanies the paper <b>"Quantifying Systematic Bias in Observational Causal Estimates Using Negative Controls: The Bias Fraction"</b> (manuscript v35, 2026-08-16) and its supplement; companion R package <b>biasratio v0.2.0</b>. All numbers come from the paper and its reproducible analyses (MIMIC-IV, 14,677 patients + 336 conditions × 200 simulated replications).<br>
-  Data: MIMIC-IV v2.2 + MIMIC-IV-ECG v1.0.1 (PhysioNet); calibration engine: OHDSI EmpiricalCalibration. This page is an educational demonstration and does not constitute clinical advice.</span>
+  Data: MIMIC-IV v2.2 + MIMIC-IV-ECG v1.0.1 (PhysioNet); calibration engine: OHDSI EmpiricalCalibration (<b>pre-existing methodology and R package</b> by Schuemie et al.). <b>BF and BER are original metrics introduced by this paper</b>, strengthening and extending that existing framework. This page is an educational demonstration and does not constitute clinical advice.</span>
 </footer>
 
 </div>
@@ -1224,7 +1227,7 @@ let CASE_TAB = "bb";
              <line x1="${X(-0.1905)}" y1="330" x2="${X(-0.1905)}" y2="205" stroke="${C.bias}" stroke-width="1.8" stroke-dasharray="7 4"/>
              <rect x="60" y="28" width="660" height="56" rx="10" fill="#EEF4F9" stroke="${C.blue}" stroke-width="1.5"/>
              <text x="390" y="50" font-size="12.5" font-weight="700" fill="${C.blue}" text-anchor="middle">${t("包的三件套输出：μ̂_B / σ̂_B（fitNull）· 校准 p 值（calibrateP）· 漏斗校准图（plotCalibration）","The package's three outputs: μ̂_B / σ̂_B (fitNull) · calibrated p (calibrateP) · funnel calibration plot (plotCalibration)")}</text>
-             <text x="390" y="70" font-size="11.5" fill="${C.muted}" text-anchor="middle">${t("BF 与 BER 只需要前两者，不引入任何新数据","BF and BER need only the first two — no new data")}</text>` }
+             <text x="390" y="70" font-size="11.5" fill="${C.muted}" text-anchor="middle">${t("注意：BF 与 BER 不在包的输出之列——它们是本论文在包输出之上构造的新指标","Note: BF and BER are NOT among the package's outputs — they are new metrics built by this paper on top of them")}</text>` }
     ], 3200);
   }
 
@@ -1322,8 +1325,8 @@ let CASE_TAB = "bb";
       { text:{zh:"<b>二元判决：</b>calibrateP() 给出校准 p = 0.94：扣除偏倚后，效应与零无可区分。但它说不出“偏倚多大、效应多大”。",
               en:"<b>The binary verdict:</b> calibrateP() gives calibrated p = 0.94: after bias removal the effect is indistinguishable from zero. But it cannot say \"how large the bias, how large the effect\"."},
         scene: ()=>step(4) },
-      { text:{zh:"<b>BF/BER 的扩展：</b>把包的输出 μ̂_B 与 ψ̃ 做比值——BF = 0.906 回答“偏倚占校准后信号的九成”，BER = 30.4 回答“偏倚是残留效应的 30 倍”。这就是从“是/否”到“连续量化”的扩展。",
-              en:"<b>The BF/BER extension:</b> form the ratio of the package's outputs μ̂_B and ψ̃ — BF = 0.906 answers \"bias is nine-tenths of the calibrated signal\"; BER = 30.4 answers \"bias is 30× the residual effect\". This is the extension from yes/no to continuous quantification."},
+      { text:{zh:"<b>BF/BER 的扩展（本论文的贡献恰在此步）：</b>把包的输出 μ̂_B 与 ψ̃ 做比值——BF = 0.906 回答“偏倚占校准后信号的九成”，BER = 30.4 回答“偏倚是残留效应的 30 倍”。这就是从“是/否”到“连续量化”的扩展；两个指标均为本论文提出，不在 EmpiricalCalibration 包内。",
+              en:"<b>The BF/BER extension (this is exactly where this paper contributes):</b> form the ratio of the package's outputs μ̂_B and ψ̃ — BF = 0.906 answers \"bias is nine-tenths of the calibrated signal\"; BER = 30.4 answers \"bias is 30× the residual effect\". This is the extension from yes/no to continuous quantification; both metrics are introduced by this paper and are not part of the EmpiricalCalibration package."},
         scene: ()=>step(5) },
       { text:{zh:"<b>收尾：</b>bootstrap（只重抽样负对照）给出 CI 与三区判定。BF 的 95% CI [0.74, 0.99] 完全高于 0.5 → 偏倚主导区：这份观测关联不足以支持因果结论（但不等于药物无效）。",
               en:"<b>Finishing up:</b> the bootstrap (resampling only the controls) gives the CI and the zone verdict. BF's 95% CI [0.74, 0.99] lies entirely above 0.5 → bias-dominated: this observed association cannot support a causal conclusion (but that does not mean the drug is ineffective)."},
