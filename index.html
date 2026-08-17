@@ -269,7 +269,7 @@
 
 <h3><span class="i18n-zh">动画 A · 负对照的原理：已知效应为零的结局</span><span class="i18n-en">Animation A · How a negative control works: an outcome known to have zero effect</span> <span class="en">How a negative control works</span></h3>
 <div class="card">
-  <svg id="anA" viewBox="0 0 780 320" width="100%" style="height:auto;"></svg>
+  <svg id="anA" viewBox="0 0 780 380" width="100%" style="height:auto;"></svg>
   <div class="anim-caption" id="capA"></div>
   <div class="anim-controls">
     <button class="astep" data-stepper="A" data-act="prev"><span class="i18n-zh">◀ 上一步</span><span class="i18n-en">◀ Back</span></button>
@@ -733,12 +733,18 @@ function hideTip(){ tip.style.display="none"; }
              A:{x:430,y:60,label:{zh:"A 治疗（β受体阻滞剂）",en:"A treatment (beta-blocker)"},sub:{zh:"treatment",en:"treatment"},c:C.blue},
              Y:{x:430,y:240,label:{zh:"Y 主结局（1年死亡）",en:"Y outcome (1-yr mortality)"},sub:{zh:"primary outcome",en:"primary outcome"},c:C.ink},
              Nk:{x:620,y:150,label:{zh:"N₁…Nₖ 负对照结局",en:"N₁…Nₖ negative controls"},sub:{zh:"negative controls",en:"negative controls"},c:C.purple}};
+  const RX=62, RY=26; // ellipse semi-axes for all nodes
+  // Compute where a line from (x1,y1) to (x2,y2) exits the source ellipse
+  // and enters the target ellipse, so arrows sit between edges (not hidden).
+  function edgePts(x1,y1,x2,y2){
+    const dx=x2-x1, dy=y2-y1;
+    const t=1/Math.sqrt((dx/RX)**2+(dy/RY)**2);
+    return {sx:x1+t*dx, sy:y1+t*dy, ex:x2-t*dx, ey:y2-t*dy};
+  }
   function arrow(x1,y1,x2,y2,color,dash){
-    const ang=Math.atan2(y2-y1,x2-x1), L=13;
-    const x3=x2-L*Math.cos(ang), y3=y2-L*Math.sin(ang);
+    const {sx,sy,ex,ey}=edgePts(x1,y1,x2,y2);
     const mk = color===C.bias ? "ah-bias" : (color===C.ink ? "ah-ink" : "ah-grey");
-    return `<line x1="${x1}" y1="${y1}" x2="${x3}" y2="${y3}" stroke="${color}" stroke-width="2.2" ${dash?'stroke-dasharray="6 4"':''}/>
-      <line x1="${x3}" y1="${y3}" x2="${x2}" y2="${y2}" stroke="${color}" stroke-width="2.2" marker-end="url(#${mk})"/>`;
+    return `<line x1="${sx.toFixed(1)}" y1="${sy.toFixed(1)}" x2="${ex.toFixed(1)}" y2="${ey.toFixed(1)}" stroke="${color}" stroke-width="2.2" ${dash?'stroke-dasharray="6 4"':''} marker-end="url(#${mk})"/>`;
   }
   function draw(){
     let s = `<defs>
@@ -752,14 +758,12 @@ function hideTip(){ tip.style.display="none"; }
     s += arrow(N.U.x,N.U.y,N.Nk.x,N.Nk.y,C.bias,true);
     // 待考察的因果效应（虚线带箭头）：A -> Y
     s += arrow(N.A.x,N.A.y,N.Y.x,N.Y.y,C.ink,true);
-    // A -> Nk：假设不存在（虚线 + 红叉）
-    const x1=N.A.x+30,y1=N.A.y+28,x2=N.Nk.x-30,y2=N.Nk.y-28;
-    const ang=Math.atan2(y2-y1,x2-x1),L=13;
-    const x3=x2-L*Math.cos(ang), y3=y2-L*Math.sin(ang);
-    s += `<line x1="${x1}" y1="${y1}" x2="${x3}" y2="${y3}" stroke="#7a756c" stroke-width="2" stroke-dasharray="6 4"/>
-        <line x1="${x1+6}" y1="${y1-6}" x2="${x3-4}" y2="${y3-8}" stroke="${C.bias}" stroke-width="2.5"/>
-        <line x1="${x1-6}" y1="${y1+6}" x2="${x3-4}" y2="${y3+8}" stroke="${C.bias}" stroke-width="2.5"/>
-        <text x="${(x1+x2)/2+12}" y="${(y1+y2)/2-10}" font-size="10.5" fill="${C.bias}">${t("治疗不能因果影响负对照（假设）","treatment cannot causally affect controls (assumption)")}</text>`;
+    // A -> Nk：假设不存在（虚线 + 红叉）— 用椭圆边缘交点
+    const {sx:anSx,sy:anSy,ex:anEx,ey:anEy}=edgePts(N.A.x,N.A.y,N.Nk.x,N.Nk.y);
+    s += `<line x1="${anSx.toFixed(1)}" y1="${anSy.toFixed(1)}" x2="${anEx.toFixed(1)}" y2="${anEy.toFixed(1)}" stroke="#7a756c" stroke-width="2" stroke-dasharray="6 4"/>
+        <line x1="${anSx+6}" y1="${anSy-6}" x2="${anEx-4}" y2="${anEy-8}" stroke="${C.bias}" stroke-width="2.5"/>
+        <line x1="${anSx-6}" y1="${anSy+6}" x2="${anEx-4}" y2="${anEy+8}" stroke="${C.bias}" stroke-width="2.5"/>
+        <text x="${((anSx+anEx)/2+12).toFixed(0)}" y="${((anSy+anEy)/2-10).toFixed(0)}" font-size="10.5" fill="${C.bias}" style="paint-order:stroke;stroke:#fff;stroke-width:3;">${t("治疗不能因果影响负对照（假设）","no causal effect (assumption)")}</text>`;
     // 节点
     for (const k in N){ const n=N[k];
       s += `<g class="dnode" data-tip="${k}" style="cursor:pointer">
@@ -1126,8 +1130,11 @@ let CASE_TAB = "bb";
       <text x="570" y="48" font-size="13" font-weight="700" fill="${C.ink}" text-anchor="middle">${t("未达标组 A=0（&lt;50%）","Below-target A=0 (&lt;50%)")}</text>` + patients(500,58,16,"#8a8378");
     function bar(x, label, val, col){
       const h = val*15;
+      const inside = h > 100;
+      const valY = inside ? 300-h+18 : 300-h-6;
+      const valFill = inside ? "#fff" : col;
       return `<rect x="${x}" y="${300-h}" width="70" height="${h}" fill="${col}" opacity="0.9"/>
-        <text x="${x+35}" y="${300-h-6}" font-size="12.5" font-weight="800" fill="${col}" text-anchor="middle">${val}%</text>
+        <text x="${x+35}" y="${valY}" font-size="12.5" font-weight="800" fill="${valFill}" text-anchor="middle">${val}%</text>
         <text x="${x+35}" y="316" font-size="11.5" fill="${C.ink}" text-anchor="middle">${label}</text>`;
     }
     const lblOn = ()=>t("达标组","On-target"), lblOff = ()=>t("未达标组","Below-target");
@@ -1159,16 +1166,16 @@ let CASE_TAB = "bb";
           + bar(90,lblOn(),8.3,C.blue) + bar(190,lblOff(),10.0,"#8a8378")
           + bar(500,lblOn(),3.2,C.bias) + bar(600,lblOff(),4.2,"#8a8378")
           + uBox()
-          + `<text x="740" y="180" font-size="13" font-weight="800" fill="${C.bias}">RR = 0.76</text>
-             <text x="740" y="200" font-size="12" fill="${C.bias}">${t("不可能由药物引起","cannot be caused by the drug")}</text>` },
+          + `<text x="770" y="180" font-size="13" font-weight="800" fill="${C.bias}" text-anchor="end" style="paint-order:stroke;stroke:#fff;stroke-width:3;">RR = 0.76</text>
+             <text x="770" y="200" font-size="12" fill="${C.bias}" text-anchor="end" style="paint-order:stroke;stroke:#fff;stroke-width:3;">${t("不可能由药物引起","cannot be caused by the drug")}</text>` },
       { text:{zh:"<b>结论：</b>负对照的真实效应已知为零。若治疗与负对照出现关联，该关联只能来自系统偏倚；12 个负对照全部呈保护性关联，说明系统偏倚明确存在。",
               en:"<b>Conclusion:</b> a negative control's true effect is known to be zero. Any treatment–control association can only come from systematic bias; all 12 controls show protective associations, so systematic bias demonstrably exists."},
         scene: ()=> grp1() + grp2() + panel(60,t("主结局 Y：1 年全因死亡","Primary outcome Y: 1-yr mortality")) + panel(470,t("负对照 N：白内障（药物不可能影响）","Negative control N: cataract (drug cannot affect)"))
           + bar(90,lblOn(),8.3,C.blue) + bar(190,lblOff(),10.0,"#8a8378")
           + bar(500,lblOn(),3.2,C.bias) + bar(600,lblOff(),4.2,"#8a8378")
-          + `<rect x="70" y="236" width="640" height="46" rx="10" fill="#EDF5EF" stroke="${C.effect}" stroke-width="1.6"/>
-             <text x="390" y="255" font-size="13" font-weight="800" fill="${C.effect}" text-anchor="middle">${t("负对照效应已知为零：治疗与负对照的关联只能来自系统偏倚","A control's true effect is zero: any treatment–control association must be systematic bias")}</text>
-             <text x="390" y="273" font-size="11.5" fill="${C.muted}" text-anchor="middle">${t("下一步：把 12 个负对照的估计值交给软件包，估计系统性偏倚的大小","Next: hand the 12 control estimates to the software package to estimate the size of systematic bias")}</text>` }
+          + `<rect x="70" y="330" width="640" height="42" rx="10" fill="#EDF5EF" stroke="${C.effect}" stroke-width="1.6"/>
+             <text x="390" y="349" font-size="13" font-weight="800" fill="${C.effect}" text-anchor="middle">${t("负对照效应已知为零：治疗与负对照的关联只能来自系统偏倚","A control's true effect is zero: any treatment–control association must be systematic bias")}</text>
+             <text x="390" y="365" font-size="11.5" fill="${C.muted}" text-anchor="middle">${t("下一步：把 12 个负对照的估计值交给软件包，估计系统性偏倚的大小","Next: hand the 12 control estimates to the software package to estimate the size of systematic bias")}</text>` }
     ], 3000);
   }
 
@@ -1204,30 +1211,31 @@ let CASE_TAB = "bb";
               en:"<b>Benchmark:</b> if the design had no systematic bias, the 12 points would scatter symmetrically around 0 (gray dashed bell = the expectation without bias)."},
         scene: ()=> axis() + points()
           + `<path d="${bell(0, 0.11, 80, X, 330)}" fill="none" stroke="#8a8378" stroke-width="2" stroke-dasharray="7 5"/>
-             <text x="330" y="200" font-size="11.5" fill="${C.muted}">${t("无偏倚时的期望：围绕 0 对称","Expected without bias: symmetric around 0")}</text>` },
+             <text x="330" y="200" font-size="11.5" fill="${C.muted}" style="paint-order:stroke;stroke:#fff;stroke-width:3;">${t("无偏倚时的期望：围绕 0 对称","Expected without bias: symmetric around 0")}</text>` },
       { text:{zh:"<b>实际却几乎全部落在 0 的左侧（保护方向）。</b>包的 fitNull() 函数用最大似然拟合出一个钟形：均值 μ̂_B = −0.190（平均系统偏倚），宽度 σ̂_B = 0.068（对照间偏倚的异质性）。",
               en:"<b>In reality nearly all fall to the left of 0 (protective direction).</b> The package's fitNull() fits a bell by maximum likelihood: mean μ̂_B = −0.190 (mean systematic bias), spread σ̂_B = 0.068 (between-control heterogeneity)."},
         scene: ()=> axis() + points()
           + `<path d="${bell(0, 0.11, 80, X, 330)}" fill="none" stroke="#8a8378" stroke-width="1.6" stroke-dasharray="7 5"/>
              <path d="${bell(-0.1905, 0.068, 118, X, 330)}" fill="rgba(169,50,38,.14)" stroke="${C.bias}" stroke-width="2.4"/>
              <line x1="${X(-0.1905)}" y1="330" x2="${X(-0.1905)}" y2="205" stroke="${C.bias}" stroke-width="1.8" stroke-dasharray="7 4"/>
-             <text x="${X(-0.1905)+6}" y="222" font-size="12.5" font-weight="800" fill="${C.bias}">μ̂_B = −0.190</text>
-             <text x="330" y="250" font-size="11.5" fill="${C.bias}">${t("fitNull() 拟合的经验零分布 N(μ̂_B, σ̂_B=0.068)","empirical null fitted by fitNull(): N(μ̂_B, σ̂_B=0.068)")}</text>` },
+             <text x="${X(-0.1905)+6}" y="222" font-size="12.5" font-weight="800" fill="${C.bias}" style="paint-order:stroke;stroke:#fff;stroke-width:3;">μ̂_B = −0.190</text>
+             <text x="390" y="315" font-size="11.5" fill="${C.bias}" text-anchor="middle" style="paint-order:stroke;stroke:#fff;stroke-width:3;">${t("fitNull() 拟合的经验零分布 N(μ̂_B, σ̂_B=0.068)","empirical null fitted by fitNull(): N(μ̂_B, σ̂_B=0.068)")}</text>` },
       { text:{zh:"<b>结论：这个钟形的中心不在 0，偏离了 0.190（log RR 尺度）。</b>研究设计会系统性地把估计向保护方向偏移 0.19——这就是要扣除的系统偏倚。",
               en:"<b>Conclusion: the bell is not centered at 0 — it is shifted by 0.190 (log-RR scale).</b> The design systematically shifts estimates 0.19 toward protection — this is the systematic bias to be subtracted."},
         scene: ()=> axis() + points()
           + `<path d="${bell(-0.1905, 0.068, 118, X, 330)}" fill="rgba(169,50,38,.14)" stroke="${C.bias}" stroke-width="2.4"/>
              <line x1="${X(-0.1905)}" y1="330" x2="${X(-0.1905)}" y2="205" stroke="${C.bias}" stroke-width="1.8" stroke-dasharray="7 4"/>
              <line x1="${X(0)}" y1="240" x2="${X(-0.1905)}" y2="240" stroke="${C.bias}" stroke-width="2.5"/>
-             <text x="${X(-0.095)}" y="230" font-size="12.5" font-weight="800" fill="${C.bias}" text-anchor="middle">${t("系统偏倚 = 0.190","systematic bias = 0.190")}</text>` },
+             <text x="${X(-0.095)}" y="230" font-size="12.5" font-weight="800" fill="${C.bias}" text-anchor="middle" style="paint-order:stroke;stroke:#fff;stroke-width:3;">${t("系统偏倚 = 0.190","systematic bias = 0.190")}</text>` },
       { text:{zh:"<b>包还输出什么？</b>① 校准 p 值 calibrateP()——把主估计放进这个钟形检验；② 校准图 plotCalibration()——就是本页病例研究里的漏斗图（阴影带 = 经验零 95% 区域，虚线 = p=0.05 边界）；③ 校准置信区间 calibrateConfidenceInterval()。",
               en:"<b>What else does the package output?</b> ① the calibrated p-value calibrateP() — testing the primary estimate against this bell; ② the calibration plot plotCalibration() — the funnel plot in the case-study section (shaded band = 95% region of the empirical null, dashed = p=0.05 boundary); ③ a calibrated confidence interval calibrateConfidenceInterval()."},
         scene: ()=> axis() + points()
           + `<path d="${bell(-0.1905, 0.068, 118, X, 330)}" fill="rgba(169,50,38,.14)" stroke="${C.bias}" stroke-width="2.4"/>
              <line x1="${X(-0.1905)}" y1="330" x2="${X(-0.1905)}" y2="205" stroke="${C.bias}" stroke-width="1.8" stroke-dasharray="7 4"/>
-             <rect x="60" y="28" width="660" height="56" rx="10" fill="#EEF4F9" stroke="${C.blue}" stroke-width="1.5"/>
-             <text x="390" y="50" font-size="12.5" font-weight="700" fill="${C.blue}" text-anchor="middle">${t("包的三件套输出：μ̂_B / σ̂_B（fitNull）· 校准 p 值（calibrateP）· 漏斗校准图（plotCalibration）","The package's three outputs: μ̂_B / σ̂_B (fitNull) · calibrated p (calibrateP) · funnel calibration plot (plotCalibration)")}</text>
-             <text x="390" y="70" font-size="11.5" fill="${C.muted}" text-anchor="middle">${t("注意：BF 与 BER 不在包的输出之列——它们是本论文在包输出之上构造的新指标","Note: BF and BER are NOT among the package's outputs — they are new metrics built by this paper on top of them")}</text>` }
+             <rect x="60" y="28" width="660" height="66" rx="10" fill="#EEF4F9" stroke="${C.blue}" stroke-width="1.5"/>
+             <text x="390" y="48" font-size="12.5" font-weight="700" fill="${C.blue}" text-anchor="middle">${t("包的三件套输出","The package's three outputs")}</text>
+             <text x="390" y="66" font-size="11.5" fill="${C.ink}" text-anchor="middle">μ̂_B / σ̂_B (fitNull) · calibrateP() · plotCalibration()</text>
+             <text x="390" y="84" font-size="11" fill="${C.muted}" text-anchor="middle">${t("BF 与 BER 是本论文新构造的指标，不在包内","BF and BER are new metrics from this paper, not in the package")}</text>` }
     ], 3200);
   }
 
@@ -1244,8 +1252,8 @@ let CASE_TAB = "bb";
           <text x="${X(0)}" y="308" font-size="12" fill="${C.muted}" text-anchor="middle">0</text>
           <path d="${bell(0, 0.056, 95, X, 290)}" fill="rgba(31,94,143,.13)" stroke="${C.blue}" stroke-width="2.2"/>
           ${pt(X(-0.184),288)}
-          <text x="${X(-0.184)+12}" y="150" font-size="12.5" font-weight="800" fill="${C.bias}">${t("ψ̂_obs = −0.184 落在尾巴上","ψ̂_obs = −0.184 sits in the tail")}</text>
-          <text x="${X(-0.184)+12}" y="168" font-size="13" font-weight="800" fill="${C.bias}">${t("naive p &lt; 0.001 → 判定显著","naive p &lt; 0.001 → declared significant")}</text>` },
+          <text x="${X(-0.184)+12}" y="150" font-size="12.5" font-weight="800" fill="${C.bias}" style="paint-order:stroke;stroke:#fff;stroke-width:3;">${t("ψ̂_obs = −0.184 落在尾巴上","ψ̂_obs = −0.184 sits in the tail")}</text>
+          <text x="${X(-0.184)+12}" y="168" font-size="13" font-weight="800" fill="${C.bias}" style="paint-order:stroke;stroke:#fff;stroke-width:3;">${t("naive p &lt; 0.001 → 判定显著","naive p &lt; 0.001 → declared significant")}</text>` },
       { text:{zh:"<b>第二步，换成经验零分布：</b>同样一个点，放进由 12 个负对照拟合出的钟形 N(−0.190, σ̃=0.088)——它恰好落在钟形<b>正中央</b> → 校准 p = 0.94，与零没有任何可区分的差别。",
               en:"<b>Step 2, switch to the empirical null:</b> the same point placed against the bell fitted from the 12 controls, N(−0.190, σ̃=0.088) — it lands <b>dead center</b> → calibrated p = 0.94, indistinguishable from zero."},
         scene: ()=> `<text x="390" y="28" font-size="14" font-weight="700" fill="${C.ink}" text-anchor="middle">${t("经验零分布：已知真实效应为 0 的结局上，估计值实际长什么样","Empirical null: what estimates actually look like on outcomes known to have zero effect")}</text>
@@ -1254,8 +1262,8 @@ let CASE_TAB = "bb";
           <text x="${X(0)}" y="308" font-size="12" fill="${C.muted}" text-anchor="middle">0</text>
           <path d="${bell(-0.1905, 0.088, 105, X, 290)}" fill="rgba(31,111,63,.13)" stroke="${C.effect}" stroke-width="2.2"/>
           ${pt(X(-0.184),288)}
-          <text x="${X(-0.184)+12}" y="150" font-size="12.5" font-weight="800" fill="${C.effect}">${t("ψ̂_obs = −0.184 恰在钟形中央","ψ̂_obs = −0.184 sits at the bell's center")}</text>
-          <text x="${X(-0.184)+12}" y="168" font-size="13" font-weight="800" fill="${C.effect}">${t("校准 p = 0.94 → 无证据支持效应","calibrated p = 0.94 → no evidence of effect")}</text>` },
+          <text x="${X(-0.184)+12}" y="150" font-size="12.5" font-weight="800" fill="${C.effect}" style="paint-order:stroke;stroke:#fff;stroke-width:3;">${t("ψ̂_obs = −0.184 恰在钟形中央","ψ̂_obs = −0.184 sits at the bell's center")}</text>
+          <text x="${X(-0.184)+12}" y="168" font-size="13" font-weight="800" fill="${C.effect}" style="paint-order:stroke;stroke:#fff;stroke-width:3;">${t("校准 p = 0.94 → 无证据支持效应","calibrated p = 0.94 → no evidence of effect")}</text>` },
       { text:{zh:"<b>为什么结论会翻转？</b>因为两个钟形的中心相差 μ̂_B = 0.190——这就是负对照揭示出的系统偏倚。所谓校准，就是把判决的参照系从“理想情形”换成“数据揭示的实际情形”。",
               en:"<b>Why does the verdict flip?</b> Because the two bells' centers differ by μ̂_B = 0.190 — precisely the systematic bias revealed by the negative controls. Calibration simply swaps the reference frame of the verdict from \"the ideal case\" to \"what the data reveal about this design\"."},
         scene: ()=> `<text x="390" y="28" font-size="14" font-weight="700" fill="${C.ink}" text-anchor="middle">${t("同一估计、两个零参照：中心之差 = 系统偏倚","One estimate, two null references: the gap between centers = systematic bias")}</text>
@@ -1264,10 +1272,10 @@ let CASE_TAB = "bb";
           <path d="${bell(0, 0.056, 95, X, 290)}" fill="rgba(31,94,143,.10)" stroke="${C.blue}" stroke-width="2" stroke-dasharray="7 5"/>
           <path d="${bell(-0.1905, 0.088, 105, X, 290)}" fill="rgba(31,111,63,.12)" stroke="${C.effect}" stroke-width="2.2"/>
           <line x1="${X(0)}" y1="110" x2="${X(-0.1905)}" y2="110" stroke="${C.bias}" stroke-width="2.5" marker-end="url(#ah-bias)"/>
-          <text x="${X(-0.095)}" y="100" font-size="12.5" font-weight="800" fill="${C.bias}" text-anchor="middle">${t("μ̂_B = 0.190（系统偏倚）","μ̂_B = 0.190 (systematic bias)")}</text>
+          <text x="${X(-0.095)}" y="100" font-size="12.5" font-weight="800" fill="${C.bias}" text-anchor="middle" style="paint-order:stroke;stroke:#fff;stroke-width:3;">${t("μ̂_B = 0.190（系统偏倚）","μ̂_B = 0.190 (systematic bias)")}</text>
           ${pt(X(-0.184),288)}
-          <text x="600" y="150" font-size="11.5" fill="${C.blue}" font-weight="700">${t("蓝虚线：标准零（理想情形）","blue dashed: standard null (ideal case)")}</text>
-          <text x="600" y="168" font-size="11.5" fill="${C.effect}" font-weight="700">${t("绿实线：经验零（实际数据）","green solid: empirical null (actual data)")}</text>` }
+          <text x="600" y="150" font-size="11.5" fill="${C.blue}" font-weight="700" style="paint-order:stroke;stroke:#fff;stroke-width:3;">${t("蓝虚线：标准零（理想情形）","blue dashed: standard null (ideal case)")}</text>
+          <text x="600" y="168" font-size="11.5" fill="${C.effect}" font-weight="700" style="paint-order:stroke;stroke:#fff;stroke-width:3;">${t("绿实线：经验零（实际数据）","green solid: empirical null (actual data)")}</text>` }
     ], 3200);
   }
 
@@ -1283,6 +1291,9 @@ let CASE_TAB = "bb";
     }
     const arrow = y => `<line x1="390" y1="${y}" x2="390" y2="${y+14}" stroke="#8a8378" stroke-width="2" marker-end="url(#ah-grey)"/>`;
     function step(k){
+      // Dynamically set viewBox height so all visible boxes fit
+      const neededH = Math.max(160, 44 + (k-1)*96 + 80);
+      document.getElementById("anD").setAttribute("viewBox", `0 0 780 ${neededH}`);
       const cols = ["#1F5E8F","#A93226","#1F6F3F","#5B3FA8","#B07D00","#21242B"];
       let s = `<text x="390" y="24" font-size="14" font-weight="700" fill="${C.ink}" text-anchor="middle">${t("BF / BER 计算链：每一步只用到上一步的输出（数值 = 论文病例）","BF / BER computation chain: each step uses only the previous step's output (values = the paper's case)")}</text>`;
       const defs = [
@@ -1315,7 +1326,7 @@ let CASE_TAB = "bb";
     createStepper("D", [
       { text:{zh:"<b>起点：</b>一切从主估计开始——这是普通分析已经会报告的数字（本例来自 TMLE）。",
               en:"<b>Starting point:</b> everything begins with the primary estimate — a number any conventional analysis would already report (here from TMLE)."},
-        scene: ()=> step(1) + `<text x="390" y="404" font-size="12" fill="${C.muted}" text-anchor="middle">${t("（后续步骤依次点亮）","(subsequent steps light up in turn)")}</text>` },
+        scene: ()=> step(1) + `<text x="390" y="132" font-size="12" fill="${C.muted}" text-anchor="middle">${t("（后续步骤依次点亮）","(subsequent steps light up in turn)")}</text>` },
       { text:{zh:"<b>软件包的核心一步：</b>fitNull() 把 12 个负对照的估计拟合成一个钟形，输出 μ̂_B（平均系统偏倚）与 σ̂_B（异质性）。BF/BER 的分子 |μ̂_B| 就来自这里。",
               en:"<b>The package's core step:</b> fitNull() fits a bell to the 12 control estimates and outputs μ̂_B (mean systematic bias) and σ̂_B (heterogeneity). The numerator of BF/BER, |μ̂_B|, comes from here."},
         scene: ()=>step(2) },
