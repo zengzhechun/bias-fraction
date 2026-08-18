@@ -157,7 +157,7 @@
   <a href="#nc-anim"><span class="i18n-zh">③ 负对照详解（动画）</span><span class="i18n-en">③ Negative controls (animated)</span></a>
   <a href="#metrics"><span class="i18n-zh">④ 指标词典</span><span class="i18n-en">④ Metric dictionary</span></a>
   <a href="#lab"><span class="i18n-zh">⑤ 互动实验室</span><span class="i18n-en">⑤ Interactive lab</span></a>
-  <a href="#case"><span class="i18n-zh">⑥ 病例研究</span><span class="i18n-en">⑥ Case study</span></a>
+  <a href="#case"><span class="i18n-zh">⑥ TTE研究案例</span><span class="i18n-en">⑥ TTE case study</span></a>
   <a href="#sim"><span class="i18n-zh">⑦ 模拟研究</span><span class="i18n-en">⑦ Simulation</span></a>
   <a href="#apply"><span class="i18n-zh">⑧ 如何应用</span><span class="i18n-en">⑧ How to apply</span></a>
   <a href="#glossary"><span class="i18n-zh">⑨ 术语表</span><span class="i18n-en">⑨ Glossary</span></a>
@@ -184,67 +184,6 @@
 <h3><span class="i18n-zh">健康依从者效应：药物流行病学中的典型混杂现象</span><span class="i18n-en">The healthy adherer effect: a canonical confounding mechanism in pharmacoepidemiology</span></h3>
 <p><span class="i18n-zh"><b>健康依从者效应（healthy adherer effect）</b>：依从治疗的患者，即使吃的是安慰剂，结局也更好——因为他们本身更健康、更自律、医疗资源更好。观察性研究中，"依从性好，按要求服药"这件事本身就携带了大量与药物无关的预后信息。</span>
 <span class="i18n-en"><b>The healthy adherer effect:</b> patients who adhere to therapy have better outcomes even on placebo — because they are healthier, more disciplined, and have better access to care to begin with. In observational studies, "taking the full dose" itself carries a wealth of prognostic information that has nothing to do with the drug.</span></p>
-
-<div class="card">
-  <span class="i18n-zh">在心衰（射血分数下降型，HFrEF）住院患者中比较"达到 ≥50% 目标剂量 β 受体阻滞剂"与"&lt;50%"。本文中的这项研究案例在TTE设计实施与因果推论分析两个层面都使用了当前的"最佳实践"——<b>严格遵循 TARGET 指南</b>（Transparent Reporting of Observational Studies Emulating a Target Trial，目标试验模拟的报告规范）进行设计与报告，并采用<b>TMLE——因果推断方法论前沿的双重稳健估计器</b>进行分析。</span>
-  <span class="i18n-en"><b>The paper's case study (MIMIC-IV):</b> among hospitalized heart-failure patients, comparing "achieving ≥50% of the target beta-blocker dose" with "&lt;50%". The case study followed current best practice at both the design and analysis stages — it was <b>designed and reported under the TARGET guideline</b> (Transparent Reporting of Observational Studies Emulating a Target Trial) and analyzed with <b>TMLE, a state-of-the-art doubly robust estimator at the frontier of causal inference methodology</b>.</span>
-  <p><span class="i18n-zh"><b>先厘清两个关键概念。</b><br>
-<b>① "达到 ≥50% 目标剂量 β 受体阻滞剂" 与 "&lt;50%" 分别指什么？</b> 心衰指南要求 β 阻滞剂从极小剂量起步、逐步向上滴定到"目标剂量"（例如比索洛尔 10 mg/天、卡维地洛 25 mg 每日两次、琥珀酸美托洛尔 200 mg/天）。本研究不比较"有没有开这个药"，而是比较"出院时实际被滴定到了多少"达到至少一半目标剂量的患者，与低于一半（&lt;50%）的患者，并假设他们在出院后一年内维持出院时的用量。比较他们 1 年后的心血管事件发生率。这正是最容易混进健康依从者效应的地方：能顺利爬到目标剂量的，往往是更耐受、更自律、被更积极随访管理的人，他们本来预后就更好。<br>
-<b>② "GDMT 治疗"是什么？为什么只算 3 个药、不是临床医生印象里的 4 个？</b> GDMT（guideline-directed medical therapy，指南导向的药物治疗）是心衰（射血分数下降型，HFrEF）的标准治疗。临床医生如今熟悉的"四根支柱"是：肾素-血管紧张素系统阻断剂（ACEI/ARB/ARNI）+ β 阻滞剂 + 盐皮质激素受体拮抗剂（MRA，如螺内酯）+ SGLT2 抑制剂（如达格列净）。<b>但本研究只取前 3 类（ACEI/ARB/ARNI + β 阻滞剂 + MRA），不把 SGLT2 抑制剂算进去。</b>原因是 SGLT2 抑制剂用于心衰是 2020–2021 年才写进指南的（达格列净的 EMPEROR-Reduced、恩格列净的 EMPULSE 研究），而 MIMIC-IV 这批患者的住院时间大多在这之前——队列里几乎没人用过 SGLT2 抑制剂。如果硬要"集齐 4 个药才算 GDMT"，我们的阳性对照人群会几乎为空、毫无区分度。所以本研究把 GDMT 锚定在<b>当时真正的标准治疗</b>上：3 类药物。这样 GDMT 才是一个"确实被广泛使用、且真实效应很大"的阳性对照，用来检验校准方法会不会矫枉过正（把真效应也一起扣掉）。</span>
-<span class="i18n-en"><b>Two key concepts to clarify first.</b><br>
-<b>① What do "achieving ≥50% of the target beta-blocker dose" and "&lt;50%" mean?</b> Heart-failure guidelines start beta-blockers at a minimal dose and titrate up step by step to a "target dose" (e.g., bisoprolol 10 mg/day, carvedilol 25 mg twice daily, metoprolol succinate 200 mg/day). This study does not compare "was the drug prescribed," but "how far was it actually titrated after discharge" — patients who reached at least half the target dose versus those below half (&lt;50%), assuming they maintained their discharge dosage over the year after discharge. We compare their 1-year cardiovascular event rate. This is exactly where the healthy-adherer effect sneaks in: those who successfully climb to target dose are the more tolerant, more adherent, more actively managed patients, who already had a better prognosis.<br>
-<b>② What is "GDMT therapy," and why only 3 drugs instead of the 4 clinicians expect?</b> GDMT (guideline-directed medical therapy) is the standard treatment for heart failure with reduced ejection fraction (HFrEF). The "four pillars" clinicians now know are: renin-angiotensin system blocker (ACEI/ARB/ARNI) + beta-blocker + mineralocorticoid receptor antagonist (MRA, e.g., spironolactone) + SGLT2 inhibitor (e.g., dapagliflozin). <b>But this study takes only the first three classes (ACEI/ARB/ARNI + beta-blocker + MRA), excluding the SGLT2 inhibitor.</b> The reason: SGLT2 inhibitors entered heart-failure guidelines only in 2020–2021 (dapagliflozin's EMPEROR-Reduced, empagliflozin's EMPULSE trials), whereas most MIMIC-IV hospitalizations predate that window — almost no patient in the cohort was on an SGLT2 inhibitor. Insisting on "all 4 drugs = GDMT" would leave our positive-control group nearly empty and uninformative. So the study anchors GDMT to <b>what was genuinely standard of care then</b>: three drug classes. That makes GDMT a positive control that was "actually widely used and has a large true effect," used to test whether calibration over-corrects (removing the true effect along with the bias).</span></p>
-  <div class="pico-wrap">
-    <table class="pico-table i18n-zh">
-      <caption>表：本研究两项病例的 PICOST 设计要素（目标剂量 β 阻滞剂 vs GDMT 治疗）</caption>
-      <thead><tr><th>要素</th><th>目标剂量 β 受体阻滞剂案例</th><th>GDMT 治疗案例</th></tr></thead>
-      <tbody>
-        <tr><th><span class="el">P</span> 人群<br><span class="sub">Population</span></th>
-          <td>心衰（射血分数下降型，HFrEF）住院、β 阻滞剂<b>新用药者</b>、出院存活且可随访 ≥1 年；共 <b>14,677</b> 例心衰住院</td>
-          <td>同一队列、同一合格标准（GDMT 阳性对照与 β 阻滞剂案例共享同一批患者）</td></tr>
-        <tr><th><span class="el">I</span> 干预/暴露<br><span class="sub">Intervention</span></th>
-          <td>出院时达到 <b>≥50% β 阻滞剂目标剂量</b>（并假定出院后 1 年内维持该用量）</td>
-          <td>出院时使用 <b>≥3 类 GDMT</b>（ACEI/ARB/ARNI + β 阻滞剂 + MRA）</td></tr>
-        <tr><th><span class="el">C</span> 对照<br><span class="sub">Comparator</span></th>
-          <td>出院时 <b>&lt;50% 目标剂量</b></td>
-          <td>出院时<b>未达 GDMT</b>（&lt;3 类）</td></tr>
-        <tr><th><span class="el">O</span> 结局<br><span class="sub">Outcome</span></th>
-          <td colspan="2">出院后 <b>1 年心血管事件发生率</b>（本研究核心硬终点为<b>全因死亡</b>——对临床结局最干净、最少争议的测量）</td></tr>
-        <tr><th><span class="el">S</span> 研究设定<br><span class="sub">Setting</span></th>
-          <td colspan="2">MIMIC-IV 重症/住院电子病历队列；采用<b>观察性目标试验模拟（TTE）</b>设计与报告</td></tr>
-        <tr><th><span class="el">T</span> 时间<br><span class="sub">Time</span></th>
-          <td colspan="2"><b>time-zero = 出院日</b>；假定出院后 1 年内维持出院时用量；随访至出院后 1 年</td></tr>
-      </tbody>
-    </table>
-    <table class="pico-table i18n-en">
-      <caption>Table: PICOST design elements of the two case studies (target-dose beta-blocker vs GDMT therapy)</caption>
-      <thead><tr><th>Element</th><th>Target-dose beta-blocker case</th><th>GDMT therapy case</th></tr></thead>
-      <tbody>
-        <tr><th><span class="el">P</span> Population</th>
-          <td>HFrEF hospitalization, <b>new users</b> of beta-blocker, discharged alive and followable ≥1 year; <b>14,677</b> HF hospitalizations</td>
-          <td>Same cohort, same eligibility (GDMT positive control shares the same patients as the beta-blocker case)</td></tr>
-        <tr><th><span class="el">I</span> Intervention</th>
-          <td>Achieved <b>≥50% of target beta-blocker dose at discharge</b> (assumed maintained over the year after discharge)</td>
-          <td>On <b>≥3 GDMT classes</b> at discharge (ACEI/ARB/ARNI + beta-blocker + MRA)</td></tr>
-        <tr><th><span class="el">C</span> Comparator</th>
-          <td><b>&lt;50% of target dose</b> at discharge</td>
-          <td><b>Not on GDMT</b> (&lt;3 classes) at discharge</td></tr>
-        <tr><th><span class="el">O</span> Outcome</th>
-          <td colspan="2"><b>1-year cardiovascular event rate</b> (the paper's core hard endpoint is <b>all-cause mortality</b> — the cleanest, least-debatable clinical measurement)</td></tr>
-        <tr><th><span class="el">S</span> Setting</th>
-          <td colspan="2">MIMIC-IV critical-care / inpatient EHR cohort; designed and reported as an <b>observational target trial emulation (TTE)</b></td></tr>
-        <tr><th><span class="el">T</span> Time</th>
-          <td colspan="2"><b>time-zero = day of discharge</b>; dosage assumed maintained for 1 year; follow-up to 1 year post-discharge</td></tr>
-      </tbody>
-    </table>
-  </div>
-  <ul>
-    <li><span class="i18n-zh">未校准的 TMLE 估计：<b>RR = 0.83</b>，看起来 β 受体阻滞剂把 1 年死亡降低了约 17%——与随机试验的表面结论相容。</span><span class="i18n-en">The uncalibrated TMLE estimate: <b>RR = 0.83</b>, apparently a ~17% reduction in 1-year mortality — superficially compatible with randomized-trial evidence.</span></li>
-    <li><span class="i18n-zh">但"能达到目标剂量"的患者，本身就是更健康的患者。</span><span class="i18n-en">But patients who reach the target dose are healthier patients to begin with.</span></li>
-    <li><span class="i18n-zh">12 个<b>负对照结局</b>（该药"不可能"影响的结局，如白内障、痛风）<b>全部</b>呈保护性关联——这就是系统性偏倚存在的直接证据。</span><span class="i18n-en">All 12 <b>negative control outcomes</b> (outcomes the drug cannot plausibly affect, e.g., cataract, gout) showed <b>protective associations</b> — direct evidence that systematic bias exists.</span></li>
-    <li><span class="i18n-zh"><b>关键启示：</b>即便有"规范设计 + 前沿估计方法"的双重保障，系统性偏移依然无法避免——TARGET 规范的试验模拟和 TMLE 双重稳健估计各自解决的是它们设计上能解决的威胁（时间变化混杂、不朽时间偏倚、模型误设），而<b>未测量混杂不在其列</b>。这正是需要经验性偏倚诊断（负对照校准 + BF）的理由。</span><span class="i18n-en"><b>Key lesson:</b> even under the dual safeguard of protocol-conformant design and a frontier estimator, systematic shifting persists — TARGET-conformant emulation and doubly robust TMLE address the threats they were built to address (time-varying confounding, immortal time bias, model misspecification), and <b>unmeasured confounding is not among them</b>. That is precisely why an empirical bias diagnostic (negative control calibration + BF) is needed.</span></li>
-  </ul>
-</div>
 
 <h3><span class="i18n-zh">现有校准方法（校准 p 值）的局限</span><span class="i18n-en">The limitation of existing calibration (the calibrated p-value)</span></h3>
 <p><span class="i18n-zh">OHDSI 的<b>经验校准（empirical calibration）</b>框架（Schuemie et al. 2014, 2018；实现于 EmpiricalCalibration R 包）是<b>已有的方法与软件</b>，并非本论文的原创工作。它的做法分两步：<b>第一步</b>，用负对照估计出系统偏倚的分布（均值 μ̂<sub>B</sub> 和波动 σ̂<sub>B</sub>）；<b>第二步</b>，把观测估计放进这个"偏倚分布"里重新检验，得到一个<b>校准 p 值（calibrated p-value）</b>。本论文的贡献（BF 与 BER）正是建立在这一已有框架之上——见后文动画 D。</span>
@@ -525,9 +464,70 @@ ber &lt;- abs(mu_b) / abs(log_rr_cal)                 # = 30.4（原始比值；
   <span class="i18n-en"><b>Reading tips (apply throughout the lab):</b> read BF &gt; 0.5 as "the signal is mostly bias", <b>not</b> as "the effect is zero"; read BF &lt; 1/3 as "the effect is at least twice the bias", still subject to residual confounding from non-exchangeability sources; values between 1/3 and 0.5 form the "can't tell" amber (mixed) zone — per the v34 simulation, point-estimate classification accuracy there is only 41.8%, barely above chance (33.3%), so confidence intervals and sensitivity analyses are essential.</span>
 </div>
 </section>
-<!-- ============ ⑥ 病例研究 ============ -->
+<!-- ============ ⑥ TTE研究案例 ============ -->
 <section id="case">
-<h2><span class="i18n-zh">⑥ 病例研究（MIMIC-IV）</span><span class="i18n-en">⑥ Case study (MIMIC-IV)</span> <span class="en">The beta-blocker case study</span></h2>
+<h2><span class="i18n-zh">⑥ TTE研究案例（MIMIC-IV）</span><span class="i18n-en">⑥ TTE case study (MIMIC-IV)</span> <span class="en">The beta-blocker TTE case study</span></h2>
+
+<div class="card">
+  <span class="i18n-zh">在心衰（射血分数下降型，HFrEF）住院患者中比较"达到 ≥50% 目标剂量 β 受体阻滞剂"与"&lt;50%"。本文中的这项研究案例在TTE设计实施与因果推论分析两个层面都使用了当前的"最佳实践"——<b>严格遵循 TARGET 指南</b>（Transparent Reporting of Observational Studies Emulating a Target Trial，目标试验模拟的报告规范）进行设计与报告，并采用<b>TMLE——因果推断方法论前沿的双重稳健估计器</b>进行分析。</span>
+  <span class="i18n-en"><b>The paper's case study (MIMIC-IV):</b> among hospitalized heart-failure patients, comparing "achieving ≥50% of the target beta-blocker dose" with "&lt;50%". The case study followed current best practice at both the design and analysis stages — it was <b>designed and reported under the TARGET guideline</b> (Transparent Reporting of Observational Studies Emulating a Target Trial) and analyzed with <b>TMLE, a state-of-the-art doubly robust estimator at the frontier of causal inference methodology</b>.</span>
+  <p><span class="i18n-zh"><b>先厘清两个关键概念。</b><br>
+<b>① "达到 ≥50% 目标剂量 β 受体阻滞剂" 与 "&lt;50%" 分别指什么？</b> 心衰指南要求 β 阻滞剂从极小剂量起步、逐步向上滴定到"目标剂量"（例如比索洛尔 10 mg/天、卡维地洛 25 mg 每日两次、琥珀酸美托洛尔 200 mg/天）。本研究不比较"有没有开这个药"，而是比较"出院时实际被滴定到了多少"达到至少一半目标剂量的患者，与低于一半（&lt;50%）的患者，并假设他们在出院后一年内维持出院时的用量。比较他们 1 年后的心血管事件发生率。这正是最容易混进健康依从者效应的地方：能顺利爬到目标剂量的，往往是更耐受、更自律、被更积极随访管理的人，他们本来预后就更好。<br>
+<b>② "GDMT 治疗"是什么？为什么只算 3 个药、不是临床医生印象里的 4 个？</b> GDMT（guideline-directed medical therapy，指南导向的药物治疗）是心衰（射血分数下降型，HFrEF）的标准治疗。临床医生如今熟悉的"四根支柱"是：肾素-血管紧张素系统阻断剂（ACEI/ARB/ARNI）+ β 阻滞剂 + 盐皮质激素受体拮抗剂（MRA，如螺内酯）+ SGLT2 抑制剂（如达格列净）。<b>但本研究只取前 3 类（ACEI/ARB/ARNI + β 阻滞剂 + MRA），不把 SGLT2 抑制剂算进去。</b>原因是 SGLT2 抑制剂用于心衰是 2020–2021 年才写进指南的（达格列净的 EMPEROR-Reduced、恩格列净的 EMPULSE 研究），而 MIMIC-IV 这批患者的住院时间大多在这之前——队列里几乎没人用过 SGLT2 抑制剂。如果硬要"集齐 4 个药才算 GDMT"，我们的阳性对照人群会几乎为空、毫无区分度。所以本研究把 GDMT 锚定在<b>当时真正的标准治疗</b>上：3 类药物。这样 GDMT 才是一个"确实被广泛使用、且真实效应很大"的阳性对照，用来检验校准方法会不会矫枉过正（把真效应也一起扣掉）。</span>
+<span class="i18n-en"><b>Two key concepts to clarify first.</b><br>
+<b>① What do "achieving ≥50% of the target beta-blocker dose" and "&lt;50%" mean?</b> Heart-failure guidelines start beta-blockers at a minimal dose and titrate up step by step to a "target dose" (e.g., bisoprolol 10 mg/day, carvedilol 25 mg twice daily, metoprolol succinate 200 mg/day). This study does not compare "was the drug prescribed," but "how far was it actually titrated after discharge" — patients who reached at least half the target dose versus those below half (&lt;50%), assuming they maintained their discharge dosage over the year after discharge. We compare their 1-year cardiovascular event rate. This is exactly where the healthy-adherer effect sneaks in: those who successfully climb to target dose are the more tolerant, more adherent, more actively managed patients, who already had a better prognosis.<br>
+<b>② What is "GDMT therapy," and why only 3 drugs instead of the 4 clinicians expect?</b> GDMT (guideline-directed medical therapy) is the standard treatment for heart failure with reduced ejection fraction (HFrEF). The "four pillars" clinicians now know are: renin-angiotensin system blocker (ACEI/ARB/ARNI) + beta-blocker + mineralocorticoid receptor antagonist (MRA, e.g., spironolactone) + SGLT2 inhibitor (e.g., dapagliflozin). <b>But this study takes only the first three classes (ACEI/ARB/ARNI + beta-blocker + MRA), excluding the SGLT2 inhibitor.</b> The reason: SGLT2 inhibitors entered heart-failure guidelines only in 2020–2021 (dapagliflozin's EMPEROR-Reduced, empagliflozin's EMPULSE trials), whereas most MIMIC-IV hospitalizations predate that window — almost no patient in the cohort was on an SGLT2 inhibitor. Insisting on "all 4 drugs = GDMT" would leave our positive-control group nearly empty and uninformative. So the study anchors GDMT to <b>what was genuinely standard of care then</b>: three drug classes. That makes GDMT a positive control that was "actually widely used and has a large true effect," used to test whether calibration over-corrects (removing the true effect along with the bias).</span></p>
+  <div class="pico-wrap">
+    <table class="pico-table i18n-zh">
+      <caption>表：本研究两项病例的 PICOST 设计要素（目标剂量 β 阻滞剂 vs GDMT 治疗）</caption>
+      <thead><tr><th>要素</th><th>目标剂量 β 受体阻滞剂案例</th><th>GDMT 治疗案例</th></tr></thead>
+      <tbody>
+        <tr><th><span class="el">P</span> 人群<br><span class="sub">Population</span></th>
+          <td>心衰（射血分数下降型，HFrEF）住院、β 阻滞剂<b>新用药者</b>、出院存活且可随访 ≥1 年；共 <b>14,677</b> 例心衰住院</td>
+          <td>同一队列、同一合格标准（GDMT 阳性对照与 β 阻滞剂案例共享同一批患者）</td></tr>
+        <tr><th><span class="el">I</span> 干预/暴露<br><span class="sub">Intervention</span></th>
+          <td>出院时达到 <b>≥50% β 阻滞剂目标剂量</b>（并假定出院后 1 年内维持该用量）</td>
+          <td>出院时使用 <b>≥3 类 GDMT</b>（ACEI/ARB/ARNI + β 阻滞剂 + MRA）</td></tr>
+        <tr><th><span class="el">C</span> 对照<br><span class="sub">Comparator</span></th>
+          <td>出院时 <b>&lt;50% 目标剂量</b></td>
+          <td>出院时<b>未达 GDMT</b>（&lt;3 类）</td></tr>
+        <tr><th><span class="el">O</span> 结局<br><span class="sub">Outcome</span></th>
+          <td colspan="2">出院后 <b>1 年心血管事件发生率</b>（本研究核心硬终点为<b>全因死亡</b>——对临床结局最干净、最少争议的测量）</td></tr>
+        <tr><th><span class="el">S</span> 研究设定<br><span class="sub">Setting</span></th>
+          <td colspan="2">MIMIC-IV 重症/住院电子病历队列；采用<b>观察性目标试验模拟（TTE）</b>设计与报告</td></tr>
+        <tr><th><span class="el">T</span> 时间<br><span class="sub">Time</span></th>
+          <td colspan="2"><b>time-zero = 出院日</b>；假定出院后 1 年内维持出院时用量；随访至出院后 1 年</td></tr>
+      </tbody>
+    </table>
+    <table class="pico-table i18n-en">
+      <caption>Table: PICOST design elements of the two case studies (target-dose beta-blocker vs GDMT therapy)</caption>
+      <thead><tr><th>Element</th><th>Target-dose beta-blocker case</th><th>GDMT therapy case</th></tr></thead>
+      <tbody>
+        <tr><th><span class="el">P</span> Population</th>
+          <td>HFrEF hospitalization, <b>new users</b> of beta-blocker, discharged alive and followable ≥1 year; <b>14,677</b> HF hospitalizations</td>
+          <td>Same cohort, same eligibility (GDMT positive control shares the same patients as the beta-blocker case)</td></tr>
+        <tr><th><span class="el">I</span> Intervention</th>
+          <td>Achieved <b>≥50% of target beta-blocker dose at discharge</b> (assumed maintained over the year after discharge)</td>
+          <td>On <b>≥3 GDMT classes</b> at discharge (ACEI/ARB/ARNI + beta-blocker + MRA)</td></tr>
+        <tr><th><span class="el">C</span> Comparator</th>
+          <td><b>&lt;50% of target dose</b> at discharge</td>
+          <td><b>Not on GDMT</b> (&lt;3 classes) at discharge</td></tr>
+        <tr><th><span class="el">O</span> Outcome</th>
+          <td colspan="2"><b>1-year cardiovascular event rate</b> (the paper's core hard endpoint is <b>all-cause mortality</b> — the cleanest, least-debatable clinical measurement)</td></tr>
+        <tr><th><span class="el">S</span> Setting</th>
+          <td colspan="2">MIMIC-IV critical-care / inpatient EHR cohort; designed and reported as an <b>observational target trial emulation (TTE)</b></td></tr>
+        <tr><th><span class="el">T</span> Time</th>
+          <td colspan="2"><b>time-zero = day of discharge</b>; dosage assumed maintained for 1 year; follow-up to 1 year post-discharge</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <ul>
+    <li><span class="i18n-zh">未校准的 TMLE 估计：<b>RR = 0.83</b>，看起来 β 受体阻滞剂把 1 年死亡降低了约 17%——与随机试验的表面结论相容。</span><span class="i18n-en">The uncalibrated TMLE estimate: <b>RR = 0.83</b>, apparently a ~17% reduction in 1-year mortality — superficially compatible with randomized-trial evidence.</span></li>
+    <li><span class="i18n-zh">但"能达到目标剂量"的患者，本身就是更健康的患者。</span><span class="i18n-en">But patients who reach the target dose are healthier patients to begin with.</span></li>
+    <li><span class="i18n-zh">12 个<b>负对照结局</b>（该药"不可能"影响的结局，如白内障、痛风）<b>全部</b>呈保护性关联——这就是系统性偏倚存在的直接证据。</span><span class="i18n-en">All 12 <b>negative control outcomes</b> (outcomes the drug cannot plausibly affect, e.g., cataract, gout) showed <b>protective associations</b> — direct evidence that systematic bias exists.</span></li>
+    <li><span class="i18n-zh"><b>关键启示：</b>即便有"规范设计 + 前沿估计方法"的双重保障，系统性偏移依然无法避免——TARGET 规范的试验模拟和 TMLE 双重稳健估计各自解决的是它们设计上能解决的威胁（时间变化混杂、不朽时间偏倚、模型误设），而<b>未测量混杂不在其列</b>。这正是需要经验性偏倚诊断（负对照校准 + BF）的理由。</span><span class="i18n-en"><b>Key lesson:</b> even under the dual safeguard of protocol-conformant design and a frontier estimator, systematic shifting persists — TARGET-conformant emulation and doubly robust TMLE address the threats they were built to address (time-varying confounding, immortal time bias, model misspecification), and <b>unmeasured confounding is not among them</b>. That is precisely why an empirical bias diagnostic (negative control calibration + BF) is needed.</span></li>
+  </ul>
+</div>
 
 <h3><span class="i18n-zh">为什么做这项案例研究？——先说临床问题本身</span><span class="i18n-en">Why this case study? — start with the clinical question itself</span></h3>
 <p><span class="i18n-zh">β 受体阻滞剂是射血分数降低型心衰治疗的基石：随机试验（MERIT-HF、CIBIS-II、COPERNICUS）证明<b>目标剂量</b>能降低死亡。但真实世界里，能达到目标剂量的患者不到一半。于是每个心内科医生都见过这样的数据——<b>"剂量达标的患者，死亡率更低"</b>：观察性研究一再重复这个保护性关联，临床上的直接推论就是"应该更积极地向上滴定"。可问题在于：<b>这是药的作用，还是人的作用？</b>能被滴定到目标剂量的患者，本来就是血流动力学更稳、肾功能更好、依从性更高的患者（第①节的"健康依从者效应"）。这个问题无法用随机试验回答——伦理上不允许把患者随机分配到"不滴定"组——所以只能靠观察性数据，而观察性数据又天然被这个问题困扰。它是"表面关联与真实效应难以区分"的最典型场景，也是示范一个偏倚诊断指标的最佳考题。</span>
