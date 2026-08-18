@@ -116,6 +116,17 @@
   .pico-table tbody tr:nth-child(even) td{background:#F7FAFC;}
   .pico-table .el{color:var(--purple); font-weight:800;}
   .pico-table .sub{color:var(--muted); font-weight:600; font-size:11.5px;}
+
+  /* ================= TARGET 指南依从性表 ================= */
+  .target-table{border-collapse:collapse; width:100%; margin:14px 0 8px; font-size:12.5px; background:#fff;}
+  .target-table caption{font-size:13px; font-weight:800; color:var(--purple); text-align:left; padding:2px 4px 9px; letter-spacing:.2px;}
+  .target-table th, .target-table td{border:1px solid #D7DEE6; padding:9px 11px; vertical-align:top; line-height:1.5;}
+  .target-table thead th{background:var(--purple); color:#fff; font-weight:800; text-align:left; font-size:12.5px;}
+  .target-table tbody th{background:#F3EEF9; color:var(--ink); font-weight:800; width:150px; white-space:normal;}
+  .target-table tbody tr:nth-child(even) td{background:#F7FAFC;}
+  .target-table .el{color:var(--purple); font-weight:800;}
+  .target-table .sub{color:var(--muted); font-weight:600; font-size:11px;}
+  .target-table td b, .target-table th b{color:var(--ink);}
 </style>
 </head>
 <body>
@@ -593,6 +604,168 @@ ber &lt;- abs(mu_b) / abs(log_rr_cal)                 # = 30.4（原始比值；
 <div class="callout">
   <span class="i18n-zh"><b>先看这个案例有多"严谨"，再看它输出了什么：</b>这项病例研究按当前标准几乎无可挑剔——<b>设计层面</b>严格遵循 TARGET 指南（资格标准、治疗策略、分配、随访、结局、因果对比全部预先明确，完整模拟目标随机试验）；<b>分析层面</b>采用 TMLE，因果推断方法论前沿的双重稳健估计器，配合 SuperLearner 与 10 个基线协变量。然而校准诊断显示：<b>即便有这双重保障，估计仍被系统性偏移主导（BF = 0.91，校准后 RR = 1.01）</b>。两层含义：<b>其一</b>，"偏倚主导"的判决不可能被归咎于分析粗糙——它出自一个全流程规范的严格研究；<b>其二</b>，方法论上的最优配置并不能消除未测量混杂——设计规范与估计精良各自对付的是它们设计上能解决的威胁，经验性偏倚诊断不是对研究严谨性的否定，而是最佳实践的必要补充。</span>
   <span class="i18n-en"><b>First see how rigorous this case study is, then see what it produced:</b> by current standards the study is close to impeccable — <b>at the design level</b> it strictly follows the TARGET guideline (eligibility, treatment strategy, assignment, follow-up, outcome, and causal contrast all specified up front, fully emulating the target randomized trial); <b>at the analysis level</b> it uses TMLE, a state-of-the-art doubly robust estimator at the frontier of causal inference, with SuperLearner and 10 baseline covariates. Yet the calibration diagnostic shows: <b>even under this dual safeguard, the estimate remained dominated by systematic shifting (BF = 0.91, calibrated RR = 1.01)</b>. Two lessons: <b>first</b>, the "bias-dominated" verdict cannot be attributed to a sloppy analysis — it came from a rigorous, protocol-conformant study; <b>second</b>, the best available methodology cannot remove unmeasured confounding — rigorous design and sophisticated estimation each address the threats they were built to address, and an empirical bias diagnostic is not a concession against rigor but a necessary complement to best practice.</span>
+</div>
+
+<!-- ============ ⑥ TARGET 指南依从性对照表（β 阻滞剂 + GDMT） ============ -->
+<h3><span class="i18n-zh">目标试验模拟（TARGET）指南依从性：逐项对照</span><span class="i18n-en">Target Trial Emulation (TARGET) guideline adherence: item by item</span> <span class="en">TARGET guideline adherence</span></h3>
+<p><span class="i18n-zh">下面两张表把本研究的两项病例研究，逐项严格对照 <b>TARGET 指南</b>（Transparent Reporting of Observational Studies Emulating a Target Trial；Hernán &amp; Robins；Dickerman &amp; Hernán 2019）的每一条目。左列为理想目标试验中该条目的含义，右列为本研究在观察性数据中如何具体实现它。两张表合并覆盖 TARGET 指南的全部条目，不遗漏任何一项。</span>
+<span class="i18n-en">The two tables below map each of our two case studies, item by item, onto every component of the <b>TARGET guideline</b> (Transparent Reporting of Observational Studies Emulating a Target Trial; Hernán &amp; Robins; Dickerman &amp; Hernán 2019). The left column states what the item means in the ideal target trial; the right column states how the study implements it in observational data. Together the two tables cover all TARGET items, with none omitted.</span></p>
+
+<div class="pico-wrap">
+  <table class="target-table i18n-zh">
+    <caption>表：β 受体阻滞剂研究对 TARGET 指南各条目的逐项依从（理想目标试验 vs 观察性模拟实现）</caption>
+    <thead><tr><th>TARGET 条目</th><th>理想目标试验中的定义</th><th>β 受体阻滞剂研究的模拟实现</th></tr></thead>
+    <tbody>
+      <tr><th><span class="el">1</span> 纳入与排除标准<br><span class="sub">Eligibility criteria</span></th>
+        <td>射血分数下降型心衰（HFrEF）患者，且"滴定至 ≥50% 目标剂量"与"维持 &lt;50%"两种策略在伦理与临床上均可被随机分配；排除无法耐受或禁忌者。</td>
+        <td>HFrEF 住院、β 受体阻滞剂<b>新用药者</b>（time-zero 前无该药使用，避免现用药偏倚与不朽时间偏倚）、出院存活且可随访 ≥1 年；共 <b>14,677</b> 例心衰住院。新用药者设计从源头切断"入组前已在用药"造成的不朽时间偏倚。</td></tr>
+      <tr><th><span class="el">2</span> 治疗策略<br><span class="sub">Treatment strategies</span></th>
+        <td>两种预先定义的<b>静态策略</b>：策略 A = 滴定至 ≥50% 目标剂量；策略 B = 维持 &lt;50% 目标剂量。</td>
+        <td>以出院时<b>实际达到的剂量</b>定义两个静态策略：干预 = 达到 ≥50% 目标剂量（并假定出院后 1 年内维持该用量），对照 = &lt;50%。策略在 time-zero 一次性定义，不随时点改变，符合 TARGET 框架对静态策略的要求。</td></tr>
+      <tr><th><span class="el">3</span> 分配程序与时点<br><span class="sub">Assignment procedure &amp; timing</span></th>
+        <td>在 <b>time-zero（基线）</b>进行随机分配。</td>
+        <td>以<b>出院日</b>为 time-zero；在 time-zero 测量"达到的剂量"作为观测暴露。新用药者设计保证 time-zero 前无暴露，因此不存在入组前已用药造成的不朽时间偏倚；分配虽非随机，但严格锚定在一个明确定义的时点。</td></tr>
+      <tr><th><span class="el">4</span> 随访期<br><span class="sub">Follow-up period</span></th>
+        <td>自随机分配起，至预设随访终点（1 年）或结局发生。</td>
+        <td>随访自出院日（time-zero）起至出院后 1 年；设 <b>3–14 天宽限期</b>（grace period）处理出院带药与剂量爬坡的时滞。结局在统一时点测量，避免错判随访起点。</td></tr>
+      <tr><th><span class="el">5</span> 结局<br><span class="sub">Outcome</span></th>
+        <td>预先指定的硬终点，盲法判定以减少错分。</td>
+        <td>主要结局为出院后 <b>1 年心血管事件</b>；核心硬终点为<b>全因死亡</b>（测量最干净、最少争议）。MIMIC-IV 的死亡记录延伸至出院之后，使 1 年全因死亡随访完整，而非用住院死亡等软替代。</td></tr>
+      <tr><th><span class="el">6</span> 因果对比<br><span class="sub">Causal contrasts (ITT / PP)</span></th>
+        <td>同时报告<b>意向性治疗（ITT，按分配策略对比）</b>与<b>符合方案（PP，按实际执行对比）</b>效应。</td>
+        <td>明确以<b>达到的剂量</b>（PP 式对比）为主要因果对比，这正是健康依从者效应最易混入之处；ITT 与 PP 在模拟中均预先声明，避免事后挑选对比方式。</td></tr>
+      <tr><th><span class="el">7</span> 分析计划<br><span class="sub">Analysis plan</span></th>
+        <td>预先指定估计量与统计方法，处理混杂与失访。</td>
+        <td>采用 <b>TMLE</b>（双重稳健、半参数有效）估计，nuisance 函数由 <b>SuperLearner</b> 集成学习拟合，纳入 <b>10 个基线协变量</b>；叠加负对照经验校准与 BF 诊断。理由见下方专节。</td></tr>
+    </tbody>
+  </table>
+  <table class="target-table i18n-en">
+    <caption>Table: Item-by-item adherence of the beta-blocker study to the TARGET guideline (ideal target trial vs observational emulation)</caption>
+    <thead><tr><th>TARGET item</th><th>Defined in the ideal target trial</th><th>Implemented in the beta-blocker study</th></tr></thead>
+    <tbody>
+      <tr><th><span class="el">1</span> Eligibility criteria</th>
+        <td>HFrEF patients for whom both "titrate to ≥50% target dose" and "maintain &lt;50%" are ethically and clinically assignable; exclude those intolerant or contraindicated.</td>
+        <td>HFrEF hospitalization, <b>new users</b> of beta-blocker (no prior use before time-zero, avoiding prevalent-user and immortal-time bias), discharged alive and followable ≥1 year; <b>14,677</b> hospitalizations. The new-user design removes immortal-time bias from pre-enrollment exposure.</td></tr>
+      <tr><th><span class="el">2</span> Treatment strategies</th>
+        <td>Two pre-specified <b>static strategies</b>: A = titrate to ≥50% target dose; B = maintain &lt;50%.</td>
+        <td>Two static strategies defined by <b>achieved dose at discharge</b>: intervention = ≥50% target dose (assumed maintained 1 year), comparator = &lt;50%. Defined once at time-zero, not time-varying, per the TARGET static-strategy requirement.</td></tr>
+      <tr><th><span class="el">3</span> Assignment procedure &amp; timing</th>
+        <td>Random assignment at <b>time-zero (baseline)</b>.</td>
+        <td><b>Day of discharge</b> is time-zero; achieved dose is measured as the observed exposure at time-zero. New-user design ensures no pre-time-zero exposure, so no immortal-time bias; assignment is observational but anchored to a well-defined time zero.</td></tr>
+      <tr><th><span class="el">4</span> Follow-up period</th>
+        <td>From randomization to the pre-specified end of follow-up (1 year) or event.</td>
+        <td>Follow-up from discharge (time-zero) to 1 year post-discharge; a <b>3–14 day grace period</b> handles discharge stockpiling and titration lag. Outcome measured at a fixed time point.</td></tr>
+      <tr><th><span class="el">5</span> Outcome</th>
+        <td>Pre-specified hard endpoint, adjudicated blinded to reduce misclassification.</td>
+        <td>Primary outcome is <b>1-year cardiovascular events</b>; core hard endpoint is <b>all-cause mortality</b> (cleanest, least debatable). MIMIC-IV death records extend beyond discharge, giving complete 1-year mortality follow-up rather than a soft in-hospital proxy.</td></tr>
+      <tr><th><span class="el">6</span> Causal contrasts (ITT / PP)</th>
+        <td>Report both <b>intention-to-treat (ITT, by assigned strategy)</b> and <b>per-protocol (PP, by actual execution)</b> effects.</td>
+        <td>The primary contrast is the <b>achieved-dose (PP-style)</b> contrast, exactly where the healthy-adherer effect enters; both ITT and PP are pre-specified in the emulation, avoiding post-hoc contrast selection.</td></tr>
+      <tr><th><span class="el">7</span> Analysis plan</th>
+        <td>Pre-specify estimand and statistical method, handling confounding and loss to follow-up.</td>
+        <td><b>TMLE</b> (doubly robust, semiparametrically efficient), with nuisance functions fit by <b>SuperLearner</b> over <b>10 baseline covariates</b>; layered with negative-control empirical calibration and the BF diagnostic. Rationale below.</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="pico-wrap">
+  <table class="target-table i18n-zh">
+    <caption>表：GDMT 研究对 TARGET 指南各条目的逐项依从（与 β 受体阻滞剂案例共享同一队列与同一时点框架）</caption>
+    <thead><tr><th>TARGET 条目</th><th>理想目标试验中的定义</th><th>GDMT 研究的模拟实现</th></tr></thead>
+    <tbody>
+      <tr><th><span class="el">1</span> 纳入与排除标准<br><span class="sub">Eligibility criteria</span></th>
+        <td>HFrEF 患者，且"使用 ≥3 类 GDMT"与"未达 GDMT"两种策略均可被随机分配；排除禁忌者。</td>
+        <td>与 β 受体阻滞剂案例<b>共享同一合格标准与同一批 14,677 例</b>心衰住院患者；GDMT 阳性对照与 β 阻滞剂案例是同一队列上的两种不同暴露定义，保证可比。</td></tr>
+      <tr><th><span class="el">2</span> 治疗策略<br><span class="sub">Treatment strategies</span></th>
+        <td>两种静态策略：策略 A = 使用 ≥3 类 GDMT；策略 B = 未达 GDMT（&lt;3 类）。</td>
+        <td>以出院时<b>实际使用的心衰药物类别数</b>定义：干预 = 使用 ≥3 类 GDMT（ACEI/ARB/ARNI + β 阻滞剂 + MRA），对照 = &lt;3 类。静态，出院时定义。不含 SGLT2 抑制剂（当时指南尚未纳入，队列几乎无人使用）。</td></tr>
+      <tr><th><span class="el">3</span> 分配程序与时点<br><span class="sub">Assignment procedure &amp; timing</span></th>
+        <td>在 time-zero（基线）随机分配。</td>
+        <td>同样以<b>出院日</b>为 time-zero，观测暴露（达类数）在 time-zero 测量；与 β 阻滞剂案例采用同一时点框架，便于同一套校准对照下直接比较。</td></tr>
+      <tr><th><span class="el">4</span> 随访期<br><span class="sub">Follow-up period</span></th>
+        <td>自随机分配起至 1 年或结局发生。</td>
+        <td>同 β 阻滞剂案例：出院后 1 年随访，3–14 天宽限期，统一时点测量结局。</td></tr>
+      <tr><th><span class="el">5</span> 结局<br><span class="sub">Outcome</span></th>
+        <td>预先指定的硬终点。</td>
+        <td>同 β 阻滞剂案例：1 年心血管事件，核心全因死亡，随访完整。</td></tr>
+      <tr><th><span class="el">6</span> 因果对比<br><span class="sub">Causal contrasts (ITT / PP)</span></th>
+        <td>同时报告 ITT 与 PP 效应。</td>
+        <td>以<b>达类数</b>（PP 式）为主要对比。GDMT 作为<b>阳性对照</b>，其真实获益被随机试验反复证实，因此若校准把 GDMT 的获益也抹掉，即说明方法矫枉过正；这是检验"过度校正"的关键设计。</td></tr>
+      <tr><th><span class="el">7</span> 分析计划<br><span class="sub">Analysis plan</span></th>
+        <td>预先指定估计量与统计方法。</td>
+        <td>同 β 阻滞剂案例：<b>TMLE + SuperLearner + 10 个基线协变量</b> + 负对照经验校准。GDMT 与 β 阻滞剂共用同一套方法与同一组对照，使两项研究的结果可直接对比。</td></tr>
+    </tbody>
+  </table>
+  <table class="target-table i18n-en">
+    <caption>Table: Item-by-item adherence of the GDMT study to the TARGET guideline (shares cohort and time-zero framework with the beta-blocker case)</caption>
+    <thead><tr><th>TARGET item</th><th>Defined in the ideal target trial</th><th>Implemented in the GDMT study</th></tr></thead>
+    <tbody>
+      <tr><th><span class="el">1</span> Eligibility criteria</th>
+        <td>HFrEF patients for whom both "on ≥3 GDMT classes" and "not on GDMT" are assignable; exclude contraindicated.</td>
+        <td><b>Same eligibility and same 14,677 patients</b> as the beta-blocker case; the GDMT positive control and the beta-blocker case are two exposure definitions on one cohort, ensuring comparability.</td></tr>
+      <tr><th><span class="el">2</span> Treatment strategies</th>
+        <td>Two static strategies: A = on ≥3 GDMT classes; B = not on GDMT (&lt;3).</td>
+        <td>Defined by <b>number of HF drug classes used at discharge</b>: intervention = ≥3 GDMT classes (ACEI/ARB/ARNI + beta-blocker + MRA), comparator = &lt;3. Static, at discharge. SGLT2 inhibitors excluded (not yet guideline-standard then; almost no use in cohort).</td></tr>
+      <tr><th><span class="el">3</span> Assignment procedure &amp; timing</th>
+        <td>Random assignment at time-zero (baseline).</td>
+        <td>Same <b>discharge day</b> as time-zero; observed exposure (class count) measured at time-zero; same time-zero framework as the beta-blocker case for direct comparison under one calibration.</td></tr>
+      <tr><th><span class="el">4</span> Follow-up period</th>
+        <td>From randomization to 1 year or event.</td>
+        <td>Same as beta-blocker case: 1-year post-discharge follow-up, 3–14 day grace period, fixed outcome time.</td></tr>
+      <tr><th><span class="el">5</span> Outcome</th>
+        <td>Pre-specified hard endpoint.</td>
+        <td>Same as beta-blocker case: 1-year cardiovascular events, all-cause mortality as core, complete follow-up.</td></tr>
+      <tr><th><span class="el">6</span> Causal contrasts (ITT / PP)</th>
+        <td>Report both ITT and PP effects.</td>
+        <td>Primary contrast is <b>class-count (PP-style)</b>. GDMT is a <b>positive control</b> whose benefit is repeatedly confirmed by trials; if calibration also erased GDMT's benefit, the method would be over-correcting, the key design to detect over-correction.</td></tr>
+      <tr><th><span class="el">7</span> Analysis plan</th>
+        <td>Pre-specify estimand and method.</td>
+        <td>Same as beta-blocker case: <b>TMLE + SuperLearner + 10 baseline covariates</b> + negative-control calibration. GDMT and beta-blocker share one method and one control set, so results are directly comparable.</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h3><span class="i18n-zh">为什么用 TMLE 双重稳健估计器，以及为什么用 SuperLearner 集成配置？</span><span class="i18n-en">Why a doubly robust TMLE estimator, and why a SuperLearner ensemble configuration?</span> <span class="en">Why TMLE + SuperLearner</span></h3>
+<div class="card">
+  <p><span class="i18n-zh">本研究在<b>分析层</b>采用 <b>TMLE（targeted maximum likelihood estimation，靶向最大似然估计）</b>配合 <b>SuperLearner</b> 集成学习。这不是随意选择，而是为了让"规范设计（TARGET）"与"前沿估计"各司其职、互相补位。</span>
+  <span class="i18n-en">At the <b>analysis layer</b> the study uses <b>TMLE (targeted maximum likelihood estimation)</b> with a <b>SuperLearner</b> ensemble. This is not arbitrary: it lets rigorous design (TARGET) and frontier estimation play complementary roles.</span></p>
+
+  <p><span class="i18n-zh"><b>① TMLE 的双重稳健性（doubly robust）。</b>TMLE 同时拟合倾向模型与结果模型，并把两者结合起来。它的关键性质是：只要<b>两者之一</b>设定正确，因果估计就一致。相比之下，传统回归调整要求结果模型完全正确、IPTW（逆概率加权）要求倾向模型完全正确，任一误设即偏。TMLE 还是<b>半参数有效</b>的，在同类估计器中方差最小。因此即便真实关系复杂，TMLE 也不像单一模型那样脆弱。</span>
+  <span class="i18n-en"><b>① TMLE is doubly robust.</b> TMLE fits both a propensity model and an outcome model and combines them. The key property: the causal estimate is consistent if <b>either one</b> is correctly specified. By contrast, plain regression requires the outcome model to be exactly right, and IPTW requires the propensity model to be exactly right; misspecify either and it biases. TMLE is also <b>semiparametrically efficient</b>, attaining the smallest variance among its class. So it is far less fragile than a single model.</span></p>
+
+  <p><span class="i18n-zh"><b>② SuperLearner 是 TMLE 的"配置"层（nuisance 引擎）。</b>TMLE 的质量取决于那两个 nuisance 函数的拟合。SuperLearner 不赌单一参数形式，而是用交叉验证从一组候选算法（glm、gam、xgboost 等）中按样本外风险选出<b>最优加权集成</b>。即使真实关系高度非线性，集成也能自适应捕捉；渐近上它不劣于（且通常优于）任一单个候选。本研究测试了三套库（SL.glm / +SL.gam / +SL.xgboost），结论稳健（见第⑥节敏感性检验）。</span>
+  <span class="i18n-en"><b>② SuperLearner is TMLE's configuration layer (nuisance engine).</b> TMLE's quality hinges on those two nuisance functions. SuperLearner does not bet on one parametric form; via cross-validation it selects the <b>optimal weighted ensemble</b> from candidate algorithms (glm, gam, xgboost, etc.) by out-of-sample risk. Even if the true relation is highly nonlinear, the ensemble adapts; asymptotically it is no worse (usually better) than any single candidate. We tested three libraries (SL.glm / +SL.gam / +SL.xgboost); conclusions were stable (Section ⑥ sensitivity checks).</span></p>
+
+  <p><span class="i18n-zh"><b>③ 与当代其他因果推断方法比较的先进性。</b>下表把本研究配置（TMLE + SuperLearner）与几种常用方法在四个维度上直接对比：</span>
+  <span class="i18n-en"><b>③ Its advancement over other contemporary causal methods.</b> The table contrasts our configuration (TMLE + SuperLearner) with common alternatives on four dimensions:</span></p>
+
+  <table class="target-table i18n-zh">
+    <caption>表：TMLE + SuperLearner 与当代因果推断方法的对比</caption>
+    <thead><tr><th>方法</th><th>双重稳健</th><th>半参数有效</th><th>对模型误设稳健</th><th>极端权重敏感度</th></tr></thead>
+    <tbody>
+      <tr><th>朴素结果回归<br><span class="sub">Naive outcome regression</span></th><td>否</td><td>否</td><td>脆弱（结果模型误设即偏）</td><td>不涉及权重</td></tr>
+      <tr><th>IPTW 逆概率加权<br><span class="sub">Inverse probability weighting</span></th><td>否（需倾向模型正确）</td><td>否</td><td>脆弱（倾向误设即偏）</td><td>高（极端权重易爆炸）</td></tr>
+      <tr><th>G-computation 标准化<br><span class="sub">G-computation / standardization</span></th><td>否（需结果模型正确）</td><td>否</td><td>脆弱（结果模型误设即偏）</td><td>不涉及权重</td></tr>
+      <tr><th><b>TMLE（本研究）</b><br><span class="sub">Targeted ML estimation</span></th><td><b>是</b></td><td><b>是</b></td><td><b>稳健（倾向或结果其一正确即一致）</b></td><td><b>低（截断 + 集成）</b></td></tr>
+      <tr><th>DoubleML<br><span class="sub">Double machine learning</span></th><td>是</td><td>是</td><td>稳健</td><td>低</td></tr>
+      <tr><th>SuperLearner<br><span class="sub">（非独立估计器）</span></th><td colspan="4">不是独立的因果估计器，而是 TMLE 的 nuisance 函数拟合引擎，提供模型灵活性与抗误设保护</td></tr>
+    </tbody>
+  </table>
+  <table class="target-table i18n-en">
+    <caption>Table: TMLE + SuperLearner vs contemporary causal-inference methods</caption>
+    <thead><tr><th>Method</th><th>Doubly robust</th><th>Semipar. efficient</th><th>Robust to misspecification</th><th>Extreme-weight sensitivity</th></tr></thead>
+    <tbody>
+      <tr><th>Naive outcome regression</th><td>No</td><td>No</td><td>Fragile (biases if outcome model wrong)</td><td>No weights</td></tr>
+      <tr><th>Inverse probability weighting (IPTW)</th><td>No (needs correct propensity)</td><td>No</td><td>Fragile (biases if propensity wrong)</td><td>High (extreme weights blow up)</td></tr>
+      <tr><th>G-computation / standardization</th><td>No (needs correct outcome model)</td><td>No</td><td>Fragile (biases if outcome model wrong)</td><td>No weights</td></tr>
+      <tr><th><b>TMLE (this study)</b></th><td><b>Yes</b></td><td><b>Yes</b></td><td><b>Robust (consistent if either model correct)</b></td><td><b>Low (truncation + ensemble)</b></td></tr>
+      <tr><th>DoubleML</th><td>Yes</td><td>Yes</td><td>Robust</td><td>Low</td></tr>
+      <tr><th>SuperLearner</th><td colspan="4">Not a standalone causal estimator; it is TMLE's nuisance-engine, supplying model flexibility and misspecification protection</td></tr>
+    </tbody>
+  </table>
+
+  <p><span class="i18n-zh"><b>④ 其他优势。</b>第一，TMLE 与<b>负对照经验校准天然兼容</b>：分析层（TMLE 估计）之上可叠加诊断层（BF/BER），二者不冲突。第二，对<b>极端倾向得分权重不敏感</b>（经截断与集成，避免 IPTW 的权重爆炸）。第三，<b>透明可复现</b>：TRIPOD 风格报告，全部 R 代码、数据与 12 个负对照公开，任何人可重跑。正因如此，当校准诊断显示"即便有双重稳健 + 前沿估计，估计仍被系统性偏移主导"时，这个判决不可能被归咎于分析粗糙，而只能指向未测量混杂，这正是经验性偏倚诊断不可替代的理由。</span>
+  <span class="i18n-en"><b>④ Other advantages.</b> First, TMLE is <b>naturally compatible with negative-control calibration</b>: the diagnostic layer (BF/BER) stacks on top of the analysis layer (TMLE estimate) without conflict. Second, it is <b>insensitive to extreme propensity weights</b> (via truncation and ensembling, avoiding IPTW's weight blow-up). Third, it is <b>transparent and reproducible</b>: TRIPOD-style reporting, with all R code, data, and the 12 negative controls public so anyone can rerun. Precisely because of this, when the calibration diagnostic shows that "even under doubly robust, frontier estimation the estimate remains bias-dominated," the verdict cannot be blamed on sloppy analysis, but only on unmeasured confounding, which is exactly why an empirical bias diagnostic is irreplaceable.</span></p>
 </div>
 
 <h3><span class="i18n-zh">负对照的偏倚分布特征：漏斗图</span><span class="i18n-en">The negative-control fingerprint: funnel plot</span> <span class="en">The negative-control fingerprint</span></h3>
