@@ -127,6 +127,24 @@
   .target-table .el{color:var(--purple); font-weight:800;}
   .target-table .sub{color:var(--muted); font-weight:600; font-size:11px;}
   .target-table td b, .target-table th b{color:var(--ink);}
+  .target-table tr.sec th{background:#E3D6F2; color:var(--purple); font-size:12px; font-weight:800; letter-spacing:.3px; text-align:left; padding:7px 11px;}
+
+  /* ================= 入组流程图（TARGET 条目 8） ================= */
+  .flow{margin:16px 0 8px; font-size:13px; display:flex; flex-direction:column; align-items:center;}
+  .flow .box{max-width:620px; background:#fff; border:1.5px solid var(--purple); border-radius:10px;
+            padding:10px 16px; text-align:center; box-shadow:0 1px 4px rgba(90,50,140,.14); line-height:1.5;}
+  .flow .box.lead{background:#F3EEF9; font-weight:800;}
+  .flow .box.excl{background:#FBEFE9; border-color:#C0651F;}
+  .flow .box.A{background:#EAF3EC; border-color:#2E8B57;}
+  .flow .box.B{background:#FBEFE9; border-color:#C0651F;}
+  .flow .box b{color:var(--ink);}
+  .flow .arrow{width:0; height:0; border-left:7px solid transparent; border-right:7px solid transparent;
+              border-top:11px solid var(--purple); margin:5px 0;}
+  .flow .split{display:flex; gap:30px; justify-content:center; width:100%; margin-top:2px;}
+  .flow .arm{flex:1; max-width:380px; display:flex; flex-direction:column; align-items:center;}
+  .flow .fu{font-size:11.5px; color:var(--muted); text-align:center; margin-top:7px; line-height:1.55; max-width:380px;}
+  .flow .note{font-size:11.5px; color:var(--muted); margin-top:13px; text-align:center; max-width:660px; line-height:1.55;}
+  .flow-h{font-size:14.5px; font-weight:800; color:var(--purple); margin:18px 0 2px; letter-spacing:.2px;}
 </style>
 </head>
 <body>
@@ -607,122 +625,143 @@ ber &lt;- abs(mu_b) / abs(log_rr_cal)                 # = 30.4（原始比值；
 </div>
 
 <!-- ============ ⑥ TARGET 指南依从性对照表（β 阻滞剂 + GDMT） ============ -->
-<h3><span class="i18n-zh">目标试验模拟（TARGET）指南依从性：逐项对照</span><span class="i18n-en">Target Trial Emulation (TARGET) guideline adherence: item by item</span> <span class="en">TARGET guideline adherence</span></h3>
-<p><span class="i18n-zh">下面两张表把本研究的两项病例研究，逐项严格对照 <b>TARGET 指南</b>（Transparent Reporting of Observational Studies Emulating a Target Trial；Hernán &amp; Robins；Dickerman &amp; Hernán 2019）的每一条目。左列为理想目标试验中该条目的含义，右列为本研究在观察性数据中如何具体实现它。两张表合并覆盖 TARGET 指南的全部条目，不遗漏任何一项。</span>
-<span class="i18n-en">The two tables below map each of our two case studies, item by item, onto every component of the <b>TARGET guideline</b> (Transparent Reporting of Observational Studies Emulating a Target Trial; Hernán &amp; Robins; Dickerman &amp; Hernán 2019). The left column states what the item means in the ideal target trial; the right column states how the study implements it in observational data. Together the two tables cover all TARGET items, with none omitted.</span></p>
+<h3><span class="i18n-zh">目标试验模拟（TARGET）指南完整依从性：变量列表（21 项全覆盖）</span><span class="i18n-en">Target Trial Emulation (TARGET) guideline full adherence: the variable list (all 21 items)</span> <span class="en">TARGET guideline: complete variable list</span></h3>
+<p><span class="i18n-zh">下表依据 <b>TARGET 指南</b>（Transparent Reporting of Observational Studies Emulating a Target Trial；Cashin et al., JAMA 2025）的<b>完整报告清单（21 个条目）</b>，把本研究的变量逐一列出。第 6 项"目标试验规范"展开为 8 个核心组件（6a–6h：纳入排除、治疗策略、分配程序、随访、结局、因果对比、识别假设、数据分析），确保不遗漏任何一项。左列为理想目标试验中该条目的含义（规范），右列为本研究在观察性数据中的具体实现（β 阻滞剂与 GDMT 两项研究均覆盖，共享处标注"两项共用"）。第 8 项"受试者选择"以入组流程图展示（见下表下方）。</span>
+<span class="i18n-en">Based on the <b>full TARGET reporting checklist (21 items)</b> (Transparent Reporting of Observational Studies Emulating a Target Trial; Cashin et al., JAMA 2025), the table below lists every study variable. Item 6 "Target trial specification" is expanded into the 8 core components (6a–6h: eligibility, treatment strategies, assignment, follow-up, outcome, causal contrast, identifying assumptions, data analysis), so no item is omitted. The left column states what the item means in the ideal target trial (specification); the right column states how the study implements it in observational data (both the beta-blocker and GDMT studies are covered; shared items are marked "both studies"). Item 8 "Participant selection" is shown as a flow diagram below the table.</span></p>
 
 <div class="pico-wrap">
-  <table class="target-table i18n-zh">
-    <caption>表：β 受体阻滞剂研究对 TARGET 指南各条目的逐项依从（理想目标试验 vs 观察性模拟实现）</caption>
-    <thead><tr><th>TARGET 条目</th><th>理想目标试验中的定义</th><th>β 受体阻滞剂研究的模拟实现</th></tr></thead>
+  <table class="target-table">
+    <caption><span class="i18n-zh">表：TARGET 指南完整变量列表（21 项全覆盖，含 8 核心组件 6a–6h）</span><span class="i18n-en">Table: Complete TARGET variable list (all 21 items, including the 8 core components 6a–6h)</span></caption>
+    <thead><tr><th>TARGET 条目<br><span class="sub">Item (# / section)</span></th><th>目标试验规范<br><span class="sub">Specification</span></th><th>本研究观察性模拟实现<br><span class="sub">Observational emulation</span></th></tr></thead>
     <tbody>
-      <tr><th><span class="el">1</span> 纳入与排除标准<br><span class="sub">Eligibility criteria</span></th>
-        <td>射血分数下降型心衰（HFrEF）患者，且"滴定至 ≥50% 目标剂量"与"维持 &lt;50%"两种策略在伦理与临床上均可被随机分配；排除无法耐受或禁忌者。</td>
-        <td>HFrEF 住院、β 受体阻滞剂<b>新用药者</b>（time-zero 前无该药使用，避免现用药偏倚与不朽时间偏倚）、出院存活且可随访 ≥1 年；共 <b>14,677</b> 例心衰住院。新用药者设计从源头切断"入组前已在用药"造成的不朽时间偏倚。</td></tr>
-      <tr><th><span class="el">2</span> 治疗策略<br><span class="sub">Treatment strategies</span></th>
-        <td>两种预先定义的<b>静态策略</b>：策略 A = 滴定至 ≥50% 目标剂量；策略 B = 维持 &lt;50% 目标剂量。</td>
-        <td>以出院时<b>实际达到的剂量</b>定义两个静态策略：干预 = 达到 ≥50% 目标剂量（并假定出院后 1 年内维持该用量），对照 = &lt;50%。策略在 time-zero 一次性定义，不随时点改变，符合 TARGET 框架对静态策略的要求。</td></tr>
-      <tr><th><span class="el">3</span> 分配程序与时点<br><span class="sub">Assignment procedure &amp; timing</span></th>
-        <td>在 <b>time-zero（基线）</b>进行随机分配。</td>
-        <td>以<b>出院日</b>为 time-zero；在 time-zero 测量"达到的剂量"作为观测暴露。新用药者设计保证 time-zero 前无暴露，因此不存在入组前已用药造成的不朽时间偏倚；分配虽非随机，但严格锚定在一个明确定义的时点。</td></tr>
-      <tr><th><span class="el">4</span> 随访期<br><span class="sub">Follow-up period</span></th>
-        <td>自随机分配起，至预设随访终点（1 年）或结局发生。</td>
-        <td>随访自出院日（time-zero）起至出院后 1 年；设 <b>3–14 天宽限期</b>（grace period）处理出院带药与剂量爬坡的时滞。结局在统一时点测量，避免错判随访起点。</td></tr>
-      <tr><th><span class="el">5</span> 结局<br><span class="sub">Outcome</span></th>
-        <td>预先指定的硬终点，盲法判定以减少错分。</td>
-        <td>主要结局为出院后 <b>1 年心血管事件</b>；核心硬终点为<b>全因死亡</b>（测量最干净、最少争议）。MIMIC-IV 的死亡记录延伸至出院之后，使 1 年全因死亡随访完整，而非用住院死亡等软替代。</td></tr>
-      <tr><th><span class="el">6</span> 因果对比<br><span class="sub">Causal contrasts (ITT / PP)</span></th>
-        <td>同时报告<b>意向性治疗（ITT，按分配策略对比）</b>与<b>符合方案（PP，按实际执行对比）</b>效应。</td>
-        <td>明确以<b>达到的剂量</b>（PP 式对比）为主要因果对比，这正是健康依从者效应最易混入之处；ITT 与 PP 在模拟中均预先声明，避免事后挑选对比方式。</td></tr>
-      <tr><th><span class="el">7</span> 分析计划<br><span class="sub">Analysis plan</span></th>
-        <td>预先指定估计量与统计方法，处理混杂与失访。</td>
-        <td>采用 <b>TMLE</b>（双重稳健、半参数有效）估计，nuisance 函数由 <b>SuperLearner</b> 集成学习拟合，纳入 <b>10 个基线协变量</b>；叠加负对照经验校准与 BF 诊断。理由见下方专节。</td></tr>
-    </tbody>
-  </table>
-  <table class="target-table i18n-en">
-    <caption>Table: Item-by-item adherence of the beta-blocker study to the TARGET guideline (ideal target trial vs observational emulation)</caption>
-    <thead><tr><th>TARGET item</th><th>Defined in the ideal target trial</th><th>Implemented in the beta-blocker study</th></tr></thead>
-    <tbody>
-      <tr><th><span class="el">1</span> Eligibility criteria</th>
-        <td>HFrEF patients for whom both "titrate to ≥50% target dose" and "maintain &lt;50%" are ethically and clinically assignable; exclude those intolerant or contraindicated.</td>
-        <td>HFrEF hospitalization, <b>new users</b> of beta-blocker (no prior use before time-zero, avoiding prevalent-user and immortal-time bias), discharged alive and followable ≥1 year; <b>14,677</b> hospitalizations. The new-user design removes immortal-time bias from pre-enrollment exposure.</td></tr>
-      <tr><th><span class="el">2</span> Treatment strategies</th>
-        <td>Two pre-specified <b>static strategies</b>: A = titrate to ≥50% target dose; B = maintain &lt;50%.</td>
-        <td>Two static strategies defined by <b>achieved dose at discharge</b>: intervention = ≥50% target dose (assumed maintained 1 year), comparator = &lt;50%. Defined once at time-zero, not time-varying, per the TARGET static-strategy requirement.</td></tr>
-      <tr><th><span class="el">3</span> Assignment procedure &amp; timing</th>
-        <td>Random assignment at <b>time-zero (baseline)</b>.</td>
-        <td><b>Day of discharge</b> is time-zero; achieved dose is measured as the observed exposure at time-zero. New-user design ensures no pre-time-zero exposure, so no immortal-time bias; assignment is observational but anchored to a well-defined time zero.</td></tr>
-      <tr><th><span class="el">4</span> Follow-up period</th>
-        <td>From randomization to the pre-specified end of follow-up (1 year) or event.</td>
-        <td>Follow-up from discharge (time-zero) to 1 year post-discharge; a <b>3–14 day grace period</b> handles discharge stockpiling and titration lag. Outcome measured at a fixed time point.</td></tr>
-      <tr><th><span class="el">5</span> Outcome</th>
-        <td>Pre-specified hard endpoint, adjudicated blinded to reduce misclassification.</td>
-        <td>Primary outcome is <b>1-year cardiovascular events</b>; core hard endpoint is <b>all-cause mortality</b> (cleanest, least debatable). MIMIC-IV death records extend beyond discharge, giving complete 1-year mortality follow-up rather than a soft in-hospital proxy.</td></tr>
-      <tr><th><span class="el">6</span> Causal contrasts (ITT / PP)</th>
-        <td>Report both <b>intention-to-treat (ITT, by assigned strategy)</b> and <b>per-protocol (PP, by actual execution)</b> effects.</td>
-        <td>The primary contrast is the <b>achieved-dose (PP-style)</b> contrast, exactly where the healthy-adherer effect enters; both ITT and PP are pre-specified in the emulation, avoiding post-hoc contrast selection.</td></tr>
-      <tr><th><span class="el">7</span> Analysis plan</th>
-        <td>Pre-specify estimand and statistical method, handling confounding and loss to follow-up.</td>
-        <td><b>TMLE</b> (doubly robust, semiparametrically efficient), with nuisance functions fit by <b>SuperLearner</b> over <b>10 baseline covariates</b>; layered with negative-control empirical calibration and the BF diagnostic. Rationale below.</td></tr>
+      <tr class="sec"><th colspan="3"><span class="i18n-zh">摘要 Abstract</span><span class="i18n-en">Abstract</span></th></tr>
+      <tr><th><span class="el">1</span> 摘要<br><span class="sub">Abstract · 1a–1c</span></th>
+        <td><span class="i18n-zh">声明研究以观察数据模拟目标试验；列出数据源；总结假设、方法、发现与结论。</span><span class="i18n-en">State the study emulates a target trial with observational data; list data sources; summarize assumptions, methods, findings and conclusions.</span></td>
+        <td><span class="i18n-zh">声明本研究以 MIMIC-IV 观察数据模拟目标试验，比较 β 阻滞剂达标剂量与 GDMT 多药对 1 年心血管事件的影响；列出数据源（MIMIC-IV，14,677 例）；总结方法（TMLE + SuperLearner + 负对照校准）与发现（未校准 RR 0.83 / 0.65，校准后 1.01 / 0.78）及结论（BF 量化偏倚主导）。</span><span class="i18n-en">States the study emulates a target trial with MIMIC-IV data comparing achieved beta-blocker dose and multi-drug GDMT on 1-year cardiovascular events; lists sources (MIMIC-IV, 14,677); summarizes methods (TMLE + SuperLearner + negative-control calibration) and findings (uncalibrated RR 0.83 / 0.65, calibrated 1.01 / 0.78) and conclusion (BF quantifies bias dominance).</span></td></tr>
+
+      <tr class="sec"><th colspan="3"><span class="i18n-zh">引言 Introduction</span><span class="i18n-en">Introduction</span></th></tr>
+      <tr><th><span class="el">2</span> 背景<br><span class="sub">Background</span></th>
+        <td><span class="i18n-zh">描述研究的科学背景与知识缺口。</span><span class="i18n-en">Describe the scientific background and the knowledge gap.</span></td>
+        <td><span class="i18n-zh">β 阻滞剂与 GDMT 是 HFrEF 治疗的基石，但观察性研究中健康依从者效应会系统性高估其疗效；经验性偏倚诊断（BF/BER）填补方法学空白。两项研究共用同一背景。</span><span class="i18n-en">Beta-blockers and GDMT are HFrEF cornerstones, yet in observational data the healthy-adherer effect systematically overstates benefit; the empirical bias diagnostic (BF/BER) fills a methodology gap. Both studies share this background.</span></td></tr>
+      <tr><th><span class="el">3</span> 因果问题<br><span class="sub">Causal question</span></th>
+        <td><span class="i18n-zh">概括因果问题。</span><span class="i18n-en">Summarize the causal question.</span></td>
+        <td><span class="i18n-zh">在 HFrEF 住院新用药者中，达到 ≥50% 目标剂量 β 阻滞剂（或同时使用 ≥3 类 GDMT）是否降低 1 年心血管事件发生率？两项研究共用同一因果问题框架。</span><span class="i18n-en">Among new users hospitalized for HFrEF, does achieving ≥50% target beta-blocker dose (or being on ≥3 GDMT classes) reduce 1-year cardiovascular events? Both studies share the same causal-question framework.</span></td></tr>
+      <tr><th><span class="el">4</span> 理由<br><span class="sub">Rationale</span></th>
+        <td><span class="i18n-zh">说明为何用可用数据模拟目标试验，并引用相关 RCT。</span><span class="i18n-en">Explain why emulating a target trial with the available data, citing informing RCTs.</span></td>
+        <td><span class="i18n-zh">以目标试验模拟把观察性分析表达为随机试验，便于与 CHAMP-HF 等 RCT 直接对话；并用负对照经验校准诊断未测量混杂造成的系统性偏倚。两项研究共用同一理由。</span><span class="i18n-en">Target trial emulation frames the observational analysis as a randomized trial, enabling direct dialogue with RCTs such as CHAMP-HF; negative-control calibration diagnoses systematic bias from unmeasured confounding. Both studies share this rationale.</span></td></tr>
+
+      <tr class="sec"><th colspan="3"><span class="i18n-zh">方法 Methods</span><span class="i18n-en">Methods</span></th></tr>
+      <tr><th><span class="el">5</span> 数据源<br><span class="sub">Data sources</span></th>
+        <td><span class="i18n-zh">列出每个数据源并描述其原始用途、类型、地理场景与时段；如相关说明数据如何链接或合并。</span><span class="i18n-en">Cite each data source and describe its original purpose, type, setting, period; if relevant, how data were linked or pooled.</span></td>
+        <td><span class="i18n-zh">MIMIC-IV（2008–2022，ICU 与住院数据）链接 MIMIC-IV-ECG；描述原始用途、类型、美国教学医院场景与时段；单中心去标识化数据库。两项研究共用同一数据源。</span><span class="i18n-en">MIMIC-IV (2008–2022, ICU and inpatient) linked to MIMIC-IV-ECG; describes original purpose, type, US teaching-hospital setting and period; de-identified single-center database. Both studies share the same source.</span></td></tr>
+      <tr><th><span class="el">6</span> 目标试验规范<br><span class="sub">Target trial specification</span></th>
+        <td><span class="i18n-zh">明确能回答因果问题的目标试验协议各组件（以下 6a–6h 逐条展开）。</span><span class="i18n-en">Specify the components of the target trial protocol that would answer the causal question (expanded item by item as 6a–6h below).</span></td>
+        <td><span class="i18n-zh">协议组件在观察数据中均可被锚定与操作化（见 6a–6h 与第 7 项）。</span><span class="i18n-en">All protocol components are anchorable and operationalizable in the data (see 6a–6h and item 7).</span></td></tr>
+      <tr><th><span class="el">6a</span> 纳入与排除标准<br><span class="sub">Eligibility criteria</span></th>
+        <td><span class="i18n-zh">描述理想目标试验中两策略可被随机分配的合格标准。</span><span class="i18n-en">Describe eligibility under which both strategies are randomly assignable in the ideal trial.</span></td>
+        <td><span class="i18n-zh">β 阻滞剂：HFrEF 住院、β 阻滞剂新用药者（time-zero 前 90 天无该药，消除既往用药者偏倚与不朽时间偏倚）、出院存活且可随访 ≥1 年；共 <b>14,677</b> 例。GDMT：共享同一合格标准与同一批 14,677 例，按药物类别数分类。</span><span class="i18n-en">Beta-blocker: HFrEF hospitalization, new users (no prior use 90 days before time-zero, removing prevalent-user and immortal-time bias), discharged alive and followable ≥1 year; <b>14,677</b> cases. GDMT: same eligibility and same 14,677 patients, classified by drug-class count.</span></td></tr>
+      <tr><th><span class="el">6b</span> 治疗策略<br><span class="sub">Treatment strategies</span></th>
+        <td><span class="i18n-zh">描述两预先定义的静态策略。</span><span class="i18n-en">Describe the two pre-specified static strategies.</span></td>
+        <td><span class="i18n-zh">β 阻滞剂：干预 = 出院时达到 ≥50% 目标日剂量（假定维持 1 年），对照 = &lt;50%。GDMT：干预 = 出院时使用 ≥3 类（ACEI/ARB/ARNI + β 阻滞剂 + MRA），对照 = &lt;3 类；不含 SGLT2i（当时未纳入指南）。均在 time-zero 一次性定义，不随时点改变。</span><span class="i18n-en">Beta-blocker: intervention = ≥50% target dose achieved at discharge (assumed maintained 1 year), comparator = &lt;50%. GDMT: intervention = ≥3 classes at discharge (ACEI/ARB/ARNI + beta-blocker + MRA), comparator = &lt;3; SGLT2i excluded (not guideline-standard then). Defined once at time-zero, not time-varying.</span></td></tr>
+      <tr><th><span class="el">6c</span> 分配程序与时点<br><span class="sub">Assignment procedure &amp; timing</span></th>
+        <td><span class="i18n-zh">在 time-zero（基线）进行随机分配。</span><span class="i18n-en">Random assignment at time-zero (baseline).</span></td>
+        <td><span class="i18n-zh">两项研究均以<b>出院日</b>为 time-zero；在 time-zero 测量达到剂量 / 达类数作为观测暴露。新用药者设计保证 time-zero 前无暴露，故无入组前用药造成的不朽时间偏倚；分配虽非随机，但锚定在明确定义时点。</span><span class="i18n-en">Both studies use <b>discharge day</b> as time-zero; achieved dose / class count is measured as the observed exposure at time-zero. New-user design ensures no pre-time-zero exposure, so no immortal-time bias; assignment is observational but anchored to a well-defined time zero.</span></td></tr>
+      <tr><th><span class="el">6d</span> 随访期<br><span class="sub">Follow-up period</span></th>
+        <td><span class="i18n-zh">随访自分配起至预设终点（1 年）或结局发生。</span><span class="i18n-en">Follow-up from assignment to the pre-specified end (1 year) or event.</span></td>
+        <td><span class="i18n-zh">两项研究随访均自出院日（time-zero）起至出院后 1 年；设 <b>3–14 天宽限期</b>处理出院带药与剂量爬坡时滞。结局在统一时点测量，避免错判随访起点。</span><span class="i18n-en">Both studies: follow-up from discharge (time-zero) to 1 year post-discharge; a <b>3–14 day grace period</b> handles discharge stockpiling and titration lag. Outcome measured at a fixed time point.</span></td></tr>
+      <tr><th><span class="el">6e</span> 结局<br><span class="sub">Outcome(s)</span></th>
+        <td><span class="i18n-zh">描述预先指定的硬终点，盲法判定以减少错分。</span><span class="i18n-en">Describe pre-specified hard endpoints, adjudicated to reduce misclassification.</span></td>
+        <td><span class="i18n-zh">两项研究主要结局均为出院后 <b>1 年心血管事件</b>；核心硬终点为<b>全因死亡</b>（测量最干净）。MIMIC-IV 死亡记录延伸至出院后，使 1 年全因死亡随访完整。</span><span class="i18n-en">Both studies: primary outcome is <b>1-year cardiovascular events</b>; core hard endpoint is <b>all-cause mortality</b> (cleanest). MIMIC-IV death records extend beyond discharge, giving complete 1-year mortality follow-up.</span></td></tr>
+      <tr><th><span class="el">6f</span> 因果对比<br><span class="sub">Causal contrast(s)</span></th>
+        <td><span class="i18n-zh">描述感兴趣的因果对比，含效应量。</span><span class="i18n-en">Describe the causal contrasts of interest, including effect measures.</span></td>
+        <td><span class="i18n-zh">两项研究均以达量 / 达类数（PP 式）为主要因果对比，正是健康依从者效应最易混入之处；ITT 与 PP 均预先声明，避免事后挑选。GDMT 另作为<b>阳性对照</b>检验矫枉过正。</span><span class="i18n-en">Both studies use achieved-dose / class-count (PP-style) as the primary contrast, exactly where the healthy-adherer effect enters; ITT and PP are pre-specified. GDMT also serves as a <b>positive control</b> to detect over-correction.</span></td></tr>
+      <tr><th><span class="el">6g</span> 识别假设<br><span class="sub">Identifying assumptions</span></th>
+        <td><span class="i18n-zh">描述为识别每个因果估计量所需假设（含因无随机化产生的基线混杂假设）及与之相关的变量。</span><span class="i18n-en">Describe assumptions needed to identify each estimand (including baseline confounding due to no randomization) and related variables.</span></td>
+        <td><span class="i18n-zh">可识别假设：① 无未测量混杂（纳入 10 个基线可测协变量）；② Positivity（两策略在协变量下均有正概率）；③ 一致性（策略定义对应潜在结局）。负对照直接检验可测混杂方向；不可测混杂由 BF 量化。两项研究假设相同。</span><span class="i18n-en">Identification assumptions: (i) no unmeasured confounding (10 measured baseline covariates); (ii) positivity (both strategies have positive probability given covariates); (iii) consistency. Negative controls directly test the direction of measured confounding; unmeasured confounding is quantified by BF. Assumptions identical for both studies.</span></td></tr>
+      <tr><th><span class="el">6h</span> 数据分析<br><span class="sub">Data analysis</span></th>
+        <td><span class="i18n-zh">描述每个估计量的分析流程、建模假设与缺失数据处理。</span><span class="i18n-en">Describe the analysis procedure, modelling assumptions and missing-data handling for each estimand.</span></td>
+        <td><span class="i18n-zh">两项研究均采用 <b>TMLE</b>（双重稳健、半参数有效）估计，nuisance 由 <b>SuperLearner</b> 集成（glm/gam/xgboost）拟合，纳入 <b>10 个基线协变量</b>；叠加 12 负对照经验校准与 BF/BER 诊断。理由见下方专节。</span><span class="i18n-en">Both studies use <b>TMLE</b> (doubly robust, semiparametrically efficient) with nuisances fit by <b>SuperLearner</b> (glm/gam/xgboost) over <b>10 baseline covariates</b>; layered with 12 negative-control empirical calibration and BF/BER diagnostics. Rationale below.</span></td></tr>
+      <tr><th><span class="el">7</span> 目标试验模拟（操作化）<br><span class="sub">Target trial emulation</span></th>
+        <td><span class="i18n-zh">描述各组件如何在观察数据中操作化，含所有变量的测量 / 确定方式。</span><span class="i18n-en">Describe how each component is operationalized in data, including how all variables were measured or ascertained.</span></td>
+        <td><span class="i18n-zh">所有变量在数据中可操作化：剂量由出院处方计算，结局由 MIMIC-IV 死亡 / 再入院记录，协变量取 time-zero 前测量值；避免错判随访起点与暴露。两项研究共享同一操作化框架。</span><span class="i18n-en">All variables operationalized in data: dose from discharge prescriptions, outcomes from MIMIC-IV death/readmission records, covariates measured before time-zero; avoids misclassifying follow-up start and exposure. Both studies share the operationalization framework.</span></td></tr>
+
+      <tr class="sec"><th colspan="3"><span class="i18n-zh">结果 Results</span><span class="i18n-en">Results</span></th></tr>
+      <tr><th><span class="el">8</span> 受试者选择<br><span class="sub">Participant selection</span></th>
+        <td><span class="i18n-zh">报告评估合格、合格、分配至各策略的人数；强烈建议附流程图。</span><span class="i18n-en">Report numbers assessed, eligible, and assigned to each strategy; a flow diagram is strongly recommended.</span></td>
+        <td><span class="i18n-zh">见下方<b>入组流程图</b>：15,053 例心衰住院评估 → 376 例排除（宽限期内未存活至 time-zero）→ 14,677 例合格 → 1,772 例（≥50%）/ 12,905 例（&lt;50%）。GDMT 共享同一合格队列，按药物类别数分类。</span><span class="i18n-en">See the <b>participant flow diagram</b> below: 15,053 HF hospitalizations assessed → 376 excluded (did not survive to time-zero) → 14,677 eligible → 1,772 (≥50%) / 12,905 (&lt;50%). GDMT shares the same eligible cohort, classified by drug-class count.</span></td></tr>
+      <tr><th><span class="el">9</span> 基线数据<br><span class="sub">Baseline data</span></th>
+        <td><span class="i18n-zh">描述各策略基线特征分布。</span><span class="i18n-en">Describe baseline characteristic distributions by strategy.</span></td>
+        <td><span class="i18n-zh">表 2 报告各策略基线分布：10 个协变量的标准化均值差（SMD）；中位年龄 73 岁（IQR 63–82），45.7% 女性；达标组呈健康依从者表型。两项研究共用同一基线表（同一队列）。</span><span class="i18n-en">Table 2 reports baseline distributions by strategy: standardized mean differences (SMD) for 10 covariates; median age 73 (IQR 63–82), 45.7% female; the achieved-dose group shows the healthy-adherer phenotype. Both studies share the same baseline table (one cohort).</span></td></tr>
+      <tr><th><span class="el">10</span> 随访<br><span class="sub">Follow-up</span></th>
+        <td><span class="i18n-zh">总结随访时长，描述各策略与对比的随访终止原因。</span><span class="i18n-en">Summarize follow-up length; describe reasons for end of follow-up per strategy and contrast.</span></td>
+        <td><span class="i18n-zh">两项研究随访均至 1 年；报告各策略随访终止原因（死亡、失访、竞争事件）。详见入组流程图随访框。</span><span class="i18n-en">Both studies followed to 1 year; reports reasons for end of follow-up per strategy (death, loss to follow-up, competing events). See the follow-up boxes in the flow diagram.</span></td></tr>
+      <tr><th><span class="el">11</span> 缺失数据<br><span class="sub">Missing data</span></th>
+        <td><span class="i18n-zh">描述各变量缺失频率（按策略）。</span><span class="i18n-en">Describe missing-data frequency per variable (by strategy).</span></td>
+        <td><span class="i18n-zh">MIMIC-IV 死亡随访完整，主要结局缺失极低；协变量缺失按 TMLE 的 SuperLearner 处理。两项研究相同。</span><span class="i18n-en">MIMIC-IV mortality follow-up is complete, so primary-outcome missingness is minimal; covariate missingness handled by TMLE's SuperLearner. Same for both studies.</span></td></tr>
+      <tr><th><span class="el">12</span> 结局<br><span class="sub">Outcomes</span></th>
+        <td><span class="i18n-zh">描述各策略结局的频率或分布。</span><span class="i18n-en">Describe outcome frequency or distribution by strategy.</span></td>
+        <td><span class="i18n-zh">β 阻滞剂：未校准 RR 0.83 → 校准 1.01（p=0.94）；GDMT：0.65 → 0.78（p=0.007）。校准后保护性关联在 β 阻滞剂中消失、在 GDMT 中存留。</span><span class="i18n-en">Beta-blocker: uncalibrated RR 0.83 → calibrated 1.01 (p=0.94); GDMT: 0.65 → 0.78 (p=0.007). The protective association vanishes for beta-blocker but survives for GDMT after calibration.</span></td></tr>
+      <tr><th><span class="el">13</span> 效应估计<br><span class="sub">Effect estimates</span></th>
+        <td><span class="i18n-zh">报告各因果对比的效应估计与精度（相对与绝对指标）。</span><span class="i18n-en">Report effect estimates with precision for each contrast (relative and absolute).</span></td>
+        <td><span class="i18n-zh">报告 RR（相对）与 RD（绝对），均含 95% CI；并附 Fieller 置信集以诚实处理比值在分母趋零时的无界区间。两项研究同法。</span><span class="i18n-en">Reports RR (relative) and RD (absolute), both with 95% CI; a Fieller confidence set honestly handles unbounded intervals when the ratio denominator approaches zero. Same method for both studies.</span></td></tr>
+      <tr><th><span class="el">14</span> 附加分析<br><span class="sub">Additional analyses</span></th>
+        <td><span class="i18n-zh">报告评估估计对操作化、假设与分析选择敏感性的所有分析。</span><span class="i18n-en">Report all analyses assessing sensitivity to choices in operationalization, assumptions and analysis.</span></td>
+        <td><span class="i18n-zh">敏感性：三套 SuperLearner 库（glm / +gam / +xgboost）结论稳健；留一法（LOO）负对照；Bootstrap；GDMT 阳性对照检验过度校正。两项研究共享同一敏感性框架（见第⑥节）。</span><span class="i18n-en">Sensitivity: three SuperLearner libraries (glm / +gam / +xgboost) give stable conclusions; leave-one-out (LOO) negative controls; bootstrap; GDMT positive control to detect over-correction. Both studies share the sensitivity framework (Section ⑥).</span></td></tr>
+
+      <tr class="sec"><th colspan="3"><span class="i18n-zh">讨论 Discussion</span><span class="i18n-en">Discussion</span></th></tr>
+      <tr><th><span class="el">15</span> 解释<br><span class="sub">Interpretation</span></th>
+        <td><span class="i18n-zh">对关键发现给出解释。</span><span class="i18n-en">Provide an interpretation of the key findings.</span></td>
+        <td><span class="i18n-zh">校准后 β 阻滞剂效应 ≈0（偏倚主导），GDMT 真实获益存留；BF 提供偏倚主导程度的量化。结合阴性对照指纹解读。两项研究共同构成解释。</span><span class="i18n-en">After calibration the beta-blocker effect ≈0 (bias-dominated) while GDMT's genuine benefit survives; BF quantifies the degree of bias dominance. Read with the negative-control fingerprint. Both studies form the interpretation.</span></td></tr>
+      <tr><th><span class="el">16</span> 局限<br><span class="sub">Limitations</span></th>
+        <td><span class="i18n-zh">讨论局限，考虑目标试验与其模拟的差异及假设合理性（含基线混杂）。</span><span class="i18n-en">Discuss limitations, considering gaps between target trial and emulation and plausibility of assumptions (incl. baseline confounding).</span></td>
+        <td><span class="i18n-zh">负对照只检验可测混杂方向，未测量混杂仍需 BF 量化；静态策略为近似；MIMIC-IV 单中心选择偏倚；目标试验与模拟之间的差异。两项研究共论。</span><span class="i18n-en">Negative controls test only the direction of measured confounding; unmeasured confounding still needs BF; static strategy is an approximation; MIMIC-IV single-center selection; gaps between target trial and emulation. Discussed for both studies.</span></td></tr>
+
+      <tr class="sec"><th colspan="3"><span class="i18n-zh">其他信息 Other information</span><span class="i18n-en">Other information</span></th></tr>
+      <tr><th><span class="el">17</span> 伦理<br><span class="sub">Ethics</span></th>
+        <td><span class="i18n-zh">提供伦理委员会审批与编号（如相关）。</span><span class="i18n-en">Provide IRB / ethics approval and number, if relevant.</span></td>
+        <td><span class="i18n-zh">MIMIC-IV 经批准的数据使用协议（PhysioNet 认证）；研究使用去标识化公开数据库，豁免个体知情同意。两项研究共用（见论文 Other Information）。</span><span class="i18n-en">MIMIC-IV approved data-use agreement (PhysioNet credentialing); study uses de-identified public data with waiver of consent. Both studies share this (paper's Other Information).</span></td></tr>
+      <tr><th><span class="el">18</span> 注册<br><span class="sub">Registration</span></th>
+        <td><span class="i18n-zh">说明研究方案是否、何时、在何处注册。</span><span class="i18n-en">State whether, when and where the protocol was registered.</span></td>
+        <td><span class="i18n-zh">研究方案预注册状态与注册号见论文 Other Information（遵循 RECORD-PE 报告规范）。两项研究共用。</span><span class="i18n-en">Protocol pre-registration status and number in the paper's Other Information (RECORD-PE guideline). Both studies share this.</span></td></tr>
+      <tr><th><span class="el">19</span> 材料共享<br><span class="sub">Sharing</span></th>
+        <td><span class="i18n-zh">说明数据、代码与材料是否可及、何处可及。</span><span class="i18n-en">State whether data, code and materials are accessible, and where.</span></td>
+        <td><span class="i18n-zh">数据 MIMIC-IV（需 PhysioNet 认证）；全部 R 代码、分析与 12 个负对照公开于 GitHub / Zenodo（DOI 见论文）。两项研究共用。</span><span class="i18n-en">Data MIMIC-IV (PhysioNet credentialing); all R code, analyses and 12 negative controls public on GitHub / Zenodo (DOI in paper). Both studies share this.</span></td></tr>
+      <tr><th><span class="el">20</span> 资金来源<br><span class="sub">Funding</span></th>
+        <td><span class="i18n-zh">提供资金来源及资助方在研究中的角色。</span><span class="i18n-en">Provide funding sources and the funders' role.</span></td>
+        <td><span class="i18n-zh">资金来源与资助方在设计、实施、报告中的角色见论文 Other Information。两项研究共用。</span><span class="i18n-en">Funding sources and funders' role in design, conduct and reporting per paper's Other Information. Both studies share this.</span></td></tr>
+      <tr><th><span class="el">21</span> 利益冲突<br><span class="sub">Conflicts of interest</span></th>
+        <td><span class="i18n-zh">声明全体作者的利益冲突与财务披露。</span><span class="i18n-en">State all authors' conflicts of interest and financial disclosures.</span></td>
+        <td><span class="i18n-zh">全体作者的利益冲突与财务披露见论文 Other Information。两项研究共用。</span><span class="i18n-en">All authors' conflicts of interest and financial disclosures per paper's Other Information. Both studies share this.</span></td></tr>
     </tbody>
   </table>
 </div>
 
 <div class="pico-wrap">
-  <table class="target-table i18n-zh">
-    <caption>表：GDMT 研究对 TARGET 指南各条目的逐项依从（与 β 受体阻滞剂案例共享同一队列与同一时点框架）</caption>
-    <thead><tr><th>TARGET 条目</th><th>理想目标试验中的定义</th><th>GDMT 研究的模拟实现</th></tr></thead>
-    <tbody>
-      <tr><th><span class="el">1</span> 纳入与排除标准<br><span class="sub">Eligibility criteria</span></th>
-        <td>HFrEF 患者，且"使用 ≥3 类 GDMT"与"未达 GDMT"两种策略均可被随机分配；排除禁忌者。</td>
-        <td>与 β 受体阻滞剂案例<b>共享同一合格标准与同一批 14,677 例</b>心衰住院患者；GDMT 阳性对照与 β 阻滞剂案例是同一队列上的两种不同暴露定义，保证可比。</td></tr>
-      <tr><th><span class="el">2</span> 治疗策略<br><span class="sub">Treatment strategies</span></th>
-        <td>两种静态策略：策略 A = 使用 ≥3 类 GDMT；策略 B = 未达 GDMT（&lt;3 类）。</td>
-        <td>以出院时<b>实际使用的心衰药物类别数</b>定义：干预 = 使用 ≥3 类 GDMT（ACEI/ARB/ARNI + β 阻滞剂 + MRA），对照 = &lt;3 类。静态，出院时定义。不含 SGLT2 抑制剂（当时指南尚未纳入，队列几乎无人使用）。</td></tr>
-      <tr><th><span class="el">3</span> 分配程序与时点<br><span class="sub">Assignment procedure &amp; timing</span></th>
-        <td>在 time-zero（基线）随机分配。</td>
-        <td>同样以<b>出院日</b>为 time-zero，观测暴露（达类数）在 time-zero 测量；与 β 阻滞剂案例采用同一时点框架，便于同一套校准对照下直接比较。</td></tr>
-      <tr><th><span class="el">4</span> 随访期<br><span class="sub">Follow-up period</span></th>
-        <td>自随机分配起至 1 年或结局发生。</td>
-        <td>同 β 阻滞剂案例：出院后 1 年随访，3–14 天宽限期，统一时点测量结局。</td></tr>
-      <tr><th><span class="el">5</span> 结局<br><span class="sub">Outcome</span></th>
-        <td>预先指定的硬终点。</td>
-        <td>同 β 阻滞剂案例：1 年心血管事件，核心全因死亡，随访完整。</td></tr>
-      <tr><th><span class="el">6</span> 因果对比<br><span class="sub">Causal contrasts (ITT / PP)</span></th>
-        <td>同时报告 ITT 与 PP 效应。</td>
-        <td>以<b>达类数</b>（PP 式）为主要对比。GDMT 作为<b>阳性对照</b>，其真实获益被随机试验反复证实，因此若校准把 GDMT 的获益也抹掉，即说明方法矫枉过正；这是检验"过度校正"的关键设计。</td></tr>
-      <tr><th><span class="el">7</span> 分析计划<br><span class="sub">Analysis plan</span></th>
-        <td>预先指定估计量与统计方法。</td>
-        <td>同 β 阻滞剂案例：<b>TMLE + SuperLearner + 10 个基线协变量</b> + 负对照经验校准。GDMT 与 β 阻滞剂共用同一套方法与同一组对照，使两项研究的结果可直接对比。</td></tr>
-    </tbody>
-  </table>
-  <table class="target-table i18n-en">
-    <caption>Table: Item-by-item adherence of the GDMT study to the TARGET guideline (shares cohort and time-zero framework with the beta-blocker case)</caption>
-    <thead><tr><th>TARGET item</th><th>Defined in the ideal target trial</th><th>Implemented in the GDMT study</th></tr></thead>
-    <tbody>
-      <tr><th><span class="el">1</span> Eligibility criteria</th>
-        <td>HFrEF patients for whom both "on ≥3 GDMT classes" and "not on GDMT" are assignable; exclude contraindicated.</td>
-        <td><b>Same eligibility and same 14,677 patients</b> as the beta-blocker case; the GDMT positive control and the beta-blocker case are two exposure definitions on one cohort, ensuring comparability.</td></tr>
-      <tr><th><span class="el">2</span> Treatment strategies</th>
-        <td>Two static strategies: A = on ≥3 GDMT classes; B = not on GDMT (&lt;3).</td>
-        <td>Defined by <b>number of HF drug classes used at discharge</b>: intervention = ≥3 GDMT classes (ACEI/ARB/ARNI + beta-blocker + MRA), comparator = &lt;3. Static, at discharge. SGLT2 inhibitors excluded (not yet guideline-standard then; almost no use in cohort).</td></tr>
-      <tr><th><span class="el">3</span> Assignment procedure &amp; timing</th>
-        <td>Random assignment at time-zero (baseline).</td>
-        <td>Same <b>discharge day</b> as time-zero; observed exposure (class count) measured at time-zero; same time-zero framework as the beta-blocker case for direct comparison under one calibration.</td></tr>
-      <tr><th><span class="el">4</span> Follow-up period</th>
-        <td>From randomization to 1 year or event.</td>
-        <td>Same as beta-blocker case: 1-year post-discharge follow-up, 3–14 day grace period, fixed outcome time.</td></tr>
-      <tr><th><span class="el">5</span> Outcome</th>
-        <td>Pre-specified hard endpoint.</td>
-        <td>Same as beta-blocker case: 1-year cardiovascular events, all-cause mortality as core, complete follow-up.</td></tr>
-      <tr><th><span class="el">6</span> Causal contrasts (ITT / PP)</th>
-        <td>Report both ITT and PP effects.</td>
-        <td>Primary contrast is <b>class-count (PP-style)</b>. GDMT is a <b>positive control</b> whose benefit is repeatedly confirmed by trials; if calibration also erased GDMT's benefit, the method would be over-correcting, the key design to detect over-correction.</td></tr>
-      <tr><th><span class="el">7</span> Analysis plan</th>
-        <td>Pre-specify estimand and method.</td>
-        <td>Same as beta-blocker case: <b>TMLE + SuperLearner + 10 baseline covariates</b> + negative-control calibration. GDMT and beta-blocker share one method and one control set, so results are directly comparable.</td></tr>
-    </tbody>
-  </table>
+  <h4 class="flow-h"><span class="i18n-zh">入组流程图（TARGET 条目 8：受试者选择）</span><span class="i18n-en">Participant flow diagram (TARGET item 8: participant selection)</span></h4>
+  <div class="flow">
+    <div class="box lead"><span class="i18n-zh">15,053 例心衰（HFrEF）住院，评估合格性</span><span class="i18n-en">15,053 HFrEF hospitalizations assessed for eligibility</span></div>
+    <div class="arrow"></div>
+    <div class="box excl"><span class="i18n-zh">排除 376 例：宽限期内（第 7 天前）院内死亡 / 未存活至 time-zero</span><span class="i18n-en">Excluded 376: in-hospital death before day 7 (did not survive to time-zero)</span></div>
+    <div class="arrow"></div>
+    <div class="box lead"><span class="i18n-zh">14,677 例合格个体（存活至宽限期结束）</span><span class="i18n-en">14,677 eligible individuals (survived to end of grace period)</span></div>
+    <div class="arrow"></div>
+    <div class="split">
+      <div class="arm">
+        <div class="box A"><span class="i18n-zh">策略 A：达到 ≥50% 目标剂量<br><b>1,772 例（12.1%）</b></span><span class="i18n-en">Strategy A: achieved ≥50% target dose<br><b>1,772 (12.1%)</b></span></div>
+        <div class="arrow"></div>
+        <div class="fu i18n-zh">随访 1 年：非依从删失* · 失访 · 竞争事件 · 结局（1 年心血管事件 / 全因死亡，计数见论文表 2）</div>
+        <div class="fu i18n-en">1-year follow-up: nonadherence censoring* · loss to follow-up · competing events · outcome (counts in paper Table 2)</div>
+      </div>
+      <div class="arm">
+        <div class="box B"><span class="i18n-zh">策略 B：&lt;50% 目标剂量<br><b>12,905 例（87.9%）</b></span><span class="i18n-en">Strategy B: &lt;50% target dose<br><b>12,905 (87.9%)</b></span></div>
+        <div class="arrow"></div>
+        <div class="fu i18n-zh">随访 1 年：非依从删失* · 失访 · 竞争事件 · 结局（计数见论文表 2）</div>
+        <div class="fu i18n-en">1-year follow-up: nonadherence censoring* · loss to follow-up · competing events · outcome (counts in paper Table 2)</div>
+      </div>
+    </div>
+    <div class="note i18n-zh">* 若估计符合方案（PP）效应。GDMT 研究使用同一 14,677 例合格队列，按出院时心衰药物类别数（≥3 vs &lt;3）分类，入组流程同上。</div>
+    <div class="note i18n-en">* If estimating a per-protocol (PP) effect. The GDMT study uses the same 14,677 eligible cohort, classified by number of HF drug classes at discharge (≥3 vs &lt;3); participant flow is identical.</div>
+  </div>
 </div>
 
 <h3><span class="i18n-zh">为什么用 TMLE 双重稳健估计器，以及为什么用 SuperLearner 集成配置？</span><span class="i18n-en">Why a doubly robust TMLE estimator, and why a SuperLearner ensemble configuration?</span> <span class="en">Why TMLE + SuperLearner</span></h3>
