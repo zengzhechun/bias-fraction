@@ -9,3 +9,6 @@ output/data/
 
 # Local helper scripts used during repo assembly (not part of the release)
 patch_docx.py
+
+# v34 nested clinical-data dir (MIMIC-IV derived; never commit)
+manuscript_v34/output/data/

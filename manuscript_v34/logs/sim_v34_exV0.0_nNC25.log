@@ -1,0 +1,16 @@
+=== Worker exV0.0_nNC25 started: 2026-08-14 13:53:52.503112 ===
+Grid for exV0.0_nNC25: 84 conditions
+  20/84 conditions done
+  40/84 conditions done
+  60/84 conditions done
+  80/84 conditions done
+
+===== Summary (v34, BF scale) =====
+BF RMSE (mean): 0.1022
+BF RMSE (median): 0.0948
+BF relative bias (mean): 1.9%
+Classification accuracy: 78.2%
+OHDSI rejection at null: 2.5%
+
+Saved: /Users/zengzhechun/SynologyDrive/工作/数据分析项目/心电图大模型/心电图公开数据集/02 mimic-iv-ecg/Topic1_LTMLE_Betablocker/manuscript_v34/output/simulation/sim_results_v34_exV0.0_nNC25.rds
+=== Worker exV0.0_nNC25 DONE: 2026-08-14 13:53:57.283462 ===

@@ -1,0 +1,67 @@
+BSR core functions loaded (v34: BF primary, BER auxiliary, Fieller added).
+警告信息:
+程序包‘data.table’是用R版本4.4.3 来建造的 
+============================================
+PHASE 1-2 (v34): BF Case Study Analysis
+============================================
+
+
+===== 1. BB 1-Year Mortality BF =====
+Fieller set for mu_B/psi_tilde: region=exterior, bounds=[-1.6167, 1.4520]
+BB uncal RR: 0.832 (logRR=-0.1842)
+Bias mu: -0.1905 (RR=0.827), sigma_B: 0.0680
+Calibrated RR: 1.006 (logRR=0.0063)
+BER (raw ratio): 30.375
+BER (bootstrap median): 9.615 [2.850, 141.743]
+BF (bootstrap median): 0.9058 [0.7403, 0.9930]
+BF (raw ratio): 0.9681
+Classification: bias-dominated
+Calibrated p: 0.9433
+
+===== 2. GDMT BF =====
+GDMT uncal RR: 0.646 (logRR=-0.4375)
+Calibrated RR: 0.781 (logRR=-0.2470)
+BER (bootstrap median): 0.805 [0.453, 1.117]
+BF (bootstrap median): 0.4460 [0.3117, 0.5275]
+Classification: mixed
+
+===== 3. BF LOO Sensitivity =====
+BB LOO BF range: [0.890, 0.989]
+All LOO classifications consistent: TRUE
+        excluded_nc        bf          class
+1         infection 0.9815430 bias-dominated
+2          gi_bleed 0.9656492 bias-dominated
+3              fall 0.9818219 bias-dominated
+4          uti_only 0.9658380 bias-dominated
+5        cellulitis 0.9885028 bias-dominated
+6          cataract 0.9868178 bias-dominated
+7    osteoarthritis 0.9603945 bias-dominated
+8  traffic_accident 0.9650833 bias-dominated
+9       hemorrhoids 0.9611745 bias-dominated
+10              bph 0.9272505 bias-dominated
+11             gout 0.8896028 bias-dominated
+12       tendinitis 0.9828565 bias-dominated
+
+===== 4. BF SL Sensitivity =====
+  SL.glm: raw BER=21.0; BF (boot median)=0.901 [0.748, 0.995]; class=bias-dominated
+  SL.glm+SL.gam: raw BER=17.8; BF (boot median)=0.896 [0.753, 0.995]; class=bias-dominated
+  SL.glm+SL.gam+SL.xgboost: raw BER=413.2; BF (boot median)=0.918 [0.718, 0.995]; class=bias-dominated
+
+===== 5. Diagnostics =====
+Shapiro-Wilk p = 0.1678 (normal OK)
+Max |Standardized Residual| = 2.319 (NC: gout)
+Empirical null: mu=-0.1905, sigma=0.0680
+
+===== 6. Grace Period Sensitivity (BF) =====
+  GP= 3 days: uncal_rr=0.8357, cal_rr=1.0110, BF=0.946, class=bias-dominated
+  GP= 5 days: uncal_rr=0.8222, cal_rr=0.9948, BF=0.973, class=bias-dominated
+  GP= 7 days: uncal_rr=0.8305, cal_rr=1.0048, BF=0.976, class=bias-dominated
+  GP=10 days: uncal_rr=0.8382, cal_rr=1.0141, BF=0.932, class=bias-dominated
+  GP=14 days: uncal_rr=0.8666, cal_rr=1.0485, BF=0.801, class=bias-dominated
+
+  Calibrated RR range: [0.9948, 1.0485]
+  All classifications: consistent (all bias-dominated)
+GDMT Fieller set: region=interior, bounds=[0.4238, 1.7953]
+
+Saved: /Users/zengzhechun/SynologyDrive/工作/数据分析项目/心电图大模型/心电图公开数据集/02 mimic-iv-ecg/Topic1_LTMLE_Betablocker/manuscript_v34/output/data/bsr_results_v34.rds
+===== PHASE 1-2 (v34) COMPLETE =====

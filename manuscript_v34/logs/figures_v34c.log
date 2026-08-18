@@ -1,0 +1,45 @@
+BSR core functions loaded (v34: BF primary, BER auxiliary, Fieller added).
+警告信息:
+程序包‘data.table’是用R版本4.4.3 来建造的 
+警告信息:
+程序包‘ggrepel’是用R版本4.4.3 来建造的 
+载入需要的程序包：viridisLite
+警告信息:
+程序包‘viridisLite’是用R版本4.4.3 来建造的 
+SIM: overall=69.8 bd=80.0 (bd0=80.5, bdnz=79.8) cp=41.8 sd=95.1
+SIM: exv0_acc=77.4 exv3_acc=62.1 exv0_null=3.1 exv3_null=3.5
+SIM: ohdsi_null=3.3 uncal_rej=92.1 ohdsi_all=52.4
+SIM: BF rel bias finite=-14.8% (exV0=2.1, exV3=-31.7); RMSE mean=0.1345 median=0.1187
+CISIM: overall=68.6 bd=57.5 cp=81.9 sd=75.5 decisive_rate=47.6 decisive_acc=86.8
+CISIM: decisive rate K12=43.7 K25=51.6
+CASE: BB BF=0.906 [0.740, 0.993] BERmed=9.6 [2.9, 141.7]; GDMT BF=0.446 [0.312, 0.528]
+CASE: LOO BF range [0.890, 0.989]; SL BF: 0.901/0.896/0.918 with CI lo 0.748/0.753/0.718
+Figure 1: Calibration plot...
+警告信息:
+`geom_errorbarh()` was deprecated in ggplot2 4.0.0.
+ℹ Please use the `orientation` argument of `geom_errorbar()` instead. 
+`height` was translated to `width`.
+`height` was translated to `width`.
+`height` was translated to `width`.
+`height` was translated to `width`.
+  Saved: fig01_calibration_plot
+Figure 2: BF main results...
+`height` was translated to `width`.
+`height` was translated to `width`.
+  Saved: fig02_BF_main
+Figure 3: Simulation heatmap...
+  Saved: fig03_simulation_heatmap
+Figure 4: Classification performance...
+  Saved: fig04_classification_domain
+Figure 5: LOO sensitivity (BF scale)...
+`height` was translated to `width`.
+`height` was translated to `width`.
+  Saved: fig05_loo_sensitivity
+Figure 6: QQ diagnostics...
+  Saved: fig06_qq_diagnostics
+Figure 7: Bootstrap distributions (BF scale)...
+  Saved: fig07_bootstrap_BF
+Table 1: BF results...
+  Saved: table01_BF_results.csv
+
+===== PHASE 4 (v34) COMPLETE =====
