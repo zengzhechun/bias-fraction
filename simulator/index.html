@@ -186,8 +186,39 @@
 <span class="i18n-en"><b>The healthy adherer effect:</b> patients who adhere to therapy have better outcomes even on placebo — because they are healthier, more disciplined, and have better access to care to begin with. In observational studies, "taking the full dose" itself carries a wealth of prognostic information that has nothing to do with the drug.</span></p>
 
 <h3><span class="i18n-zh">现有校准方法（校准 p 值）的局限</span><span class="i18n-en">The limitation of existing calibration (the calibrated p-value)</span></h3>
-<p><span class="i18n-zh">OHDSI 的<b>经验校准（empirical calibration）</b>框架（Schuemie et al. 2014, 2018；实现于 EmpiricalCalibration R 包）是<b>已有的方法与软件</b>，并非本论文的原创工作。它的做法分两步：<b>第一步</b>，用负对照估计出系统偏倚的分布（均值 μ̂<sub>B</sub> 和波动 σ̂<sub>B</sub>）；<b>第二步</b>，把观测估计放进这个"偏倚分布"里重新检验，得到一个<b>校准 p 值（calibrated p-value）</b>。本论文的贡献（BF 与 BER）正是建立在这一已有框架之上——见后文动画 D。</span>
-<span class="i18n-en">The OHDSI <b>empirical calibration</b> framework (Schuemie et al. 2014, 2018; implemented in the EmpiricalCalibration R package) is <b>pre-existing methodology and software</b>, not an original contribution of this paper. It proceeds in two steps: <b>step 1</b>, estimate the distribution of systematic bias from negative controls (mean μ̂<sub>B</sub> and spread σ̂<sub>B</sub>); <b>step 2</b>, re-test the observed estimate against this "bias distribution," yielding a <b>calibrated p-value</b>. The contribution of this paper — BF and BER — is built on top of that existing framework; see Animation D below.</span></p>
+<p><span class="i18n-zh">在讲局限之前，先用临床的语言把这套<b>已有的校准方法</b>（OHDSI 经验校准框架，Schuemie et al. 2014/2018，实现于 EmpiricalCalibration R 包）拆成三步。它建立在三个依次递进的概念上：<b>负对照 → 系统偏倚的分布（μ̂<sub>B</sub>, σ̂<sub>B</sub>）→ 校准 p 值</b>。本论文的 BF 与 BER 正是踩在这些肩膀上——见后文动画 D。</span>
+<span class="i18n-en">Before its limitation, let's unpack this <b>pre-existing calibration method</b> (the OHDSI empirical-calibration framework, Schuemie et al. 2014/2018, in the EmpiricalCalibration R package) in clinical language, in three steps. It rests on three sequential concepts: <b>negative control → the distribution of systematic bias (μ̂<sub>B</sub>, σ̂<sub>B</sub>) → calibrated p-value</b>. BF and BER stand on these shoulders — see Animation D below.</span></p>
+
+<div class="card">
+  <span class="i18n-zh"><b>第一步：什么是负对照（negative control）？</b></span>
+  <span class="i18n-en"><b>Step 1: What is a negative control?</b></span>
+  <p><span class="i18n-zh">负对照是一个<b>治疗"不可能"影响</b>的结局，但它和主结局<b>共享同一套混杂结构</b>（同一批未测量的因素 U 同时污染它和主结局）。因为真实效应<b>已知为零</b>，所以一旦观察到"治疗与负对照相关"，这段相关<b>只能来自偏倚</b>，绝不可能来自药物作用——它相当于一块"已知真值为 0 的校准砝码"：我们确切知道治疗对它没有真实作用，于是测量出的任何非零关联，都是天平（研究设计）的系统误差读数。</span>
+  <span class="i18n-en">A negative control is an outcome the treatment <b>cannot possibly</b> affect, yet it shares the primary outcome's confounding structure (the same unmeasured factors U corrupt both). Because its true effect is <b>known to be zero</b>, any observed treatment–control association <b>must come from bias</b>, never from the drug — it is a "calibration weight known to be exactly 0": we know the treatment has no real effect on it, so any non-zero measured association is the scale's (the study design's) systematic-error reading.</span></p>
+  <p><span class="i18n-zh">🩺 <b>临床比喻：</b>想检查一台体重秤有没有"系统性偏高"，你不会去称一个真人（你不知道他真多重），而是放上一块<b>标称 0 kg 的校准砝码</b>。如果秤显示 −0.3 kg（读数偏低），你就知道这台秤平均偏低 0.3 kg。负对照就是那块"你已知真值为 0 的砝码"——β 受体阻滞剂<b>不可能</b>预防白内障（cataract），但观察数据里"达标组"的白内障发生率也更低（3.2% vs 4.2%，RR≈0.76）。药物没法保护眼睛，所以这 0.76 的"保护作用"只能来自健康依从者效应这类混杂——它正是我们要校准的偏倚的<b>直接证据</b>。</span>
+  <span class="i18n-en">🩺 <b>Clinical analogy:</b> to check whether a scale reads systematically high, you don't weigh a person (you don't know their true weight) — you put a <b>0 kg calibration weight</b> on it. If it reads −0.3 kg, you know the scale runs ~0.3 kg low. A negative control is that weight whose true value you know is 0 — a beta-blocker <b>cannot</b> prevent cataract, yet in observational data the "target-dose" group also has lower cataract rates (3.2% vs 4.2%, RR≈0.76). The drug can't protect eyes, so this 0.76 "protective effect" can only come from confounding like the healthy-adherer effect — <b>direct evidence</b> of the very bias we must calibrate.</span></p>
+</div>
+
+<div class="card">
+  <span class="i18n-zh"><b>第二步：估计"系统偏倚的分布"（μ̂<sub>B</sub> 与 σ̂<sub>B</sub>）</b></span>
+  <span class="i18n-en"><b>Step 2: Estimate the "distribution of systematic bias" (μ̂<sub>B</sub> and σ̂<sub>B</sub>)</b></span>
+  <p><span class="i18n-zh">把 K 个负对照各自的估计值交给软件包，它会用最大似然拟合成一个<b>钟形分布</b>（经验零分布）。这个钟形有两个参数：<br>
+  • <b>中心 μ̂<sub>B</sub>（平均系统偏倚）</b>：设计平均把估计往哪边、推了多少——相当于那台秤"平均偏低 0.3 kg"的恒定偏移量。<br>
+  • <b>宽度 σ̂<sub>B</sub>（偏倚异质性）</b>：不同负对照之间偏倚的离散程度——相当于同一块 0 kg 砝码每天复称，读数在 −0.2 到 −0.4 之间晃动的范围。<br>
+  在我们的 β 受体阻滞剂研究里，12 个负对照<b>全部</b>偏向保护一侧，拟合出 μ̂<sub>B</sub> = −0.190（log RR 尺度，即设计平均把估计往"保护"方向推了 0.190），σ̂<sub>B</sub> = 0.068（各对照间偏倚的波动不大、彼此相当一致）。</span>
+  <span class="i18n-en">Feed the K control estimates to the package and it fits them, by maximum likelihood, into a <b>bell-shaped distribution</b> (the empirical null). It has two parameters:<br>
+  • <b>Center μ̂<sub>B</sub> (mean systematic bias)</b>: on average, which way and how far the design pushes estimates — like the scale's constant offset of "running ~0.3 kg low."<br>
+  • <b>Width σ̂<sub>B</sub> (bias heterogeneity)</b>: how much the bias scatters across different controls — like the same 0 kg weight reweighed daily, readings wobbling between −0.2 and −0.4.<br>
+  In our beta-blocker study, all 12 controls leaned protective, fitting μ̂<sub>B</sub> = −0.190 (log-RR scale, i.e. the design on average pushes estimates 0.190 toward "protection") and σ̂<sub>B</sub> = 0.068 (the bias is modest and fairly consistent across controls).</span></p>
+</div>
+
+<div class="card">
+  <span class="i18n-zh"><b>第三步：把观测估计放进"偏倚分布"里重新检验 → 校准 p 值</b></span>
+  <span class="i18n-en"><b>Step 3: Re-test the observed estimate against the "bias distribution" → the calibrated p-value</b></span>
+  <p><span class="i18n-zh">普通的 p 值检验的是："在<b>没有偏倚</b>的假设下（一个以 0 为中心的钟形），观测估计是否显著不等于 0？"而<b>校准 p 值</b>换了一个参照系：它检验的是"在<b>数据揭示的实际偏倚分布</b>（以 μ̂<sub>B</sub> 为中心、并纳入 σ̂<sub>B</sub> 不确定性的钟形）里，观测估计是否显著不等于 0？"——说白了，就是把判决的尺子，从"理想情形"换成"这台秤实际偏了多少"。</span>
+  <span class="i18n-en">An ordinary p-value asks: "assuming <b>no bias</b> (a bell centered at 0), is the observed estimate significantly different from 0?" The <b>calibrated p-value</b> swaps the reference frame: it asks "against the <b>bias distribution the data actually reveal</b> (a bell centered at μ̂<sub>B</sub>, with the uncertainty σ̂<sub>B</sub>), is the observed estimate significantly different from 0?" — in short, it swaps the yardstick of the verdict from "the ideal case" to "how far this scale actually strays."</span></p>
+  <p><span class="i18n-zh">🩺 <b>临床比喻：</b>普通 p 值相当于问"这个病人的体重，和 70 kg 教科书标准值差得多吗"；校准 p 值相当于问"这个病人的体重，和我们这台<b>已知偏低 0.3 kg 的秤</b>通常会显示的值差得多吗"。本例主结局测得 log RR = −0.186（未校准 RR≈0.83）：若按"无偏倚"的尺子，它显著不等于 0；但放进以 −0.190 为中心的偏倚钟形里，它恰好落在<b>正中央</b>——说明这段"差异"和秤自身偏差几乎一模一样。于是校准 p 值 = 0.94，结论是"扣除秤的偏差后，没有证据显示真实效应存在"。<b>注意：这里的"没证据"恰恰是因为偏倚把估计从真值附近推到了偏倚中心——偏倚很大，却被悄悄归了零。</b></span>
+  <span class="i18n-en">🩺 <b>Clinical analogy:</b> the ordinary p-value asks "is this patient's weight far from the 70 kg textbook value?"; the calibrated p-value asks "is this patient's weight far from what our <b>scale known to read 0.3 kg low</b> would show?" Here the primary outcome reads log RR = −0.186 (uncalibrated RR≈0.83): against the "no-bias" yardstick it is significantly ≠ 0; but placed in the bias bell centered at −0.190 it lands <b>dead center</b> — meaning this "difference" is almost identical to the scale's own error. So the calibrated p-value = 0.94 and the verdict is "after removing the scale's bias, no evidence of a real effect." <b>Note: this "no evidence" is precisely because the bias pushed the estimate from near the truth to the bias center — the bias is large, yet it got silently zeroed out.</b></span></p>
+</div>
 
 <div class="card">
   <span class="i18n-zh"><b>校准 p 值到底在说什么？（划重点）</b></span><span class="i18n-en"><b>What the calibrated p-value actually says (key point)</b></span>
