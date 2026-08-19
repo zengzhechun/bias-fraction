@@ -452,4 +452,151 @@ knitr::include_graphics(file.path(FIG_DIR, "fig06_qq_diagnostics.png"))
 knitr::include_graphics(file.path(FIG_DIR, "fig07_bootstrap_BF.png"))
 ```
 
+# eAppendix 13. Small-sample sensitivity of the empirical null
+
+The empirical null was estimated from only $K = 12$ negative controls. The fitted distribution inherits the parameter uncertainty of $\hat{\mu}_B$ and $\hat{\sigma}_B$, which is non-trivial at this sample size and which the default plug-in calibrated p-value ignores. We performed a parametric sensitivity analysis to quantify the impact on Type I error and to assess the two case-study conclusions under a small-sample-corrected reference.
+
+## Methods
+
+We assumed the empirical null model of `fitNull` (EmpiricalCalibration 3.1.4), in which each negative-control estimate satisfies $\hat{\gamma}_k \sim N(\mu_B, \hat{\tau}_k^2 + \sigma_B^2)$ and the parameters $(\mu_B, \sigma_B)$ are estimated by maximum likelihood. We fixed the true parameters at the empirical null point estimates from the beta-blocker analysis of this study, $\mu_B = -0.190$ and $\sigma_B = 0.068$, and drew the within-control standard errors from the empirical distribution of the 12 actual negative-control SEs (range, 0.025 to 0.302, including three poorly-informative controls with $\hat{\tau}_k > 0.24$). For each $K \in \{5, 8, 12, 20, 45, 100\}$ we generated 2000 replicate negative-control panels and target estimates under the calibration null ($\hat{\gamma}_{\text{target}} \sim N(\mu_B, \hat{\tau}_{\text{target}}^2 + \sigma_B^2)$ with $\hat{\tau}_{\text{target}} = 0.056$, the beta-blocker target SE), fit the null by maximum likelihood, and computed three calibrated two-sided p values:
+
+- **Plug-in (current default):** $2 \{ 1 - \Phi(|\hat{\gamma}_{\text{target}} - \hat{\mu}_B| / \sqrt{\hat{\tau}_{\text{target}}^2 + \hat{\sigma}_B^2}) \}$, identical to `calibrateP.null`.
+- **Variance-inflated normal:** plug-in variance inflated by $\widehat{\mathrm{Var}}(\hat{\mu}_B) = [\sum_k (\hat{\tau}_k^2 + \hat{\sigma}_B^2)^{-1}]^{-1}$.
+- **t-predictive (df = $K - 2$):** denominator as above, two-sided p value from the t distribution, following the random-effects prediction-interval construction of Higgins, Thompson and Spiegelhalter [-@higgins2009reevaluation].
+
+The primary operating characteristic was the empirical Type I error rate at $\alpha = 0.05$. Secondary characteristics were the root-mean-square error of $\hat{\sigma}_B$ relative to its true value, the fraction of replicates that severely underestimated $\hat{\sigma}_B$ ($< \sigma_B / 2$), and the fraction that hit the $\hat{\sigma}_B = 0$ boundary.
+
+## Results
+
+| K | Plug-in | Variance-inflated | t(K−2) | Oracle (known params) | RMSE($\hat{\sigma}_B$) | $\hat{\sigma}_B$ median | P($\hat{\sigma}_B < \sigma_B/2$) | P($\hat{\sigma}_B = 0$) |
+|---|---|---|---|---|---|---|---|---|
+| 5  | 17.4% | 14.0% | 2.3%  | 4.3% | 0.0538 | 0.032 | 51.1% | 34.6% |
+| 8  | 14.6% | 12.2% | 6.3%  | 5.1% | 0.0418 | 0.049 | 36.7% | 19.0% |
+| 12 | 11.4% | 9.9%  | 6.6%  | 4.9% | 0.0335 | 0.055 | 24.4% | 8.6% |
+| 20 | 10.0% | 9.0%  | 6.8%  | 5.9% | 0.0234 | 0.061 | 10.3% | 2.1% |
+| 45 | 6.8%  | 6.4%  | 5.6%  | 4.8% | 0.0139 | 0.065 | 1.6%  | 0% |
+| 100 | 5.4%  | 5.4%  | 5.2%  | 5.1% | 0.0095 | 0.066 | 0%    | 0% |
+
+The oracle row confirms simulation correctness; the four methods differ only through their treatment of the finite-sample uncertainty of the null parameters. The plug-in calibrated p-value is materially anti-conservative at $K = 12$ (11.4% Type I error) and reaches the nominal rate at $K \approx 100$. Variance inflation alone addresses the uncertainty of $\hat{\mu}_B$ and gives a partial correction (11.4% to 9.9% at $K = 12$); the additional heavy tails of the t($K-2$) reference bring the error close to nominal (6.6%) without substantial overcorrection at $K \geq 8$. The dominant source of anti-conservatism at small $K$ is the downward bias and boundary behaviour of the maximum-likelihood variance-component estimator $\hat{\sigma}_B$: at $K = 12$ the median estimate was 0.055 (true 0.068), 24% of replicates underestimated $\sigma_B$ by more than half, and 8.6% collapsed to the $\hat{\sigma}_B = 0$ boundary.
+
+## Case-study application
+
+For each case-study observation we computed the t-predictive calibrated p value in addition to the plug-in value, and ran a 2000-replicate resampling bootstrap of the 12 negative controls to quantify conclusion robustness.
+
+| Analysis | Plug-in p | t(K−2) p | Resampling bootstrap (plug-in p) | P(p < 0.05) across resamples |
+|---|---|---|---|---|
+| Beta-blocker (RR 0.83) | 0.943 | 0.947 | median 0.80; 95% PI 0.444-0.989 | 0% |
+| GDMT (RR 0.65)        | 0.0067 | 0.027  | median 0.003; 95% PI 0.000-0.065 | 95.9% |
+
+The beta-blocker conclusion ("no evidence of an effect after calibration") is invariant to the choice of inference: the plug-in p value never crossed 0.05 in any bootstrap replicate, and the t-predictive p value (0.947) is essentially identical to the plug-in value because the observation lies near the centre of the bias distribution, where heavier tails add little. The GDMT conclusion ("residual effect survives calibration") survives the t-predictive correction in direction (0.027 < 0.05) but the evidence is materially weaker: the t-predictive p value is roughly four times the plug-in value and approaches the 0.05 threshold. The bootstrap analysis confirms that the GDMT plug-in p value sits below 0.05 in 95.9% of resamples, with the upper end of the 95% PI (0.065) crossing the nominal threshold.
+
+## Implications and recommendations
+
+At $K = 12$ the default plug-in calibrated p value should be reported together with a small-sample sensitivity. A pragmatic sensitivity uses a t($K-2$) predictive reference distribution for the empirical null [@higgins2009reevaluation], which restores near-nominal Type I error without heavy computation and does not require MCMC. Two caveats apply. First, the t($K-2$) reference is an acknowledged approximation [@nagashima2023predicting], not a closed-form exact result; at very small $K$ it over-corrects (2.3% at $K = 5$). Second, the t($K-2$) reference addresses the uncertainty of $\hat{\mu}_B$ but only partially compensates for the downward bias and boundary behaviour of $\hat{\sigma}_B$. A more complete small-sample treatment would require either a bias-corrected estimator for $\sigma_B$ (e.g., REML) or a full Bayesian posterior via `fitMcmcNull` [@schuemie2018empirical]. We retain the plug-in p value as the primary statistic for consistency with the OHDSI convention and report the t-predictive p value as a sensitivity in the main manuscript. The companion R package `biasratio` will add a `method = "robust"` option in a subsequent release to make the t-predictive and REML variants directly available to investigators working with modest negative-control panels.
+
+The simulation script (`sim_smallK_null_correction.R`) and results table (`sim_smallK_typeI_results.csv`) are available in the project repository under `manuscript_v35/output/simulation/`.
+
+# eAppendix 14. Zone-boundary sensitivity and the distinction from the calibrated p-value
+
+This appendix addresses two questions that arise naturally from the three-zone classification.
+
+**Q1. How does the BF three-zone classification differ from the calibrated p-value binary rule?** The calibrated p-value answers a *significance* question ("is the calibrated effect distinguishable from zero?") and is binary by construction. The BF answers a *credibility* question ("what share of the total calibrated signal is plausibly bias?") and is a continuous fraction in $[0,1]$. The formal distinction (eTable 1) is sharpened by examining each metric's dependence on the primary study's standard error. The plug-in calibrated p-value is
+
+$$p_{\mathrm{cal}} = 2\,\Phi\!\Bigl(-\frac{|\hat{\psi} - \hat{\mu}_B|}{\sqrt{\hat{\tau}^{2} + \hat{\sigma}_{B}^{2}}}\Bigr),$$
+
+which depends on the precision $\hat{\tau}$ of the primary estimate: a small study with a large point estimate can yield a non-significant calibrated p-value, while a large study with a smaller point estimate can yield a significant one. The BF,
+
+$$\widehat{\mathrm{BF}} = \frac{|\hat{\mu}_B|}{|\hat{\mu}_B| + |\hat{\psi} - \hat{\mu}_B|},$$
+
+contains *no* $\hat{\tau}$: it answers the bias-share question entirely from the point estimates of bias and effect. Consequently, the two metrics are not redundant. They agree at the extremes — when the effect is large, BF is small and $p_{\mathrm{cal}}$ is small; when bias dominates, BF is large and $p_{\mathrm{cal}}$ is large — which is the desired convergent validity. They disagree in the *middle*: a borderline-calibrated effect can have $p_{\mathrm{cal}} < 0.05$ (significant after calibration) yet $\widehat{\mathrm{BF}} \in (1/3,\,0.5)$ (mixed, ~30–50% of the signal plausibly bias), or vice versa. The three-zone framework makes this disagreement *legible*: the "mixed" region is the explicit "I don't know" band, and the selective CI rule (eTable 3) issues a decisive call only when the entire confidence interval lies in one zone. The calibrated p-value has no analogue: it forces a binary verdict on every analysis, including the ones where the data are too weak to support one.
+
+**Q2. Could adjusting the red/amber/green boundaries raise classification accuracy?** No, not beyond what the metric already supports under the default boundaries. The $1/3$ and $0.5$ boundaries are *definitional*, not tuned: $\mathrm{BF} < 1/3 \Leftrightarrow$ residual effect $\geq 2\times$ bias (BER $< 0.5$); $\mathrm{BF} > 0.5 \Leftrightarrow$ bias $>$ effect (BER $> 1$). Moving them changes the *meaning* of "effect-dominated" and "bias-dominated," it does not optimise a classifier. To verify empirically, we re-classified all 67,200 repetitions of the 336-condition simulation under a grid of 28 (cut1, cut2) pairs spanning $\mathrm{cut}_{1} \in \{0.20,\,0.25,\,0.30,\,1/3,\,0.35,\,0.40,\,0.45\}$ and $\mathrm{cut}_{2} \in \{0.50,\,0.55,\,0.60,\,0.65\}$, using each repetition's stored $\hat{\rho} = |\hat{\mu}_B|/|\hat{\psi} - \hat{\mu}_B|$ (the `r_pt` column of `ci_simulation_merged.rds`).
+
+The results are given in eTable 9 and visualised in eFigures 7 and 8. Three patterns emerge.
+
+1. Overall point-estimate accuracy is bounded at **50.1–74.9%** across the entire plausible threshold range. The strictest setting (cut1 = 0.20, cut2 = 0.50) yields the maximum of 74.9%; the default (1/3, 0.50) yields 70.0%. **No threshold pair lifts overall accuracy above 75%**, because the middle simulation conditions (true BF $\approx 0.4$–$0.5$) have genuinely low signal-to-noise: the variance of $\widehat{\mathrm{BF}}$ in this region dominates, independently of where the line is drawn.
+
+2. Moving the boundaries trades *coverage* against extreme-zone accuracy (a precision–recall trade-off). Stricter boundaries (smaller cut1, larger cut2) raise the accuracy of the effect- and bias-dominated zones but reduce the share of analyses assigned a decisive (non-mixed) zone. The effect-dominated zone rises from 69.8% accuracy at cut1 = 0.20 to 98.9% at cut1 = 0.45, while its coverage falls from 17.4% to 47.6% (eFigure 8); the bias-dominated zone behaves analogously in cut2. The middle zone's accuracy (10–82% across the grid) is an *intrinsic* function of $\widehat{\mathrm{BF}}$'s estimation variance in the middle, not of the line's placement.
+
+3. The selective CI-based rule (eTable 3) is the correct fix: its **86.8% decisive accuracy on the 47.6% of cases it covers** sits above the point-estimate accuracy–coverage frontier (eFigure 8, red star). At comparable coverage (~47–48%), the best point-estimate setting achieves only ~65–70% overall accuracy; the CI rule reaches 86.8% because it abstains precisely on the cases where $\widehat{\mathrm{BF}}$ is poorly identified. The point-estimate frontier is monotonically decreasing: as coverage rises, accuracy falls. No point on the frontier exceeds 80% accuracy at 60% coverage.
+
+We therefore retain the default 1/3 and 0.5 boundaries as the operational thresholds and recommend the selective CI rule — already implemented in `biasratio::bf_classify()` with the bootstrap CI — for any application in which the analyst wishes to convert "mixed" into "no call" rather than risk an over-confident binary verdict. The threshold-sweep results CSV is at `manuscript_v35/output/tables/threshold_sweep_results.csv`; the R script is at `manuscript_v35/output/simulation/threshold_sweep.R`.
+
+# eTable 9. Zone-boundary sensitivity sweep
+
+```{r etable9-sweep}
+rp <- ci_reps
+classify_sweep <- function(ber, eff_ber, bias_ber) {
+  ifelse(is.na(ber), "unclassifiable",
+  ifelse(ber > bias_ber, "bias-dominated",
+  ifelse(ber < eff_ber, "effect-dominated", "competitive")))
+}
+grid <- expand.grid(
+  cut1 = c(0.20, 0.25, 0.30, 1/3, 0.35, 0.40, 0.45),
+  cut2 = c(0.50, 0.55, 0.60, 0.65)
+)
+out <- data.frame()
+for (i in seq_len(nrow(grid))) {
+  c1 <- grid$cut1[i]; c2 <- grid$cut2[i]
+  pred <- classify_sweep(rp$r_pt, c1/(1-c1), c2/(1-c2))
+  out <- rbind(out, data.frame(
+    `Effect cut`    = sprintf("%.2f", c1),
+    `Bias cut`      = sprintf("%.2f", c2),
+    `Overall acc.`  = sprintf("%.1f", 100*mean(pred == rp$true_class)),
+    `Bias acc.`     = sprintf("%.1f", 100*mean(pred[rp$true_class == "bias-dominated"]   == "bias-dominated")),
+    `Mixed acc.`    = sprintf("%.1f", 100*mean(pred[rp$true_class == "competitive"]      == "competitive")),
+    `Effect acc.`   = sprintf("%.1f", 100*mean(pred[rp$true_class == "effect-dominated"] == "effect-dominated")),
+    `Decisive rate` = sprintf("%.1f", 100*mean(pred != "competitive")),
+    check.names = FALSE))
+}
+knitr::kable(out, align = "rrrrrrr",
+  caption = "Zone-boundary sensitivity of the point-estimate rule across the 67,200 repetitions of the 336-condition simulation. cut1 = BF threshold for effect-dominated (BF < cut1); cut2 = BF threshold for bias-dominated (BF > cut2). Overall accuracy is bounded at 50.1-74.9% across the grid; the default (1/3, 0.5) yields 70.0%. The selective CI-based rule (eTable 3) achieves 86.8% accuracy on the 47.6% of repetitions it covers, above every point-estimate setting in the grid.")
+```
+
+# eFigure 7. Overall point-estimate accuracy across the threshold grid
+
+```{r efig7-sweep-heatmap, fig.cap="Overall point-estimate classification accuracy (%) across 28 (cut1, cut2) pairs. Accuracy is bounded at 50.1-74.9%; the strictest corner (cut1=0.20, cut2=0.50) yields the maximum 74.9%, the default (0.33, 0.50) yields 70.0%. No pair exceeds 75% because the middle simulation conditions have intrinsically low BF signal-to-noise.", fig.width=7.2, fig.height=5.6}
+mat <- matrix(as.numeric(out$`Overall acc.`), nrow = length(unique(out$`Effect cut`)),
+              ncol = length(unique(out$`Bias cut`)), byrow = TRUE)
+cut1v <- sort(unique(as.numeric(out$`Effect cut`)))
+cut2v <- sort(unique(as.numeric(out$`Bias cut`)))
+pal <- grDevices::colorRampPalette(c("#EBD9D9","#FBF0D6","#CFE3CF"))(100)
+graphics::image(cut1v, cut2v, mat, col = pal,
+      xlab = "Effect threshold cut1 (BF < cut1 = effect-dominated)",
+      ylab = "Bias threshold cut2 (BF > cut2 = bias-dominated)",
+      main = "Overall point-estimate accuracy (%) across zone boundaries",
+      axes = FALSE, zlim = c(50, 78))
+graphics::axis(1, at = cut1v, labels = sprintf("%.2f", cut1v))
+graphics::axis(2, at = cut2v, labels = sprintf("%.2f", cut2v))
+graphics::box()
+for (i in seq_along(cut1v)) for (j in seq_along(cut2v))
+  graphics::text(cut1v[i], cut2v[j], sprintf("%.1f", mat[i,j]), cex = 0.85, col = "#333333")
+```
+
+# eFigure 8. Accuracy-coverage trade-off
+
+```{r efig8-sweep-frontier, fig.cap="Accuracy-coverage trade-off of the point-estimate rule (28 settings) and the selective CI-based rule. The point-estimate cloud sits in the 50-75% accuracy band; the selective CI rule (86.8% @ 47.6% coverage) is above the frontier, demonstrating that abstention beats threshold tuning.", fig.width=7.6, fig.height=5.2}
+graphics::plot(as.numeric(out$`Decisive rate`), as.numeric(out$`Overall acc.`), type = "n",
+     xlim = c(40, 100), ylim = c(48, 90),
+     xlab = "Coverage: share of repetitions assigned a decisive (non-mixed) zone (%)",
+     ylab = "Overall classification accuracy (%)",
+     main = "Accuracy-coverage trade-off: point-estimate rule vs selective CI rule")
+ord <- order(as.numeric(out$`Decisive rate`))
+graphics::lines(as.numeric(out$`Decisive rate`)[ord], as.numeric(out$`Overall acc.`)[ord],
+      col = "#9AA7B0", lwd = 1.4, lty = 3)
+graphics::points(as.numeric(out$`Decisive rate`), as.numeric(out$`Overall acc.`),
+       pch = 21, bg = "#5B8FA8", col = "#2C2C2C", cex = 1.4)
+def <- which(out$`Effect cut` == "0.33" & out$`Bias cut` == "0.50")
+graphics::points(as.numeric(out$`Decisive rate`[def]), as.numeric(out$`Overall acc.`[def]),
+       pch = 21, bg = "#B8A060", col = "#2C2C2C", cex = 2.0)
+graphics::text(as.numeric(out$`Decisive rate`[def]), as.numeric(out$`Overall acc.`[def]),
+     " default", pos = 2, cex = 0.8)
+graphics::points(47.6, 86.8, pch = 8, col = "#8B4A4A", cex = 2.2)
+graphics::text(47.6, 86.8, " CI rule (86.8% @ 47.6%)", pos = 4, col = "#8B4A4A", cex = 0.85)
+graphics::legend("bottomleft",
+       c("point-estimate grid (28)", "default 1/3, 0.5", "selective CI rule"),
+       pch = c(21, 21, 8), col = c("#2C2C2C","#2C2C2C","#8B4A4A"),
+       pt.bg = c("#5B8FA8","#B8A060", NA), cex = 0.8)
+```
+
 # eReferences

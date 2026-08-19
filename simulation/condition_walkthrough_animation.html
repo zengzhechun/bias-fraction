@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>单条件 200 次重复抽样 · 单步动画演示</title>
+<style>
+  :root{
+    --bg:#f5f9fd; --panel:#ffffff; --ink:#1f2d3d; --muted:#5b6b7b;
+    --line:#d6e2ee; --blue:#2f6fb0; --blue2:#7fb3e0; --orange:#e08a2b;
+    --red:#d9534f; --green:#2e9e6b; --yellow:#e6b800; --accent:#1d6fb8;
+    --indigo:#4b3ca7; --brown:#8b5a2b; --ink-2:#1f2d3d;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,"PingFang SC","Microsoft YaHei",Segoe UI,Roboto,sans-serif;
+    font-size:14px;line-height:1.55}
+  .wrap{max-width:980px;margin:0 auto;padding:22px 18px 48px}
+  h1{font-size:20px;margin:0 0 4px;color:var(--accent)}
+  .sub{color:var(--muted);font-size:13px;margin-bottom:16px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 16px}
+  .chip{background:var(--panel);border:1px solid var(--line);border-radius:999px;
+    padding:5px 12px;font-size:12.5px}
+  .chip b{color:var(--accent)}
+  .chip.primary{background:#eaf2fb;border-color:var(--accent)}
+  .chip.primary b{color:var(--accent)}
+  .stage{background:var(--panel);border:1px solid var(--line);border-radius:12px;
+    padding:14px;box-shadow:0 1px 3px rgba(20,50,90,.06)}
+  svg{display:block;width:100%;height:auto;background:#fbfdff;border-radius:8px}
+  .step-txt{min-height:74px;font-size:14px;color:var(--ink);margin-top:10px}
+  .step-txt .k{color:var(--accent);font-weight:600}
+  .controls{display:flex;align-items:center;gap:10px;margin-top:14px;flex-wrap:wrap}
+  button{background:var(--accent);color:#fff;border:0;border-radius:8px;padding:8px 14px;
+    font-size:13.5px;cursor:pointer;transition:filter .15s}
+  button:hover{filter:brightness(1.08)}
+  button.ghost{background:#eaf2fb;color:var(--accent)}
+  .dots{display:flex;gap:6px;margin-left:auto}
+  .dot{width:10px;height:10px;border-radius:50%;background:var(--line)}
+  .dot.on{background:var(--accent)}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin-top:8px}
+  .legend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+  .axis-t{font-size:11px;fill:var(--muted)}
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  @keyframes pop{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .pop{animation:pop .5s ease both}
+  .foot{color:var(--muted);font-size:12px;margin-top:18px;border-top:1px solid var(--line);padding-top:10px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>一个条件如何抽出 200 个样本</h1>
+  <div class="sub">条件: ψ=−0.30, μ_B=−0.20, σ_B=0.05, K=12, 交互性违反=30% · 真实落点 <b>BF=0.40 → 黄区 (competitive)</b></div>
+  <div class="chips" id="chips"></div>
+
+  <div class="stage">
+    <svg id="cv" viewBox="0 0 620 410" preserveAspectRatio="xMidYMid meet"></svg>
+    <div class="step-txt" id="stepTxt"></div>
+    <div class="legend">
+      <span><i style="background:var(--blue)"></i>干净负对照 (均值 μ_B=−0.20)</span>
+      <span><i style="background:var(--orange)"></i>被违反负对照 (均值 μ_B+0.15=−0.05)</span>
+      <span><i style="background:var(--indigo)"></i>主研究观测 obs</span>
+      <span><i style="background:var(--brown)"></i>经验零均值 μ_b (拟合)</span>
+    </div>
+    <div class="controls">
+      <button class="ghost" id="prev">上一步</button>
+      <button id="next">下一步</button>
+      <button class="ghost" id="play">▶ 自动播放</button>
+      <button class="ghost" id="reset">重置</button>
+      <div class="dots" id="dots"></div>
+    </div>
+  </div>
+
+  <div class="foot" id="foot"></div>
+</div>
+
+<script>
+const DATA = {"params":{"psi":-0.3,"muB":-0.2,"sigmaB":0.05,"K":12,"exV":0.3,"bsr_true":0.6667,"bf_true":0.4,"true_class":"competitive","cond_seed":551,"muB_shifted":-0.05,"mu_b_mean":-0.1501,"bsr_mean":0.4442},"nc_rep1":[{"nc_id":1,"is_shifted":false,"nc_bias_true":-0.2,"nc_log_rr":-0.1579,"nc_se":0.1158},{"nc_id":2,"is_shifted":false,"nc_bias_true":-0.2,"nc_log_rr":-0.1881,"nc_se":0.0739},{"nc_id":3,"is_shifted":false,"nc_bias_true":-0.2,"nc_log_rr":-0.1695,"nc_se":0.0374},{"nc_id":4,"is_shifted":false,"nc_bias_true":-0.2,"nc_log_rr":-0.2746,"nc_se":0.0571},{"nc_id":5,"is_shifted":false,"nc_bias_true":-0.2,"nc_log_rr":-0.2228,"nc_se":0.1173},{"nc_id":6,"is_shifted":false,"nc_bias_true":-0.2,"nc_log_rr":-0.1607,"nc_se":0.04},{"nc_id":7,"is_shifted":false,"nc_bias_true":-0.2,"nc_log_rr":-0.2543,"nc_se":0.1098},{"nc_id":8,"is_shifted":false,"nc_bias_true":-0.2,"nc_log_rr":-0.2647,"nc_se":0.1164},{"nc_id":9,"is_shifted":true,"nc_bias_true":-0.05,"nc_log_rr":-0.06,"nc_se":0.0567},{"nc_id":10,"is_shifted":true,"nc_bias_true":-0.05,"nc_log_rr":0.0168,"nc_se":0.1011},{"nc_id":11,"is_shifted":true,"nc_bias_true":-0.05,"nc_log_rr":-0.0168,"nc_se":0.1076},{"nc_id":12,"is_shifted":true,"nc_bias_true":-0.05,"nc_log_rr":-0.0464,"nc_se":0.0662}],"reps200":[{"rep_id":1,"mu_b":-0.1506,"sigma_b":0.0414,"obs":-0.4494,"bsr":0.5038,"bf":0.335,"cls":"competitive"},{"rep_id":2,"mu_b":-0.1454,"sigma_b":0.0809,"obs":-0.4732,"bsr":0.4435,"bf":0.3072,"cls":"effect-dominated"},{"rep_id":3,"mu_b":-0.1323,"sigma_b":0.0578,"obs":-0.5396,"bsr":0.3249,"bf":0.2452,"cls":"effect-dominated"},{"rep_id":4,"mu_b":-0.1475,"sigma_b":0.0585,"obs":-0.5632,"bsr":0.3547,"bf":0.2618,"cls":"effect-dominated"},{"rep_id":5,"mu_b":-0.134,"sigma_b":0.058,"obs":-0.4768,"bsr":0.3909,"bf":0.281,"cls":"effect-dominated"},{"rep_id":6,"mu_b":-0.1379,"sigma_b":0.0614,"obs":-0.606,"bsr":0.2947,"bf":0.2276,"cls":"effect-dominated"},{"rep_id":7,"mu_b":-0.1344,"sigma_b":0.0571,"obs":-0.4709,"bsr":0.3993,"bf":0.2853,"cls":"effect-dominated"},{"rep_id":8,"mu_b":-0.1137,"sigma_b":0.0797,"obs":-0.5062,"bsr":0.2898,"bf":0.2247,"cls":"effect-dominated"},{"rep_id":9,"mu_b":-0.1332,"sigma_b":0.0418,"obs":-0.5559,"bsr":0.3151,"bf":0.2396,"cls":"effect-dominated"},{"rep_id":10,"mu_b":-0.167,"sigma_b":0.0545,"obs":-0.5263,"bsr":0.4648,"bf":0.3173,"cls":"effect-dominated"},{"rep_id":11,"mu_b":-0.15,"sigma_b":0.0581,"obs":-0.4276,"bsr":0.5401,"bf":0.3507,"cls":"competitive"},{"rep_id":12,"mu_b":-0.1884,"sigma_b":0.0323,"obs":-0.3835,"bsr":0.9655,"bf":0.4912,"cls":"competitive"},{"rep_id":13,"mu_b":-0.1289,"sigma_b":0.0408,"obs":-0.4649,"bsr":0.3837,"bf":0.2773,"cls":"effect-dominated"},{"rep_id":14,"mu_b":-0.1576,"sigma_b":0.0835,"obs":-0.561,"bsr":0.3907,"bf":0.281,"cls":"effect-dominated"},{"rep_id":15,"mu_b":-0.1743,"sigma_b":0.0644,"obs":-0.5125,"bsr":0.5153,"bf":0.3401,"cls":"competitive"},{"rep_id":16,"mu_b":-0.1751,"sigma_b":0.0549,"obs":-0.5355,"bsr":0.4858,"bf":0.327,"cls":"effect-dominated"},{"rep_id":17,"mu_b":-0.1507,"sigma_b":0.0667,"obs":-0.4294,"bsr":0.5407,"bf":0.3509,"cls":"competitive"},{"rep_id":18,"mu_b":-0.161,"sigma_b":0.0548,"obs":-0.4542,"bsr":0.5492,"bf":0.3545,"cls":"competitive"},{"rep_id":19,"mu_b":-0.1504,"sigma_b":0.0755,"obs":-0.6028,"bsr":0.3325,"bf":0.2495,"cls":"effect-dominated"},{"rep_id":20,"mu_b":-0.1158,"sigma_b":0.0006,"obs":-0.524,"bsr":0.2838,"bf":0.221,"cls":"effect-dominated"},{"rep_id":21,"mu_b":-0.1619,"sigma_b":0.0288,"obs":-0.5332,"bsr":0.4362,"bf":0.3037,"cls":"effect-dominated"},{"rep_id":22,"mu_b":-0.1218,"sigma_b":0.0626,"obs":-0.4129,"bsr":0.4184,"bf":0.295,"cls":"effect-dominated"},{"rep_id":23,"mu_b":-0.1702,"sigma_b":0.0524,"obs":-0.5013,"bsr":0.5141,"bf":0.3395,"cls":"competitive"},{"rep_id":24,"mu_b":-0.1413,"sigma_b":0.0339,"obs":-0.6024,"bsr":0.3065,"bf":0.2346,"cls":"effect-dominated"},{"rep_id":25,"mu_b":-0.1647,"sigma_b":0.0103,"obs":-0.4132,"bsr":0.6626,"bf":0.3985,"cls":"competitive"},{"rep_id":26,"mu_b":-0.1145,"sigma_b":0.0432,"obs":-0.4842,"bsr":0.3098,"bf":0.2365,"cls":"effect-dominated"},{"rep_id":27,"mu_b":-0.1366,"sigma_b":0.0506,"obs":-0.4899,"bsr":0.3866,"bf":0.2788,"cls":"effect-dominated"},{"rep_id":28,"mu_b":-0.1497,"sigma_b":0.0524,"obs":-0.4487,"bsr":0.5005,"bf":0.3335,"cls":"competitive"},{"rep_id":29,"mu_b":-0.1461,"sigma_b":0.0528,"obs":-0.4299,"bsr":0.5149,"bf":0.3399,"cls":"competitive"},{"rep_id":30,"mu_b":-0.1283,"sigma_b":0.0264,"obs":-0.4577,"bsr":0.3896,"bf":0.2804,"cls":"effect-dominated"},{"rep_id":31,"mu_b":-0.1822,"sigma_b":0.0467,"obs":-0.4245,"bsr":0.752,"bf":0.4292,"cls":"competitive"},{"rep_id":32,"mu_b":-0.1242,"sigma_b":0.0863,"obs":-0.5678,"bsr":0.2799,"bf":0.2187,"cls":"effect-dominated"},{"rep_id":33,"mu_b":-0.1609,"sigma_b":0.0292,"obs":-0.4556,"bsr":0.5457,"bf":0.353,"cls":"competitive"},{"rep_id":34,"mu_b":-0.1918,"sigma_b":0,"obs":-0.5534,"bsr":0.5303,"bf":0.3465,"cls":"competitive"},{"rep_id":35,"mu_b":-0.136,"sigma_b":0.076,"obs":-0.5868,"bsr":0.3017,"bf":0.2318,"cls":"effect-dominated"},{"rep_id":36,"mu_b":-0.115,"sigma_b":0.0444,"obs":-0.4311,"bsr":0.364,"bf":0.2668,"cls":"effect-dominated"},{"rep_id":37,"mu_b":-0.162,"sigma_b":0.0613,"obs":-0.5244,"bsr":0.447,"bf":0.3089,"cls":"effect-dominated"},{"rep_id":38,"mu_b":-0.1578,"sigma_b":0.0701,"obs":-0.5784,"bsr":0.3751,"bf":0.2728,"cls":"effect-dominated"},{"rep_id":39,"mu_b":-0.1506,"sigma_b":0.071,"obs":-0.5434,"bsr":0.3834,"bf":0.2771,"cls":"effect-dominated"},{"rep_id":40,"mu_b":-0.0879,"sigma_b":0.0544,"obs":-0.4677,"bsr":0.2315,"bf":0.188,"cls":"effect-dominated"},{"rep_id":41,"mu_b":-0.1451,"sigma_b":0.0552,"obs":-0.4998,"bsr":0.4091,"bf":0.2903,"cls":"effect-dominated"},{"rep_id":42,"mu_b":-0.1294,"sigma_b":0.0755,"obs":-0.4492,"bsr":0.4045,"bf":0.288,"cls":"effect-dominated"},{"rep_id":43,"mu_b":-0.1674,"sigma_b":0.0522,"obs":-0.537,"bsr":0.4528,"bf":0.3117,"cls":"effect-dominated"},{"rep_id":44,"mu_b":-0.1907,"sigma_b":0,"obs":-0.4668,"bsr":0.6904,"bf":0.4084,"cls":"competitive"},{"rep_id":45,"mu_b":-0.1438,"sigma_b":0.0291,"obs":-0.5094,"bsr":0.3933,"bf":0.2823,"cls":"effect-dominated"},{"rep_id":46,"mu_b":-0.1123,"sigma_b":0.0723,"obs":-0.4543,"bsr":0.3284,"bf":0.2472,"cls":"effect-dominated"},{"rep_id":47,"mu_b":-0.158,"sigma_b":0.0366,"obs":-0.4467,"bsr":0.5475,"bf":0.3538,"cls":"competitive"},{"rep_id":48,"mu_b":-0.1389,"sigma_b":0.0579,"obs":-0.5751,"bsr":0.3186,"bf":0.2416,"cls":"effect-dominated"},{"rep_id":49,"mu_b":-0.1617,"sigma_b":0.0002,"obs":-0.4825,"bsr":0.5041,"bf":0.3352,"cls":"competitive"},{"rep_id":50,"mu_b":-0.1469,"sigma_b":0.0725,"obs":-0.5194,"bsr":0.3945,"bf":0.2829,"cls":"effect-dominated"},{"rep_id":51,"mu_b":-0.1455,"sigma_b":0.0573,"obs":-0.4537,"bsr":0.4723,"bf":0.3208,"cls":"effect-dominated"},{"rep_id":52,"mu_b":-0.1476,"sigma_b":0.0518,"obs":-0.5133,"bsr":0.4037,"bf":0.2876,"cls":"effect-dominated"},{"rep_id":53,"mu_b":-0.1577,"sigma_b":0,"obs":-0.553,"bsr":0.3989,"bf":0.2851,"cls":"effect-dominated"},{"rep_id":54,"mu_b":-0.1478,"sigma_b":0.0348,"obs":-0.5078,"bsr":0.4105,"bf":0.291,"cls":"effect-dominated"},{"rep_id":55,"mu_b":-0.1657,"sigma_b":0.0787,"obs":-0.5571,"bsr":0.4234,"bf":0.2974,"cls":"effect-dominated"},{"rep_id":56,"mu_b":-0.1696,"sigma_b":0.0875,"obs":-0.4519,"bsr":0.6005,"bf":0.3752,"cls":"competitive"},{"rep_id":57,"mu_b":-0.1646,"sigma_b":0.0001,"obs":-0.5738,"bsr":0.4022,"bf":0.2869,"cls":"effect-dominated"},{"rep_id":58,"mu_b":-0.1454,"sigma_b":0.0572,"obs":-0.4426,"bsr":0.4892,"bf":0.3285,"cls":"effect-dominated"},{"rep_id":59,"mu_b":-0.1297,"sigma_b":0.0405,"obs":-0.4921,"bsr":0.3579,"bf":0.2636,"cls":"effect-dominated"},{"rep_id":60,"mu_b":-0.175,"sigma_b":0.0001,"obs":-0.4304,"bsr":0.6855,"bf":0.4067,"cls":"competitive"},{"rep_id":61,"mu_b":-0.1555,"sigma_b":0.09,"obs":-0.5126,"bsr":0.4354,"bf":0.3033,"cls":"effect-dominated"},{"rep_id":62,"mu_b":-0.1528,"sigma_b":0.0686,"obs":-0.5126,"bsr":0.4246,"bf":0.2981,"cls":"effect-dominated"},{"rep_id":63,"mu_b":-0.1254,"sigma_b":0.0725,"obs":-0.5028,"bsr":0.3322,"bf":0.2493,"cls":"effect-dominated"},{"rep_id":64,"mu_b":-0.1596,"sigma_b":0.0695,"obs":-0.4745,"bsr":0.5067,"bf":0.3363,"cls":"competitive"},{"rep_id":65,"mu_b":-0.1637,"sigma_b":0.0362,"obs":-0.4019,"bsr":0.6874,"bf":0.4074,"cls":"competitive"},{"rep_id":66,"mu_b":-0.1812,"sigma_b":0.0937,"obs":-0.4719,"bsr":0.6237,"bf":0.3841,"cls":"competitive"},{"rep_id":67,"mu_b":-0.1548,"sigma_b":0.0792,"obs":-0.3994,"bsr":0.633,"bf":0.3876,"cls":"competitive"},{"rep_id":68,"mu_b":-0.1708,"sigma_b":0,"obs":-0.5168,"bsr":0.4935,"bf":0.3304,"cls":"effect-dominated"},{"rep_id":69,"mu_b":-0.1493,"sigma_b":0.062,"obs":-0.5703,"bsr":0.3547,"bf":0.2618,"cls":"effect-dominated"},{"rep_id":70,"mu_b":-0.1545,"sigma_b":0.0459,"obs":-0.3979,"bsr":0.6347,"bf":0.3883,"cls":"competitive"},{"rep_id":71,"mu_b":-0.1192,"sigma_b":0.0571,"obs":-0.429,"bsr":0.3846,"bf":0.2778,"cls":"effect-dominated"},{"rep_id":72,"mu_b":-0.1388,"sigma_b":0.0689,"obs":-0.54,"bsr":0.346,"bf":0.257,"cls":"effect-dominated"},{"rep_id":73,"mu_b":-0.1407,"sigma_b":0.0553,"obs":-0.4032,"bsr":0.536,"bf":0.3489,"cls":"competitive"},{"rep_id":74,"mu_b":-0.1328,"sigma_b":0.0501,"obs":-0.4685,"bsr":0.3955,"bf":0.2834,"cls":"effect-dominated"},{"rep_id":75,"mu_b":-0.1431,"sigma_b":0.0336,"obs":-0.5742,"bsr":0.332,"bf":0.2492,"cls":"effect-dominated"},{"rep_id":76,"mu_b":-0.1102,"sigma_b":0.0736,"obs":-0.4583,"bsr":0.3166,"bf":0.2405,"cls":"effect-dominated"},{"rep_id":77,"mu_b":-0.1516,"sigma_b":0.0296,"obs":-0.5593,"bsr":0.372,"bf":0.2711,"cls":"effect-dominated"},{"rep_id":78,"mu_b":-0.1437,"sigma_b":0.0001,"obs":-0.4662,"bsr":0.4456,"bf":0.3083,"cls":"effect-dominated"},{"rep_id":79,"mu_b":-0.1361,"sigma_b":0.073,"obs":-0.5945,"bsr":0.2968,"bf":0.2289,"cls":"effect-dominated"},{"rep_id":80,"mu_b":-0.1388,"sigma_b":0.0577,"obs":-0.5266,"bsr":0.3579,"bf":0.2636,"cls":"effect-dominated"},{"rep_id":81,"mu_b":-0.131,"sigma_b":0.0762,"obs":-0.5518,"bsr":0.3112,"bf":0.2373,"cls":"effect-dominated"},{"rep_id":82,"mu_b":-0.1361,"sigma_b":0.079,"obs":-0.3931,"bsr":0.5298,"bf":0.3463,"cls":"competitive"},{"rep_id":83,"mu_b":-0.1422,"sigma_b":0.0282,"obs":-0.4616,"bsr":0.4453,"bf":0.3081,"cls":"effect-dominated"},{"rep_id":84,"mu_b":-0.1445,"sigma_b":0.0724,"obs":-0.5375,"bsr":0.3677,"bf":0.2689,"cls":"effect-dominated"},{"rep_id":85,"mu_b":-0.1693,"sigma_b":0.029,"obs":-0.5315,"bsr":0.4673,"bf":0.3185,"cls":"effect-dominated"},{"rep_id":86,"mu_b":-0.1565,"sigma_b":0.0189,"obs":-0.5444,"bsr":0.4036,"bf":0.2875,"cls":"effect-dominated"},{"rep_id":87,"mu_b":-0.1459,"sigma_b":0.0784,"obs":-0.5661,"bsr":0.3472,"bf":0.2577,"cls":"effect-dominated"},{"rep_id":88,"mu_b":-0.1509,"sigma_b":0.0337,"obs":-0.5118,"bsr":0.4179,"bf":0.2947,"cls":"effect-dominated"},{"rep_id":89,"mu_b":-0.1518,"sigma_b":0.0358,"obs":-0.5628,"bsr":0.3693,"bf":0.2697,"cls":"effect-dominated"},{"rep_id":90,"mu_b":-0.1655,"sigma_b":0.0001,"obs":-0.5166,"bsr":0.4713,"bf":0.3203,"cls":"effect-dominated"},{"rep_id":91,"mu_b":-0.1409,"sigma_b":0.0519,"obs":-0.4824,"bsr":0.4126,"bf":0.2921,"cls":"effect-dominated"},{"rep_id":92,"mu_b":-0.1214,"sigma_b":0.0595,"obs":-0.5455,"bsr":0.2863,"bf":0.2226,"cls":"effect-dominated"},{"rep_id":93,"mu_b":-0.1674,"sigma_b":0.0434,"obs":-0.5291,"bsr":0.463,"bf":0.3165,"cls":"effect-dominated"},{"rep_id":94,"mu_b":-0.1592,"sigma_b":0,"obs":-0.4664,"bsr":0.5181,"bf":0.3413,"cls":"competitive"},{"rep_id":95,"mu_b":-0.1809,"sigma_b":0.0592,"obs":-0.5077,"bsr":0.5535,"bf":0.3563,"cls":"competitive"},{"rep_id":96,"mu_b":-0.1489,"sigma_b":0.0647,"obs":-0.5431,"bsr":0.3777,"bf":0.2742,"cls":"effect-dominated"},{"rep_id":97,"mu_b":-0.1529,"sigma_b":0.0331,"obs":-0.5538,"bsr":0.3814,"bf":0.2761,"cls":"effect-dominated"},{"rep_id":98,"mu_b":-0.1525,"sigma_b":0.05,"obs":-0.5921,"bsr":0.3469,"bf":0.2576,"cls":"effect-dominated"},{"rep_id":99,"mu_b":-0.1432,"sigma_b":0.0118,"obs":-0.5962,"bsr":0.316,"bf":0.2401,"cls":"effect-dominated"},{"rep_id":100,"mu_b":-0.1499,"sigma_b":0.065,"obs":-0.5523,"bsr":0.3724,"bf":0.2714,"cls":"effect-dominated"},{"rep_id":101,"mu_b":-0.1547,"sigma_b":0.0844,"obs":-0.5333,"bsr":0.4087,"bf":0.2901,"cls":"effect-dominated"},{"rep_id":102,"mu_b":-0.1277,"sigma_b":0.0668,"obs":-0.5058,"bsr":0.3378,"bf":0.2525,"cls":"effect-dominated"},{"rep_id":103,"mu_b":-0.1376,"sigma_b":0.057,"obs":-0.5254,"bsr":0.3549,"bf":0.2619,"cls":"effect-dominated"},{"rep_id":104,"mu_b":-0.1428,"sigma_b":0.0467,"obs":-0.4356,"bsr":0.4878,"bf":0.3279,"cls":"effect-dominated"},{"rep_id":105,"mu_b":-0.1409,"sigma_b":0.0484,"obs":-0.4173,"bsr":0.5099,"bf":0.3377,"cls":"competitive"},{"rep_id":106,"mu_b":-0.1593,"sigma_b":0.0291,"obs":-0.5274,"bsr":0.4329,"bf":0.3021,"cls":"effect-dominated"},{"rep_id":107,"mu_b":-0.1485,"sigma_b":0.0603,"obs":-0.566,"bsr":0.3558,"bf":0.2624,"cls":"effect-dominated"},{"rep_id":108,"mu_b":-0.1216,"sigma_b":0.0584,"obs":-0.3969,"bsr":0.4419,"bf":0.3065,"cls":"effect-dominated"},{"rep_id":109,"mu_b":-0.1734,"sigma_b":0.0801,"obs":-0.5746,"bsr":0.4323,"bf":0.3018,"cls":"effect-dominated"},{"rep_id":110,"mu_b":-0.159,"sigma_b":0.0442,"obs":-0.4909,"bsr":0.4789,"bf":0.3238,"cls":"effect-dominated"},{"rep_id":111,"mu_b":-0.1507,"sigma_b":0.0637,"obs":-0.4694,"bsr":0.4727,"bf":0.321,"cls":"effect-dominated"},{"rep_id":112,"mu_b":-0.1638,"sigma_b":0.0436,"obs":-0.6363,"bsr":0.3465,"bf":0.2573,"cls":"effect-dominated"},{"rep_id":113,"mu_b":-0.1326,"sigma_b":0.0487,"obs":-0.4223,"bsr":0.4578,"bf":0.314,"cls":"effect-dominated"},{"rep_id":114,"mu_b":-0.1429,"sigma_b":0.04,"obs":-0.566,"bsr":0.3376,"bf":0.2524,"cls":"effect-dominated"},{"rep_id":115,"mu_b":-0.169,"sigma_b":0.0534,"obs":-0.5061,"bsr":0.5012,"bf":0.3339,"cls":"competitive"},{"rep_id":116,"mu_b":-0.1521,"sigma_b":0.074,"obs":-0.5393,"bsr":0.3928,"bf":0.282,"cls":"effect-dominated"},{"rep_id":117,"mu_b":-0.1212,"sigma_b":0.111,"obs":-0.445,"bsr":0.3742,"bf":0.2723,"cls":"effect-dominated"},{"rep_id":118,"mu_b":-0.1602,"sigma_b":0,"obs":-0.4364,"bsr":0.5802,"bf":0.3672,"cls":"competitive"},{"rep_id":119,"mu_b":-0.1667,"sigma_b":0,"obs":-0.38,"bsr":0.7813,"bf":0.4386,"cls":"competitive"},{"rep_id":120,"mu_b":-0.1769,"sigma_b":0.039,"obs":-0.5148,"bsr":0.5233,"bf":0.3435,"cls":"competitive"},{"rep_id":121,"mu_b":-0.1542,"sigma_b":0.0223,"obs":-0.4816,"bsr":0.4711,"bf":0.3202,"cls":"effect-dominated"},{"rep_id":122,"mu_b":-0.194,"sigma_b":0.0408,"obs":-0.4551,"bsr":0.7432,"bf":0.4264,"cls":"competitive"},{"rep_id":123,"mu_b":-0.1398,"sigma_b":0,"obs":-0.5739,"bsr":0.3219,"bf":0.2435,"cls":"effect-dominated"},{"rep_id":124,"mu_b":-0.1361,"sigma_b":0.0484,"obs":-0.5485,"bsr":0.33,"bf":0.2481,"cls":"effect-dominated"},{"rep_id":125,"mu_b":-0.1362,"sigma_b":0.0946,"obs":-0.4386,"bsr":0.4503,"bf":0.3105,"cls":"effect-dominated"},{"rep_id":126,"mu_b":-0.1602,"sigma_b":0.0575,"obs":-0.4473,"bsr":0.558,"bf":0.3582,"cls":"competitive"},{"rep_id":127,"mu_b":-0.1372,"sigma_b":0.0669,"obs":-0.5102,"bsr":0.3677,"bf":0.2688,"cls":"effect-dominated"},{"rep_id":128,"mu_b":-0.1402,"sigma_b":0.0807,"obs":-0.5005,"bsr":0.389,"bf":0.2801,"cls":"effect-dominated"},{"rep_id":129,"mu_b":-0.1323,"sigma_b":0.0812,"obs":-0.4997,"bsr":0.3601,"bf":0.2648,"cls":"effect-dominated"},{"rep_id":130,"mu_b":-0.1229,"sigma_b":0.0124,"obs":-0.5558,"bsr":0.2838,"bf":0.221,"cls":"effect-dominated"},{"rep_id":131,"mu_b":-0.1708,"sigma_b":0.0296,"obs":-0.4817,"bsr":0.5492,"bf":0.3545,"cls":"competitive"},{"rep_id":132,"mu_b":-0.1786,"sigma_b":0.0578,"obs":-0.4085,"bsr":0.7768,"bf":0.4372,"cls":"competitive"},{"rep_id":133,"mu_b":-0.1506,"sigma_b":0.0001,"obs":-0.4907,"bsr":0.4428,"bf":0.3069,"cls":"effect-dominated"},{"rep_id":134,"mu_b":-0.1398,"sigma_b":0.0623,"obs":-0.4576,"bsr":0.44,"bf":0.3055,"cls":"effect-dominated"},{"rep_id":135,"mu_b":-0.1427,"sigma_b":0.0155,"obs":-0.5282,"bsr":0.37,"bf":0.2701,"cls":"effect-dominated"},{"rep_id":136,"mu_b":-0.1588,"sigma_b":0.0001,"obs":-0.3544,"bsr":0.8117,"bf":0.448,"cls":"competitive"},{"rep_id":137,"mu_b":-0.1548,"sigma_b":0.021,"obs":-0.479,"bsr":0.4774,"bf":0.3231,"cls":"effect-dominated"},{"rep_id":138,"mu_b":-0.1276,"sigma_b":0.0639,"obs":-0.5464,"bsr":0.3046,"bf":0.2335,"cls":"effect-dominated"},{"rep_id":139,"mu_b":-0.1823,"sigma_b":0.0529,"obs":-0.5801,"bsr":0.4583,"bf":0.3143,"cls":"effect-dominated"},{"rep_id":140,"mu_b":-0.1575,"sigma_b":0.0875,"obs":-0.4633,"bsr":0.5151,"bf":0.34,"cls":"competitive"},{"rep_id":141,"mu_b":-0.1234,"sigma_b":0.0749,"obs":-0.4671,"bsr":0.3591,"bf":0.2642,"cls":"effect-dominated"},{"rep_id":142,"mu_b":-0.151,"sigma_b":0.028,"obs":-0.4719,"bsr":0.4704,"bf":0.3199,"cls":"effect-dominated"},{"rep_id":143,"mu_b":-0.1538,"sigma_b":0.0458,"obs":-0.5206,"bsr":0.4193,"bf":0.2954,"cls":"effect-dominated"},{"rep_id":144,"mu_b":-0.1263,"sigma_b":0.0001,"obs":-0.5591,"bsr":0.2918,"bf":0.2259,"cls":"effect-dominated"},{"rep_id":145,"mu_b":-0.1759,"sigma_b":0.0374,"obs":-0.6151,"bsr":0.4006,"bf":0.286,"cls":"effect-dominated"},{"rep_id":146,"mu_b":-0.1655,"sigma_b":0.0764,"obs":-0.4818,"bsr":0.5233,"bf":0.3435,"cls":"competitive"},{"rep_id":147,"mu_b":-0.1218,"sigma_b":0.0686,"obs":-0.4919,"bsr":0.329,"bf":0.2476,"cls":"effect-dominated"},{"rep_id":148,"mu_b":-0.1662,"sigma_b":0.0665,"obs":-0.4795,"bsr":0.5305,"bf":0.3466,"cls":"competitive"},{"rep_id":149,"mu_b":-0.1308,"sigma_b":0.0452,"obs":-0.4658,"bsr":0.3905,"bf":0.2808,"cls":"effect-dominated"},{"rep_id":150,"mu_b":-0.1745,"sigma_b":0.0305,"obs":-0.369,"bsr":0.8974,"bf":0.473,"cls":"competitive"},{"rep_id":151,"mu_b":-0.1245,"sigma_b":0.073,"obs":-0.4146,"bsr":0.4293,"bf":0.3003,"cls":"effect-dominated"},{"rep_id":152,"mu_b":-0.0939,"sigma_b":0.0422,"obs":-0.4997,"bsr":0.2313,"bf":0.1878,"cls":"effect-dominated"},{"rep_id":153,"mu_b":-0.1835,"sigma_b":0.0135,"obs":-0.5526,"bsr":0.497,"bf":0.332,"cls":"effect-dominated"},{"rep_id":154,"mu_b":-0.1594,"sigma_b":0.0698,"obs":-0.4198,"bsr":0.6119,"bf":0.3796,"cls":"competitive"},{"rep_id":155,"mu_b":-0.1398,"sigma_b":0.0752,"obs":-0.4303,"bsr":0.481,"bf":0.3248,"cls":"effect-dominated"},{"rep_id":156,"mu_b":-0.1588,"sigma_b":0.0784,"obs":-0.5242,"bsr":0.4344,"bf":0.3028,"cls":"effect-dominated"},{"rep_id":157,"mu_b":-0.1705,"sigma_b":0.0493,"obs":-0.5724,"bsr":0.4244,"bf":0.2979,"cls":"effect-dominated"},{"rep_id":158,"mu_b":-0.1344,"sigma_b":0.0456,"obs":-0.5098,"bsr":0.3579,"bf":0.2635,"cls":"effect-dominated"},{"rep_id":159,"mu_b":-0.1669,"sigma_b":0.045,"obs":-0.4476,"bsr":0.5946,"bf":0.3729,"cls":"competitive"},{"rep_id":160,"mu_b":-0.1429,"sigma_b":0.0683,"obs":-0.608,"bsr":0.3074,"bf":0.2351,"cls":"effect-dominated"},{"rep_id":161,"mu_b":-0.1748,"sigma_b":0.0001,"obs":-0.4584,"bsr":0.6166,"bf":0.3814,"cls":"competitive"},{"rep_id":162,"mu_b":-0.1578,"sigma_b":0.0858,"obs":-0.5335,"bsr":0.42,"bf":0.2958,"cls":"effect-dominated"},{"rep_id":163,"mu_b":-0.1235,"sigma_b":0.077,"obs":-0.4654,"bsr":0.3612,"bf":0.2654,"cls":"effect-dominated"},{"rep_id":164,"mu_b":-0.1828,"sigma_b":0.0388,"obs":-0.5448,"bsr":0.505,"bf":0.3355,"cls":"competitive"},{"rep_id":165,"mu_b":-0.1282,"sigma_b":0.0503,"obs":-0.6157,"bsr":0.263,"bf":0.2082,"cls":"effect-dominated"},{"rep_id":166,"mu_b":-0.113,"sigma_b":0.0534,"obs":-0.5162,"bsr":0.2802,"bf":0.2189,"cls":"effect-dominated"},{"rep_id":167,"mu_b":-0.1355,"sigma_b":0.0959,"obs":-0.53,"bsr":0.3433,"bf":0.2556,"cls":"effect-dominated"},{"rep_id":168,"mu_b":-0.1932,"sigma_b":0.0447,"obs":-0.4463,"bsr":0.7631,"bf":0.4328,"cls":"competitive"},{"rep_id":169,"mu_b":-0.1806,"sigma_b":0.0417,"obs":-0.3672,"bsr":0.968,"bf":0.4919,"cls":"competitive"},{"rep_id":170,"mu_b":-0.1983,"sigma_b":0,"obs":-0.4719,"bsr":0.7248,"bf":0.4202,"cls":"competitive"},{"rep_id":171,"mu_b":-0.1734,"sigma_b":0.0534,"obs":-0.4745,"bsr":0.576,"bf":0.3655,"cls":"competitive"},{"rep_id":172,"mu_b":-0.1533,"sigma_b":0.0725,"obs":-0.4336,"bsr":0.5467,"bf":0.3535,"cls":"competitive"},{"rep_id":173,"mu_b":-0.1718,"sigma_b":0.0533,"obs":-0.4606,"bsr":0.5948,"bf":0.373,"cls":"competitive"},{"rep_id":174,"mu_b":-0.1581,"sigma_b":0.0491,"obs":-0.5707,"bsr":0.3832,"bf":0.277,"cls":"effect-dominated"},{"rep_id":175,"mu_b":-0.1314,"sigma_b":0.0382,"obs":-0.6597,"bsr":0.2488,"bf":0.1992,"cls":"effect-dominated"},{"rep_id":176,"mu_b":-0.1654,"sigma_b":0.0091,"obs":-0.4662,"bsr":0.5501,"bf":0.3549,"cls":"competitive"},{"rep_id":177,"mu_b":-0.1376,"sigma_b":0.0444,"obs":-0.4316,"bsr":0.4681,"bf":0.3188,"cls":"effect-dominated"},{"rep_id":178,"mu_b":-0.1511,"sigma_b":0.0714,"obs":-0.5657,"bsr":0.3643,"bf":0.267,"cls":"effect-dominated"},{"rep_id":179,"mu_b":-0.1399,"sigma_b":0.0001,"obs":-0.571,"bsr":0.3246,"bf":0.2451,"cls":"effect-dominated"},{"rep_id":180,"mu_b":-0.1597,"sigma_b":0.0616,"obs":-0.5005,"bsr":0.4685,"bf":0.319,"cls":"effect-dominated"},{"rep_id":181,"mu_b":-0.1699,"sigma_b":0.0001,"obs":-0.5702,"bsr":0.4246,"bf":0.298,"cls":"effect-dominated"},{"rep_id":182,"mu_b":-0.1349,"sigma_b":0.0003,"obs":-0.4778,"bsr":0.3936,"bf":0.2824,"cls":"effect-dominated"},{"rep_id":183,"mu_b":-0.1268,"sigma_b":0.0697,"obs":-0.4619,"bsr":0.3785,"bf":0.2746,"cls":"effect-dominated"},{"rep_id":184,"mu_b":-0.1414,"sigma_b":0.0219,"obs":-0.5369,"bsr":0.3575,"bf":0.2633,"cls":"effect-dominated"},{"rep_id":185,"mu_b":-0.1536,"sigma_b":0.0736,"obs":-0.5193,"bsr":0.42,"bf":0.2958,"cls":"effect-dominated"},{"rep_id":186,"mu_b":-0.1618,"sigma_b":0.0533,"obs":-0.5354,"bsr":0.4333,"bf":0.3023,"cls":"effect-dominated"},{"rep_id":187,"mu_b":-0.1367,"sigma_b":0.0517,"obs":-0.6177,"bsr":0.2842,"bf":0.2213,"cls":"effect-dominated"},{"rep_id":188,"mu_b":-0.1851,"sigma_b":0.0002,"obs":-0.5559,"bsr":0.4993,"bf":0.333,"cls":"effect-dominated"},{"rep_id":189,"mu_b":-0.16,"sigma_b":0.0713,"obs":-0.542,"bsr":0.4188,"bf":0.2952,"cls":"effect-dominated"},{"rep_id":190,"mu_b":-0.1343,"sigma_b":0.0389,"obs":-0.5286,"bsr":0.3406,"bf":0.2541,"cls":"effect-dominated"},{"rep_id":191,"mu_b":-0.1719,"sigma_b":0.0951,"obs":-0.5313,"bsr":0.4785,"bf":0.3236,"cls":"effect-dominated"},{"rep_id":192,"mu_b":-0.2057,"sigma_b":0,"obs":-0.5898,"bsr":0.5355,"bf":0.3487,"cls":"competitive"},{"rep_id":193,"mu_b":-0.1628,"sigma_b":0.0488,"obs":-0.544,"bsr":0.4272,"bf":0.2993,"cls":"effect-dominated"},{"rep_id":194,"mu_b":-0.1153,"sigma_b":0.02,"obs":-0.4688,"bsr":0.326,"bf":0.2459,"cls":"effect-dominated"},{"rep_id":195,"mu_b":-0.1365,"sigma_b":0.0649,"obs":-0.4555,"bsr":0.428,"bf":0.2997,"cls":"effect-dominated"},{"rep_id":196,"mu_b":-0.1644,"sigma_b":0.0621,"obs":-0.5872,"bsr":0.389,"bf":0.2801,"cls":"effect-dominated"},{"rep_id":197,"mu_b":-0.1389,"sigma_b":0.0546,"obs":-0.4968,"bsr":0.388,"bf":0.2795,"cls":"effect-dominated"},{"rep_id":198,"mu_b":-0.1817,"sigma_b":0.062,"obs":-0.6702,"bsr":0.372,"bf":0.2711,"cls":"effect-dominated"},{"rep_id":199,"mu_b":-0.1793,"sigma_b":0.0804,"obs":-0.5405,"bsr":0.4963,"bf":0.3317,"cls":"effect-dominated"},{"rep_id":200,"mu_b":-0.126,"sigma_b":0.0613,"obs":-0.5557,"bsr":0.2933,"bf":0.2268,"cls":"effect-dominated"}]}
+;
+
+// ---------- 工具 ----------
+const NS="http://www.w3.org/2000/svg";
+function el(t,a){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);return e;}
+function txt(x,y,s,cls,anchor){const t=el("text",{x,y,class:cls||"axis-t"});if(anchor)t.setAttribute("text-anchor",anchor);t.textContent=s;return t;}
+function scale(d0,d1,p0,p1){return v=>p0+(v-d0)/(d1-d0)*(p1-p0);}
+
+const cv=document.getElementById("cv");
+const P=DATA.params;
+const STEPS=[
+  {t:"固定条件 (BF 视角)", d:"这一行是模拟里<b>永不改变</b>的 5 个因子。本论文以 <b>BF（偏倚分数）为主指标</b>：BF = |μ_B|/(|μ_B|+|ψ|) = 0.20/0.50 = <span class='k'>0.40</span>，落在 1/3 与 0.5 之间, 即<span class='k'>黄区</span>(competitive)。200 次重复要估计的就是这个固定真值, 每次用重抽出来的样本去估, 估计值会围绕真值波动。"},
+  {t:"第 1 步 · 抽 12 个负对照", d:"每个负对照的观测效应 <span class='mono'>nc_log_rr ~ N(其均值, σ_B=0.05)</span>。前 8 个均值=−0.20 (蓝, 干净), 后 4 个均值=−0.05 (橙, 被违反)。每条横线是该对照的标准误 nc_se。这就是「样本数据框」的 12 行。"},
+  {t:"第 2 步 · 拟合经验零分布 fitNull", d:"用 12 个负对照拟合高斯, 得到经验零均值 <span class='k'>μ_b</span> 与离散度 σ_b。本轮回合 μ_b=−0.1506, 比真值 −0.20 <b>偏高</b>, 因为 4 个被违反对照(橙)把分布往右拉了。这正是「交互性违反」的污染源。"},
+  {t:"第 3 步 · 抽主研究观测", d:"主研究观测 <span class='mono'>obs = ψ + μ_B + N(0, 0.06) = −0.50 + 噪声</span>。本轮回合 obs=−0.4494 (紫点)。注意 obs − μ_B(真实) = −0.30 = ψ, 即去偏后的真实效应。"},
+  {t:"第 4 步 · 算 BF 并分类", d:"BF_est = |μ_b|/(|μ_b|+|obs−μ_b|) = 0.1506/0.4494 = <span class='k'>0.335</span>。介于 1/3 与 0.5 之间, 落在黄区 (competitive)。本轮回合碰巧判对, 但 μ_b 被污染会让很多回合误判为绿区。"},
+  {t:"第 5 步 · 重复 200 次并汇总", d:"把 200 个 BF_est 画成直方图 (绿=BF&lt;1/3, 黄=1/3~0.5, 红=BF&gt;0.5)。真值在黄区, 但点估计大量落在绿区 (73.5%), 只有 26.5% 落在黄区。<span class='k'>这正是黄区准确率只有 ~42% 的由来</span>: 不是分界线位置问题, 而是 μ_b 估计方差 + 违反污染的内在极限。正确对策是 v35 的 bootstrap CI 选择性规则 (保守弃权)。"}
+];
+let step=0, timer=null;
+
+function chipsHTML(){
+  // BF_true 高亮为主指标, BER 作为辅助
+  return [
+    {p:`ψ=<b>${P.psi}</b>`},
+    {p:`μ_B=<b>${P.muB}</b>`},
+    {p:`σ_B=<b>${P.sigmaB}</b>`},
+    {p:`K=<b>${P.K}</b>`},
+    {p:`违反=<b>${P.exV}</b>`},
+    {p:`BF_true=<b>${P.bf_true}</b>`, pri:true},
+    {p:`BER_true=<b>${P.bsr_true}</b>`},
+    {p:`种子=<b>${P.cond_seed}</b>`}
+  ].map(c=>`<span class="chip ${c.pri?'primary':''}">${c.p}</span>`).join("");
+}
+
+function clear(){while(cv.firstChild)cv.removeChild(cv.firstChild);}
+
+// 步骤 0: 静态条件卡 (BF 为主)
+function render0(){
+  clear();
+  const g=el("g",{}); cv.appendChild(g);
+  g.appendChild(txt(300,40,"该条件的固定因子与唯一真值 (BF)",null,"middle"));
+  const rows=[
+    ["主研究真实效应 ψ", P.psi],
+    ["真实系统偏倚 μ_B", P.muB],
+    ["负对照离散度 σ_B", P.sigmaB],
+    ["负对照个数 K", P.K],
+    ["交互性违反比例", P.exV+" (→ "+((P.K*P.exV).toFixed(0))+" 个被违反)"],
+    ["BF_true = |μ_B|/(|μ_B|+|ψ|)", P.bf_true+"  →  黄区 (主指标)"],
+    ["BER_true = |μ_B|/|ψ|  (辅助)", P.bsr_true+" (= BF/(1−BF))"],
+    ["条件种子 cond_seed", P.cond_seed+" (保证可复现)"]
+  ];
+  let y=78;
+  rows.forEach(r=>{
+    g.appendChild(txt(150,y,r[0],null,"end"));
+    g.appendChild(txt(170,y,String(r[1]),"", "start"));
+    y+=28;
+  });
+  g.appendChild(el("rect",{x:430,y:62,width:140,height:170,rx:10,fill:"#fff7da",stroke:"#e6b800"}));
+  g.appendChild(txt(500,88,"真值落点 (BF)",null,"middle"));
+  g.appendChild(txt(500,120,"BF = 0.40",null,"middle"));
+  g.appendChild(txt(500,150,"黄区 competitive",null,"middle"));
+  g.appendChild(txt(500,182,"介于 1/3 与 0.5",null,"middle"));
+  g.appendChild(txt(500,208,"最难判断的区间",null,"middle"));
+}
+
+// 通用: 画数值横轴
+function drawAxis(d0,d1,y,label){
+  const x=scale(d0,d1,50,560);
+  cv.appendChild(el("line",{x1:50,y1:y,x2:560,y2:y,stroke:"#9fb4c7"}));
+  for(let v=Math.ceil(d0*20)/20; v<=d1+1e-9; v+=0.05){
+    const px=x(v); cv.appendChild(el("line",{x1:px,y1:y-4,x2:px,y2:y+4,stroke:"#9fb4c7"}));
+    cv.appendChild(txt(px,y+16,v.toFixed(2),"axis-t","middle"));
+  }
+  cv.appendChild(txt(305,y+34,label,null,"middle"));
+  return x;
+}
+
+// 步骤 1: 12 个负对照
+function render1(){
+  clear();
+  const d0=-0.35,d1=0.10,y0=40, ystep=20;
+  const x=drawAxis(d0,d1,290,"数值轴 (log 风险比)");
+  const nc=DATA.nc_rep1;
+  nc.forEach((row,idx)=>{
+    const y=y0+idx*ystep;
+    const col=row.is_shifted?"var(--orange)":"var(--blue)";
+    const px=x(row.nc_log_rr);
+    cv.appendChild(txt(20,y+4,row.is_shifted?"违反":"干净","axis-t","end"));
+    cv.appendChild(el("line",{x1:x(row.nc_bias_true),y1:y-7,x2:x(row.nc_bias_true),y2:y+7,
+      stroke:col,"stroke-dasharray":"2 2",opacity:.55}));
+    cv.appendChild(el("line",{x1:x(row.nc_log_rr-row.nc_se),y1:y,x2:x(row.nc_log_rr+row.nc_se),y2:y,
+      stroke:col,opacity:.45,"stroke-width":2}));
+    const c=el("circle",{cx:px,cy:y,r:4.5,fill:col,class:"pop"});
+    c.style.animationDelay=(idx*0.07)+"s";
+    cv.appendChild(c);
+  });
+}
+
+// 步骤 2: fitNull 高斯
+function render2(){
+  clear();
+  const d0=-0.35,d1=0.10,ybase=250;
+  const x=drawAxis(d0,d1,290,"数值轴 (log 风险比)");
+  const mu=-0.1506, sig=0.0414;
+  const path=el("path",{fill:"rgba(46,158,107,.18)",stroke:"var(--green)","stroke-width":2});
+  let d="M "+x(d0)+" "+ybase;
+  for(let v=d0; v<=d1+1e-9; v+=0.005){
+    const f=Math.exp(-((v-mu)**2)/(2*sig*sig));
+    const yy=ybase-f*210;
+    d+=" L "+x(v).toFixed(1)+" "+yy.toFixed(1);
+  }
+  d+=" L "+x(d1)+" "+ybase+" Z";
+  path.setAttribute("d",d); cv.appendChild(path);
+  cv.appendChild(el("line",{x1:x(mu),y1:30,x2:x(mu),y2:ybase,stroke:"var(--green)","stroke-dasharray":"4 3"}));
+  cv.appendChild(txt(x(mu),24,"μ_b=−0.1506","axis-t","middle"));
+  cv.appendChild(el("line",{x1:x(-0.20),y1:30,x2:x(-0.20),y2:ybase,stroke:"#9fb4c7","stroke-dasharray":"4 3"}));
+  cv.appendChild(txt(x(-0.20),24,"真值 −0.20","axis-t","middle"));
+  DATA.nc_rep1.forEach(row=>{
+    cv.appendChild(el("circle",{cx:x(row.nc_log_rr),cy:ybase-(Math.exp(-((row.nc_log_rr-mu)**2)/(2*sig*sig)))*210,r:3.2,
+      fill:row.is_shifted?"var(--orange)":"var(--blue)"}));
+  });
+}
+
+// 步骤 3: 主研究观测
+function render3(){
+  clear();
+  const d0=-0.65,d1=0.10;
+  const x=drawAxis(d0,d1,250,"数值轴 (log 风险比)");
+  cv.appendChild(el("circle",{cx:x(-0.1506),cy:120,r:6,fill:"var(--brown)"}));
+  cv.appendChild(txt(x(-0.1506),104,"μ_b=−0.1506","axis-t","middle"));
+  cv.appendChild(el("circle",{cx:x(-0.4494),cy:120,r:7,fill:"var(--indigo)"}));
+  cv.appendChild(txt(x(-0.4494),104,"obs=−0.4494","axis-t","middle"));
+  cv.appendChild(el("line",{x1:x(-0.4494),y1:140,x2:x(-0.1506),y2:140,stroke:"#888","stroke-width":2,"marker-end":"url(#ar)"}));
+  cv.appendChild(txt(305,175,"obs = ψ + μ_B + N(0,0.06) = −0.50 + 噪声","axis-t","middle"));
+  const defs=el("defs",{}); const m=el("marker",{id:"ar",markerWidth:8,markerHeight:8,refX:6,refY:3,orient:"auto"});
+  m.appendChild(el("path",{d:"M0,0 L6,3 L0,6 Z",fill:"#888"})); defs.appendChild(m); cv.appendChild(defs);
+}
+
+// 步骤 4: BF 分类
+function render4(){
+  clear();
+  cv.appendChild(txt(300,50,"第 1 轮回合的 BF 计算 (主指标)",null,"middle"));
+  const lines=[
+    "BF_est = |μ_b| / (|μ_b| + |obs − μ_b|)",
+    "        = |−0.1506| / (|−0.1506| + |−0.4494 − (−0.1506)|)",
+    "        = 0.1506 / (0.1506 + 0.2988)",
+    "        = 0.1506 / 0.4494 = 0.335",
+    "1/3 ≤ 0.335 ≤ 0.5  →  黄区 (competitive)"
+  ];
+  let y=95; lines.forEach((s,i)=>{
+    cv.appendChild(txt(300,y,s,i===4?"":"mono","middle"));
+    y+=30;
+  });
+  const b=el("rect",{x:250,y:255,width:100,height:34,rx:8,fill:"var(--yellow)"});
+  cv.appendChild(b); cv.appendChild(txt(300,278,"黄区 competitive","axis-t","middle"));
+}
+
+// 步骤 5: 200 次汇总 (BF 直方图)
+function render5(){
+  clear();
+  const reps=DATA.reps200;
+  // 按 BF 分类统计 (cls 已经是 BF 尺度的分类)
+  const counts={green:0,yellow:0,red:0};
+  reps.forEach(r=>{ if(r.cls==="effect-dominated")counts.green++; else if(r.cls==="competitive")counts.yellow++; else counts.red++; });
+
+  // 左: BF 直方图 (x 轴 0~1, 阈值 1/3 与 0.5)
+  cv.appendChild(txt(150,28,"200 个 BF_est 落区分布 (BF 尺度)",null,"middle"));
+  const total=200, y0=80, h=170, bw=170;
+  const bfMin=0, bfMax=1;
+  const bands=[["green",0,1/3,"var(--green)","绿区 <1/3"],["yellow",1/3,0.5,"var(--yellow)","黄区 1/3–0.5"],["red",0.5,1,"var(--red)","红区 >0.5"]];
+  bands.forEach(b=>{
+    const x0=40+b[1]/bfMax*bw, x1=40+b[2]/bfMax*bw;
+    cv.appendChild(el("rect",{x:x0,y:y0,width:x1-x0,height:h,fill:b[3],opacity:.18}));
+  });
+  // 区名 + BF 阈值图例 (独立行, 比例数交给右图堆叠条)
+  const bandText = bands.map(b=>{
+    const s={green:"绿",yellow:"黄",red:"红"}[b[0]];
+    const label={green:"<1/3",yellow:"1/3–0.5",red:">0.5"}[b[0]];
+    return s+"区 "+label;
+  }).join("   |   ");
+  cv.appendChild(txt(40+bw/2, y0+h+30, bandText, null, "middle"));
+  // 真值线 (BF_true = 0.40) + 白底标签,避免与 x 轴刻度重叠
+  const xt=40+P.bf_true/bfMax*bw;
+  cv.appendChild(el("line",{x1:xt,y1:y0-2,x2:xt,y2:y0+h,stroke:"#1f2d3d","stroke-dasharray":"4 3"}));
+  // 白底矩形 (铺在 x 轴刻度上方), 尺寸按字符估宽, 锚点 middle
+  cv.appendChild(el("rect",{x:xt-46,y:y0-26,width:92,height:18,fill:"#fbfdff",opacity:.96}));
+  cv.appendChild(txt(xt,y0-13,"真值 BF=0.40",null,"middle"));
+  // x 轴刻度 (避开真值文字)
+  const xticks=[0, 0.25, 0.5, 0.75, 1];
+  xticks.forEach(v=>{
+    const xp=40+v*bw;
+    cv.appendChild(el("line",{x1:xp,y1:y0,x2:xp,y2:y0+4,stroke:"#9fb4c7"}));
+    cv.appendChild(txt(xp,y0-4,v.toFixed(2),null,"middle"));
+  });
+
+  // 右: 堆叠条 + 辅助信息
+  cv.appendChild(txt(490,32,"点估计 vs 真值 (BF 尺度)",null,"middle"));
+  cv.appendChild(txt(490,58,"真值: 黄区 (BF=0.40)",null,"middle"));
+  const sx=420, sy=78, sh=150, sw=130;
+  let yy=sy;
+  [["green",counts.green,"绿区"],["yellow",counts.yellow,"黄区"],["red",counts.red,"红区"]].forEach(b=>{
+    const hh=b[1]/total*sh;
+    cv.appendChild(el("rect",{x:sx,y:yy,width:sw,height:hh,fill:b[0],opacity:.8}));
+    cv.appendChild(txt(sx+sw+8,yy+hh/2,(b[2]+" "+b[1]),null,"start"));
+    yy+=hh;
+  });
+  cv.appendChild(txt(sx,sy+sh+20,"200 个回合分类计数",null,"middle"));
+  cv.appendChild(txt(490,sy+sh+45,"μ_b 均值=−0.1501 (真值 −0.20)",null,"middle"));
+  cv.appendChild(txt(490,sy+sh+65,"被 4 个被违反对照(均值 −0.05) 拉高",null,"middle"));
+}
+
+const renderers=[render0,render1,render2,render3,render4,render5];
+function render(){
+  renderers[step]();
+  document.getElementById("stepTxt").innerHTML="<b>步骤 "+(step+1)+"/6 · "+STEPS[step].t+"</b><br>"+STEPS[step].d;
+  document.getElementById("dots").innerHTML=STEPS.map((_,i)=>`<span class="dot ${i===step?'on':''}"></span>`).join("");
+  document.getElementById("prev").disabled=step===0;
+  document.getElementById("next").disabled=step===STEPS.length-1;
+}
+function go(s){step=Math.max(0,Math.min(STEPS.length-1,s));render();}
+function play(){ if(timer)return; document.getElementById("play").textContent="⏸ 暂停";
+  timer=setInterval(()=>{ if(step>=STEPS.length-1){stop();return;} go(step+1); },2600); }
+function stop(){ if(timer){clearInterval(timer);timer=null;} document.getElementById("play").textContent="▶ 自动播放"; }
+
+document.getElementById("prev").onclick=()=>{stop();go(step-1);};
+document.getElementById("next").onclick=()=>{stop();go(step+1);};
+document.getElementById("play").onclick=()=>{ timer?stop():play(); };
+document.getElementById("reset").onclick=()=>{stop();go(0);};
+
+document.getElementById("chips").innerHTML=chipsHTML();
+document.getElementById("foot").innerHTML=
+  "数据来自 bias-fraction/analysis/run_sim_worker_v35.R 的真实机制 (种子 cond_seed=551)。本论文以 <b>BF</b> 为主指标、<b>BER</b> 为辅助展示。第1轮负对照与 μ_b=−0.1506、obs=−0.4494、BF_est=0.335 均为真实抽样值。黄区准确率低的来源: μ_b 估计方差 + 违反污染, 非分界线位置问题。";
+render();
+</script>
+</body>
+</html>
