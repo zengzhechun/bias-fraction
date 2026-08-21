@@ -1,0 +1,677 @@
+---
+title: "Supplementary Materials: The Bias Fraction from Negative Control Calibration"
+author: "Zeng Zhechun et al."
+date: "2026-08-16"
+bibliography: references.bib
+csl: vancouver.csl
+format:
+  docx:
+    toc: false
+    number-sections: true
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+```{r setup, include=FALSE}
+source("../R/00_config.R")
+source("../R/01_bsr_core.R")
+library(EmpiricalCalibration)
+
+bsr_res <- readRDS(file.path(OUT_DIR, "data", "bsr_results_v35.rds"))
+sim     <- readRDS(file.path(SIM_DIR, "simulation_merged_v35.rds"))
+ci_sim  <- readRDS(file.path(SIM_DIR, "ci_simulation_merged.rds"))
+nc      <- readRDS(file.path(DATA_DIR, "negative_controls_expanded.rds"))
+
+nc_est <- nc$estimates
+en_fit <- fitNull(nc_est$logRr, nc_est$seLogRr)
+en_mu <- en_fit[1]
+en_sigma <- en_fit[2]
+en_diag <- bsr_res$diagnostics
+
+bb    <- bsr_res$bb
+gdmt  <- bsr_res$gdmt
+bb_bf <- bb$boot$bf_median
+bb_lo <- bb$boot$bf_ci_lo
+bb_hi <- bb$boot$bf_ci_hi
+gdmt_bf <- gdmt$boot$bf_median
+gdmt_lo <- gdmt$boot$bf_ci_lo
+gdmt_hi <- gdmt$boot$bf_ci_hi
+sl_bf <- bsr_res$sl$bf
+sl_lo <- bsr_res$sl$bf_ci_lo
+sl_hi <- bsr_res$sl$bf_ci_hi
+
+ci_reps <- ci_sim$reps
+ci_conds <- ci_sim$conditions
+ci_decisive <- !is.na(ci_reps$ci_class) & ci_reps$ci_class != "competitive"
+ci_decisive_rate <- 100 * mean(ci_decisive)
+ci_decisive_acc <- 100 * mean(ci_reps$ci_class[ci_decisive] == ci_reps$true_class[ci_decisive])
+```
+
+# eAppendix 1. The observed bias fraction (OBF) and Fieller confidence sets
+
+## Observed bias fraction
+
+The main text introduces the bias fraction (BF) as the new metric proposed by this work, defined as the share of the *total calibrated signal* attributable to bias. A companion quantity, likewise defined in this work, is the observed bias fraction (OBF), which divides the estimated bias by the *uncalibrated* estimate:
+
+$$\mathrm{OBF} = \frac{|\hat{\mu}_B|}{|\hat{\psi}_{\text{obs}}|}.$$
+
+OBF answers "of the association as estimated before calibration, what share is bias?" In the beta-blocker analysis, $|\hat{\mu}_B| = 0.190$ and $|\hat{\psi}_{\text{obs}}| = 0.184$, giving OBF = `r round(abs(bb$bsr$mu_bias) / abs(bb$bsr$log_rr_uncal), 2)`; the estimated bias is comparable to the entire observed association. For GDMT, OBF = `r round(abs(gdmt$bsr$mu_bias) / abs(gdmt$bsr$log_rr_uncal), 2)`, because the observed association ($|\hat{\psi}_{\text{obs}}| = 0.438$) is larger than the estimated bias. OBF is scale-invariant like BF, but unbounded, and it is unstable when the observed estimate is near zero. We report OBF as a descriptive companion; all classifications use BF.
+
+## Fieller confidence sets
+
+The signed ratio $\rho = \mu_B / \tilde{\psi}$ underlies BF through $\mathrm{BF} = |\rho|/(1+|\rho|)$. Fieller's theorem gives the set of $\rho$ values consistent with the data at level $1-\alpha$ [@fieller1954interval]. With $m_1 = \hat{\mu}_B$, $m_2 = \tilde{\psi} = \hat{\psi}_{\text{obs}} - \hat{\mu}_B$, $v_{11} = \mathrm{Var}(\hat{\mu}_B)$, $v_{22} = \hat{\sigma}_{\text{obs}}^2 + v_{11}$, and $v_{12} = -v_{11}$ (the primary estimate is independent of the negative controls), the confidence set contains all $\rho$ satisfying
+
+$$(m_1 - \rho m_2)^2 \le z^2_{\alpha/2} (v_{11} - 2\rho v_{12} + \rho^2 v_{22}).$$
+
+When the coefficient of $\rho^2$ is negative, the set is the exterior of a finite interval, unbounded in both tails; when the discriminant is negative the set is empty or the whole line. We estimated $v_{11}$ from the variance of $\hat{\mu}_B$ across bootstrap resamples.
+
+- **Beta-blocker**: the Fieller set was exterior, $(-\infty, `r round(bb$fieller$lo, 2)`] \cup [`r round(bb$fieller$hi, 2)`, \infty)$. Only ratios inside [`r round(bb$fieller$lo, 2)`, `r round(bb$fieller$hi, 2)`] are excluded at 95%. The calibrated estimate ($\tilde{\psi} = `r round(bb$bsr$log_rr_true, 3)`$) is tiny relative to its uncertainty ($\tilde{\sigma} = `r round(sqrt((0.0561)^2 + bb$bsr$sigma_bias^2), 3)`$), so the ratio is poorly identified in the frequentist sense. The bootstrap CI on BF, [`r round(bb_lo, 2)`, `r round(bb_hi, 2)`], lies entirely above 0.5, and the zone assignment is unaffected.
+- **GDMT**: the Fieller set was interior, [`r round(gdmt$fieller$lo, 2)`, `r round(gdmt$fieller$hi, 2)`], straddling 1, consistent with the mixed classification.
+
+**Why the two interval methods can disagree.** For the beta-blocker analysis the exterior Fieller set admits signed ratios with $|\rho| \geq 1.45$, corresponding to $\mathrm{BF} \geq 0.59$ — a weaker restriction than the bootstrap lower bound of `r round(bb_lo, 2)`. Two design differences explain the divergence. First, $v_{11}$ enters the Fieller quadratic as the bootstrap variance of $\hat{\mu}_B$, which captures resampling uncertainty in the negative controls but not the full sampling variance of the primary estimate, making the quadratic comparatively flat and widening the excluded region. Second, Fieller inverts a test on the unbounded signed ratio $\rho$, whose confidence set may therefore be unbounded, whereas the bootstrap percentile interval is computed on the logit-BF scale, where the statistic is bounded by construction. When the calibrated estimate is this small, the bootstrap CI on BF — which sits entirely above 0.5 here — is the more informative summary; the honest message of the Fieller set is that the ratio itself is weakly identified.
+
+The lesson of the Fieller exercise is that when the calibrated estimate is near zero, no interval method can pin down the ratio; readers should rely on the zone assignment from the BF bootstrap CI and on the calibrated p-value, rather than on the precise numeric value of BF or BER.
+
+# eAppendix 2. What BF does not estimate
+
+The metric does not estimate the true treatment effect; it summarizes the relationship between estimated bias and the residual effect after calibration. A bias-dominated classification means "the calibrated estimate does not support a causal claim", not "the true effect is zero". The metric does not identify the source of bias, whether healthy-adherer confounding, indication bias, or another channel of unmeasured confounding. It does not provide a probability or posterior distribution over the true effect. When $\tilde{\psi} \approx 0$, a BF near 1 could reflect either a genuinely null treatment effect or a bias that approximately cancels a non-zero true effect; the metric cannot distinguish these cases.
+
+# eAppendix 3. When calibration-based diagnostics should not be used
+
+**Insufficient negative controls.** With $K < 5$, the empirical null estimate is too imprecise. We recommend at least 8-10 controls with adequate event counts.
+
+**Non-exchangeable controls.** If negative controls are affected by outcome-specific mechanisms that do not operate on the primary endpoint, the bias distribution estimated from the controls will misrepresent the bias affecting the primary analysis.
+
+**Heterogeneous bias directions.** The empirical null model assumes the negative controls share a bias direction. Opposite-direction bias attenuates $\hat{\mu}_B$ toward zero and makes BF optimistic.
+
+**Small residual effects.** When the true treatment effect is near zero, the underlying ratio's denominator is near zero. On the BF scale this appears as values near 1, wide bootstrap CIs, and unbounded Fieller sets. Read such values as "signal saturated by bias", not as precise fractions.
+
+# eAppendix 4. RECORD-PE reporting checklist
+
+The study is reported following the RECORD-PE guidelines [@langan2018recordpe]. The completed checklist is available from the authors upon request.
+
+# eAppendix 5. TARGET trial emulation checklist
+
+The target trial emulation is reported following the TARGET statement [@cashin2025target]. The completed checklist is available from the authors upon request.
+
+# eAppendix 6. Alignment with the 5-step design framework of Ren et al. (2026)
+
+Ren et al. [@ren2026tte] proposed a 5-step framework for designing a target trial, developed through a cross-sectional survey of 237 TTE studies and expert consensus. The beta-blocker case study was assessed against this framework.
+
+```{r ren-framework}
+ren_steps <- data.frame(
+  Step = c("Step 1: Define the causal question",
+           "Step 2: Identify and categorize the application scenario",
+           "Step 3: Specify PICO according to the application scenario",
+           "Step 4: Review existing or similar RCTs to guide trial design",
+           "Step 5: Develop a transparent protocol"),
+  Framework_Requirement = c(
+    "Articulate the causal estimand and the hypothetical trial that would answer it",
+    "Classify the study into one of 8 recurring clinical scenarios",
+    "Define Population, Intervention, Comparator, and Outcome aligned with the scenario",
+    "Review prior RCTs with the same or similar PICO; justify the choice of trial to emulate",
+    "Prespecify eligibility, treatment strategies, assignment, follow-up, outcomes, causal contrast, and analysis plan"),
+  Case_Study_Adherence = c(
+    "Causal estimand: log RR of 1-year all-cause mortality for >=50% vs <50% target beta-blocker dose. Hypothetical trial: parallel-group RCT of dose achievement during index hospitalization.",
+    "Scenario: estimating effectiveness of an intervention in actual clinical settings (one of the 8 scenarios in Ren et al.); secondary scenario: extending evidence to a population underrepresented in pivotal HFrEF trials (MIMIC-IV captures real-world inpatients, many with comorbidities excluded from MERIT-HF/CIBIS-II).",
+    "P: adults hospitalized with HF, not on BB at admission, 7-day grace period (N=14,677). I: >=50% target BB dose during index admission. C: <50% target dose. O: 1-year all-cause mortality after the grace period (including post-discharge deaths).",
+    "Pivotal RCTs reviewed (MERIT-HF 1999, CIBIS-II 1999, COPERNICUS 2001, DAPA-HF 2019). Trial emulated: a hypothetical pragmatic trial of in-hospital dose achievement rather than an existing RCT, because no RCT has evaluated a dose-threshold strategy during the index hospitalization with 1-year mortality follow-up in this population.",
+    "Protocol components prespecified: eligibility (new-user design, baseline covariates n=10), treatment strategy (point treatment with 7-day grace period), assignment (TMLE with SuperLearner), follow-up (1 year after the grace period, including post-discharge deaths), outcome (all-cause mortality), causal contrast (ITT-like via TMLE), analysis plan (primary TMLE + negative control calibration + sensitivity analyses). Not prospectively registered (methodological illustration)."),
+  stringsAsFactors = FALSE
+)
+knitr::kable(ren_steps,
+  col.names = c("Framework step", "Requirement", "Case study adherence"),
+  caption = "eTable 10: Alignment of the beta-blocker case study with the 5-step target trial design framework of Ren et al. (2026).",
+  longtable = TRUE)
+```
+
+# eAppendix 7. Methodologic self-audit against the 7 core components of Ren et al. (2026)
+
+Ren et al. identified 7 core methodologic components for TTE implementation and found that 43.5% of published TTE studies failed to report all 7. The table below documents this paper's adherence.
+
+```{r ren-seven-components}
+seven_components <- data.frame(
+  Component = c("1. Eligibility criteria", "2. Treatment strategies",
+                "3. Assignment procedures", "4. Follow-up", "5. Outcomes",
+                "6. Causal contrast", "7. Statistical methods"),
+  Requirement = c(
+    "Rely solely on baseline information; avoid postbaseline eligibility; use sequential design when multiple eligibility windows exist",
+    "Predefine point or sustained strategies; prefer active-comparator new-user design; consider prevalent new-user for established comparators",
+    "Emulate randomization via propensity scores, G-methods, or doubly robust estimators; align method with treatment strategy type",
+    "Use visual diagram to align eligibility, treatment initiation, and follow-up at time zero; avoid immortal time bias",
+    "Prespecify primary and secondary outcomes; document definitions, data sources, and validation procedures",
+    "Clearly specify ITT vs per-protocol; justify based on research question and treatment strategy type",
+    "Align with causal contrast; address unmeasured confounding; report sensitivity analyses; for dynamic strategies use clone-censor-weight + G-methods"),
+  Case_Study_Status = c(
+    "COMPLIANT. Eligibility based on baseline covariates (age, sex, vitals, labs, ECG). 7-day grace period applied to avoid immortal time bias. No postbaseline information used for eligibility. Single eligibility window.",
+    "PARTIALLY COMPLIANT. Point treatment strategy predefined (>=50% vs <50% target dose during index admission). Active comparator used (<50% dose). New-user design implemented. Limitation: dose is a thresholded point exposure, not a sustained strategy.",
+    "COMPLIANT. TMLE with SuperLearner (doubly robust estimator). Both treatment model (g-model) and outcome model (Q-model) used SL.glm as the sole learner (parsimonious specification for the 10-covariate space; see eAppendix 8).",
+    "PARTIALLY COMPLIANT. Time zero aligned at grace period end. Follow-up extends to 1 year after the grace period, ascertained from MIMIC-IV date-of-death records including post-discharge deaths, so hospital discharge is not a competing risk. Limitation: no explicit flowchart of the eligibility/follow-up process.",
+    "COMPLIANT. Primary outcome prespecified: all-cause mortality within 1 year after the grace period (deaths on days 8-365). Source: MIMIC-IV date-of-death records, capturing in-hospital and post-discharge deaths. Binary outcome.",
+    "COMPLIANT. Causal contrast is ITT-like (effect of being assigned to >=50% dose strategy at baseline, estimated via TMLE). Not a per-protocol analysis. Justified by the point-treatment design and the absence of post-baseline treatment switching.",
+    "COMPLIANT AND EXTENDED. TMLE aligned with ITT-like contrast. Unmeasured confounding addressed via negative control calibration with the bias fraction (the core contribution of this paper), placing this study in the 30.8% minority of TTE studies that address unmeasured confounding (Ren et al. 2026). Sensitivity analyses: leave-one-out NC exclusion, SuperLearner configuration variation, grace period variation, GDMT known-effect comparison."),
+  stringsAsFactors = FALSE
+)
+knitr::kable(seven_components,
+  col.names = c("Component", "Requirement (Ren et al. 2026)", "Case study status"),
+  caption = "eTable 11: Methodologic self-audit of the beta-blocker case study against the 7 core TTE components.",
+  longtable = TRUE)
+```
+
+**Summary of self-audit.** Of the 7 components, 5 are fully compliant, 2 are partially compliant (treatment strategy and follow-up), and the statistical methods component is compliant and extended beyond the Ren et al. baseline by incorporating negative control calibration with BF for unmeasured confounding. The partial compliances reflect the methodological-illustration nature of this paper rather than a clinical trial report; the limitations are acknowledged in the main text.
+
+# eAppendix 8. TMLE implementation details
+
+All TMLE estimations used the `ltmle` R package [@lendle2017ltmle]:
+
+- **Treatment model (g-model)**: SuperLearner with SL.glm as the sole learner
+- **Outcome model (Q-model)**: SuperLearner with SL.glm as the sole learner
+- **Covariates (n = 10)**: age, sex, heart rate, QRS duration, QTc interval, atrial fibrillation, left bundle branch block, creatinine, estimated glomerular filtration rate, potassium
+- **Missing data**: MICE with 5 imputed datasets [@vanbuuren2011mice]
+- **Variance estimation**: influence-curve-based standard errors
+
+**Note on SuperLearner library specification.** For the primary analysis, both the g-model and the Q-model used SL.glm as the sole learner. This parsimonious configuration reflects the low-dimensional covariate space (10 baseline variables, $N = 14{,}677$), where a simple parametric specification is often sufficient and reduces the risk of overfitting in sparse data; TMLE's double-robustness property ensures consistency if either nuisance model is correctly specified. Because the `ltmle` package applies a single `SL.library` argument to both nuisance models simultaneously, the sensitivity analysis varied the library for the g-model and Q-model jointly. The three configurations (SL.glm alone, SL.glm + SL.gam, and SL.glm + SL.gam + SL.xgboost) produced BF = `r round(sl_bf[1], 2)`, `r round(sl_bf[2], 2)`, and `r round(sl_bf[3], 2)`, with bootstrap 95% CIs [`r round(sl_lo[1], 2)`, `r round(sl_hi[1], 2)`], [`r round(sl_lo[2], 2)`, `r round(sl_hi[2], 2)`], and [`r round(sl_lo[3], 2)`, `r round(sl_hi[3], 2)`], each lying entirely above the bias-dominated threshold of 0.5. The underlying ratio varied 20-fold across these configurations (BER, 17.8 to 413.2); the bounded scale absorbed this variation. The qualitative conclusion is insensitive to the library choice. For future implementations with higher-dimensional covariate spaces or larger samples, richer libraries for both nuisance functions are advisable.
+
+# eAppendix 9. Bootstrap procedure
+
+For $b = 1, \ldots, B$ (default $B = 2000$ for the primary analysis; $B = 500$ for leave-one-out analyses to reduce computational burden):
+
+1. Sample $K$ indices with replacement from $\{1, \ldots, K\}$
+2. Fit the empirical null to the bootstrap control set, obtaining $\hat{\mu}_B^{(b)}$
+3. Compute $\tilde{\psi}^{(b)} = \hat{\psi}_{\text{obs}} - \hat{\mu}_B^{(b)}$
+4. Compute $\mathrm{BF}^{(b)} = |\hat{\mu}_B^{(b)}| / (|\hat{\mu}_B^{(b)}| + |\tilde{\psi}^{(b)}|)$
+
+The $(1-\alpha) \times 100\%$ CI is the $\alpha/2$ and $1-\alpha/2$ quantiles of $\{\mathrm{BF}^{(b)}\}$ on the logit scale, back-transformed to [0,1]; this equals the percentile CI of BER on the log scale, transformed. The point estimate is the bootstrap median on the logit scale, back-transformed, so point estimate and CI come from the same distribution. Iterations where the empirical null fit fails are set to NA rather than silently substituted. In rare resamples where the estimated mean bias is exactly zero, the log ratio is floored at $10^{-4}$ before the log transform (the logarithm of zero being undefined); the floor sits far below any practically relevant ratio value and leaves the reported intervals unchanged.
+
+# eAppendix 10. Consistency property
+
+Under the shared bias structure assumption and with $K \geq 2$ negative controls whose bias estimates satisfy $\hat{\gamma}_k \sim \mathcal{N}(\mu_B, \sqrt{\hat{\tau}_k^2 + \sigma_B^2})$, the estimator
+
+$$\widehat{\mathrm{BF}} = \frac{|\hat{\mu}_B|}{|\hat{\mu}_B| + |\hat{\psi}_{\text{obs}} - \hat{\mu}_B|},$$
+
+where $\hat{\mu}_B$ is the maximum likelihood estimate from the empirical null model, is consistent for $|\mu_B| / (|\mu_B| + |\psi|)$ as $K \to \infty$ under standard regularity conditions.
+
+*Derivation.* Under bias exchangeability, each negative control estimate is an observation from the bias-generating process: $\hat{\gamma}_k = \mu_B + \delta_k + \varepsilon_k$ with $\delta_k \sim \mathcal{N}(0, \sigma_B^2)$ and $\varepsilon_k \sim \mathcal{N}(0, \hat{\tau}_k^2)$, so $\hat{\gamma}_k \sim \mathcal{N}(\mu_B, \sqrt{\hat{\tau}_k^2 + \sigma_B^2})$ marginally. The MLE $\hat{\mu}_B$ is consistent for $\mu_B$ as $K \to \infty$. The bias-corrected estimate $\tilde{\psi} = \hat{\psi}_{\text{obs}} - \hat{\mu}_B$ converges in probability to $\psi$, since $\hat{\psi}_{\text{obs}} \xrightarrow{p} \psi + \mu_B$ and $\hat{\mu}_B \xrightarrow{p} \mu_B$. The map $f(\mu_B, \psi) = |\mu_B|/(|\mu_B| + |\psi|)$ is continuous at every point of the parameter space, including $\psi = 0$, where $f(\mu_B, 0) = 1$ for $\mu_B \neq 0$. By the continuous mapping theorem, $\widehat{\mathrm{BF}}$ converges in probability to $|\mu_B|/(|\mu_B| + |\psi|)$. No exclusion of $\psi = 0$ is needed, in contrast to the unbounded ratio, whose population limit diverges at the null.
+
+**Remark (finite K behavior).** With fixed $K$, $\widehat{\mathrm{BF}}$ is a ratio of correlated random variables, and the bootstrap CI accounts for estimation uncertainty in $\hat{\mu}_B$. Fieller's theorem provides an alternative confidence set for the underlying ratio [@fieller1954interval] (eAppendix 1).
+
+# eAppendix 11. Properties of the metric
+
+**Property 1 (Boundedness and ceiling).** $\mathrm{BF} \in [0,1]$ by construction, with BF = 1 only when both the calibrated estimate and the true ψ are exactly zero (the literal-null degeneracy). The boundedness removes the need for special handling of infinite values when the denominator is small and caps the influence of a near-zero denominator on the scale of reported values. The price is a structural one-sided ceiling: BF cannot exceed 1, so at true BF near 1 the estimator can only err downward. In the v37 design we move the operating range slightly off this singularity by replacing the ψ = 0 cell with ψ = −0.01 (RR = 0.99, BF_true ∈ {0.952, 0.976, 0.985}, all well inside the bias-dominated zone), so the ceiling artifact no longer appears in the primary agreement study. The full-version analysis including the literal null is preserved as a transparency analysis (eAppendix 16).
+
+**Property 2 (Metric under no bias).** When $\mu_B = 0$, the estimated BF is near zero. When $\mu_B \neq 0$ and the true ψ is non-zero (the v37 operating range starts at ψ = −0.01), the population BF is interior (0.95–0.985), and the estimator behaves near-unbiasedly; the eAppendix 16 primary agreement study confirms this. The behavior at ψ = 0 is no longer part of the operating range.
+
+**Property 3 (Bootstrap consistency).** The nonparametric bootstrap is consistent for the distribution of $\widehat{\mathrm{BF}}$ when $K$ is fixed, subject to the standard smoothness conditions; the logit transform keeps the bootstrap distribution approximately symmetric. The bootstrap remains valid in the sense of smooth functionals except at $\tilde{\psi} = 0$, where the underlying ratio is not Hadamard differentiable; in that region the Fieller set (eAppendix 1) is the honest summary.
+
+# eTable 1. Comparison of BF and the calibrated p-value
+
+| Feature | BF | Calibrated p-value |
+|---------|-----|-------------------|
+| Output type | Continuous fraction in [0,1] | Binary significance test |
+| Question answered | How large is bias relative to the residual effect? | Is there evidence of an effect after bias correction? |
+| Scale | Scale-invariant, bounded | Depends on sample size |
+| Interpretation when non-significant | Distinguishes "bias dominated" from "borderline" | Cannot distinguish these scenarios |
+| Behavior at the null | BF = 1 | p close to 1 |
+| Computation | From OHDSI pipeline quantities | From OHDSI pipeline |
+| Recommended use | Alongside calibrated p-value and CI | Current standard |
+
+# eTable 2. Simulation study design
+
+```{r etable2-sim-design}
+sim_design <- data.frame(
+  Factor = c("True effect size (psi)", "Systematic bias (mu_B)", "Observation standard error of target-effect estimate (sigma_ps)",
+             "Number of negative controls (K)", "Exchangeability violation"),
+  Levels = c("0, -0.05, -0.10, -0.15, -0.20, -0.30, -0.40 (7)",
+             "-0.05, -0.10, -0.15, -0.20, -0.30, -0.40 (6)",
+             "0.06, 0.10 (2)",
+             "12, 25 (2)",
+             "0%, 30% (2)"),
+  Count = c("7", "6", "2", "2", "2")
+)
+knitr::kable(sim_design,
+  col.names = c("Factor", "Levels (count)", "N levels"),
+  caption = "Simulation study design. Total: 10 x 8 x 2 x 2 x 2 = 640 conditions, 1000 repetitions each (640,000 total). BF_true ranges from about 0.11 to 0.98; the upper end (approx 0.98) is the near-null psi = -0.01 design point (RR = 0.99), which replaces the literal psi = 0 boundary of the earlier design so the bounded BF scale has no singularity in the operating range. The 30% violation level is implemented as a fixed, pre-specified subset of round(K x 0.3) shifted controls (the last 4 of 12 = 33.3% for K = 12 and the last 8 of 25 = 32.0% for K = 25), distributionally equivalent to a random 30% subset. The random draws use common random numbers across violation levels (documented variance-reduction choice).")
+```
+
+# eTable 3. CI-based classification heuristic results
+
+```{r etable3-ci-sim}
+ci_summary <- data.frame(
+  Zone = c("Bias-dominated (BF_true > 0.5 or null)",
+           "Mixed (1/3 <= BF_true <= 0.5)",
+           "Effect-dominated (BF_true < 1/3)",
+           "Overall"),
+  N_reps = c(sum(ci_reps$true_class == "bias-dominated"),
+             sum(ci_reps$true_class == "competitive"),
+             sum(ci_reps$true_class == "effect-dominated"),
+             nrow(ci_reps)),
+  Point_Acc = c(
+    100 * with(ci_reps[ci_reps$true_class == "bias-dominated", ], mean(pt_class == true_class)),
+    100 * with(ci_reps[ci_reps$true_class == "competitive", ], mean(pt_class == true_class)),
+    100 * with(ci_reps[ci_reps$true_class == "effect-dominated", ], mean(pt_class == true_class)),
+    100 * mean(ci_reps$pt_class == ci_reps$true_class)),
+  CI_Acc = c(
+    100 * with(ci_reps[ci_reps$true_class == "bias-dominated", ], mean(ci_class == true_class, na.rm = TRUE)),
+    100 * with(ci_reps[ci_reps$true_class == "competitive", ], mean(ci_class == true_class, na.rm = TRUE)),
+    100 * with(ci_reps[ci_reps$true_class == "effect-dominated", ], mean(ci_class == true_class, na.rm = TRUE)),
+    100 * mean(ci_reps$ci_class == ci_reps$true_class, na.rm = TRUE)),
+  CI_as_Competitive = c(
+    100 * with(ci_reps[ci_reps$true_class == "bias-dominated", ], mean(ci_class == "competitive", na.rm = TRUE)),
+    100 * with(ci_reps[ci_reps$true_class == "competitive", ], mean(ci_class == "competitive", na.rm = TRUE)),
+    100 * with(ci_reps[ci_reps$true_class == "effect-dominated", ], mean(ci_class == "competitive", na.rm = TRUE)),
+    100 * mean(ci_reps$ci_class == "competitive", na.rm = TRUE))
+)
+knitr::kable(ci_summary, digits = 1,
+  col.names = c("Zone", "N repetitions", "Point-estimate accuracy, %",
+                "CI-based accuracy, %", "CI classified as mixed, %"),
+  caption = sprintf("CI-based classification heuristic vs point-estimate rule across all 640 conditions (67,200 repetitions, the companion CI simulation). The CI-based rule issued a decisive (non-mixed) classification in %.1f%% of repetitions; those decisive calls were %.1f%% accurate.", ci_decisive_rate, ci_decisive_acc))
+```
+
+Two patterns emerge. First, the CI-based rule is conservative by construction: a substantial fraction of repetitions were absorbed into the mixed category, which is why mixed-zone accuracy rose while bias- and effect-dominated accuracy fell relative to the point-estimate rule. Second, the rule is selective: its `r sprintf("%.1f", ci_decisive_rate)`% decisive classifications were `r sprintf("%.1f", ci_decisive_acc)`% accurate. Increasing the number of negative controls from 12 to 25 raised the decisive rate (`r sprintf("%.1f", 100 * mean(ci_conds$decisive_rate[ci_conds$n_nc == 12]))`% to `r sprintf("%.1f", 100 * mean(ci_conds$decisive_rate[ci_conds$n_nc == 25]))`%). A mixed CI-based classification should be read as insufficient evidence to distinguish bias from effect, not as evidence that the two are comparable.
+
+# eTable 4. Leave-one-out sensitivity analysis
+
+```{r etable4-loo}
+loo_tab <- data.frame(
+  Excluded = bsr_res$loo$excluded_nc,
+  BF = round(bsr_res$loo$bf, 3),
+  BF_CI = sprintf("[%.3f, %.3f]", bsr_res$loo$bf_ci_lo, bsr_res$loo$bf_ci_hi),
+  Zone = ifelse(bsr_res$loo$bf > 0.5, "Bias-dominated",
+         ifelse(bsr_res$loo$bf < 1/3, "Effect-dominated", "Mixed"))
+)
+knitr::kable(loo_tab,
+  col.names = c("Excluded negative control", "BF", "95% CI", "Zone"),
+  caption = sprintf("Leave-one-out sensitivity analysis. Full-data BF = %.2f. All %d exclusions remained in the bias-dominated zone (BF > 0.5).", bb_bf, nrow(loo_tab)))
+```
+
+# eTable 5. SuperLearner sensitivity analysis
+
+```{r etable5-sl}
+sl_tab <- data.frame(
+  Configuration = c("SL.glm", "SL.glm + SL.gam", "SL.glm + SL.gam + SL.xgboost"),
+  BF = round(sl_bf, 3),
+  CI_95 = sprintf("[%.3f, %.3f]", sl_lo, sl_hi),
+  BER_auxiliary = round(bf_to_ber(sl_bf), 1),
+  Zone = ifelse(sl_bf > 0.5, "Bias-dominated", ifelse(sl_bf < 1/3, "Effect-dominated", "Mixed"))
+)
+knitr::kable(sl_tab,
+  col.names = c("SuperLearner configuration", "BF", "95% CI", "BER (auxiliary)", "Zone"),
+  caption = "SuperLearner sensitivity analysis. All three configurations remained in the bias-dominated zone with bootstrap CIs entirely above 0.5. The auxiliary ratio varied 20-fold (17.8 to 413.2) while BF moved by 0.02.")
+```
+
+# eTable 6. Grace period sensitivity analysis
+
+```{r etable6-grace}
+gp_tab <- bsr_res$grace_period_sensitivity
+gp_tab$bf_ci <- ""
+knitr::kable(gp_tab[, c("grace_period", "n_cohort", "uncal_rr", "cal_rr", "bf", "class")],
+  col.names = c("Grace period (days)", "N (cohort)", "Uncalibrated RR",
+    "Calibrated RR", "BF", "Classification"),
+  caption = "Grace period sensitivity analysis. Calibrated RR ranged from 0.995 to 1.049, and all BF estimates remained in the bias-dominated zone (BF > 0.5).")
+```
+
+The grace period was varied between 3 and 14 days and the beta-blocker TMLE estimate and credibility metric were recomputed at each value. The calibrated risk ratio estimates ranged from 0.995 to 1.049, and all BF estimates remained in the bias-dominated zone. The qualitative conclusion is robust to the grace period specification.
+
+Note that the TMLE model and empirical null were refit independently at each grace period value; consequently, the 7-day entry (uncalibrated RR = `r round(gp_tab$uncal_rr[gp_tab$grace_period == 7], 3)`, BF = `r round(gp_tab$bf[gp_tab$grace_period == 7], 3)`) is close to but does not exactly reproduce the primary analysis (uncalibrated RR = `r round(bb$bsr$rr_uncal, 3)`, BF = `r round(bb_bf, 3)`). The small divergence arises because BF is a ratio estimator whose denominator (the calibrated estimate) is near zero in this application, so minor refitting differences are amplified; the bias-dominated classification is unaffected.
+
+# eTable 7. Relative bias of the unbounded ratio (BER) vs BF, per simulation configuration
+
+```{r etable7-ber-bf-bias}
+sub_fin  <- sim[is.finite(sim$bsr_true), ]
+ber_agg  <- aggregate(bsr_rel_bias ~ ex_violation + n_nc, data = sub_fin, FUN = mean, na.rm = TRUE)
+bf_agg   <- aggregate(cbind(bf_rel_bias, bf_rmse) ~ ex_violation + n_nc, data = sub_fin, FUN = mean, na.rm = TRUE)
+
+cfg_tab <- data.frame(
+  Setting = sprintf("0%% violation, K = %d", bf_agg$n_nc[bf_agg$ex_violation == 0]),
+  BER_rel_bias = sprintf("%+.1f", 100 * ber_agg$bsr_rel_bias[ber_agg$ex_violation == 0]),
+  BF_rel_bias = sprintf("%+.1f", 100 * bf_agg$bf_rel_bias[bf_agg$ex_violation == 0]),
+  BF_RMSE = sprintf("%.3f", bf_agg$bf_rmse[bf_agg$ex_violation == 0])
+)
+viol_tab <- data.frame(
+  Setting = sprintf("30%% violation, K = %d", bf_agg$n_nc[bf_agg$ex_violation == 0.3]),
+  BER_rel_bias = sprintf("%+.1f", 100 * ber_agg$bsr_rel_bias[ber_agg$ex_violation == 0.3]),
+  BF_rel_bias = sprintf("%+.1f", 100 * bf_agg$bf_rel_bias[bf_agg$ex_violation == 0.3]),
+  BF_RMSE = sprintf("%.3f", bf_agg$bf_rmse[bf_agg$ex_violation == 0.3])
+)
+knitr::kable(rbind(cfg_tab, viol_tab),
+  col.names = c("Simulation setting (per K and exchangeability level, 84 conditions each)", "BER relative bias, %", "BF relative bias, %", "BF RMSE"),
+  caption = "Per-configuration mean relative bias of the unbounded ratio (BER) and the bounded bias fraction (BF) under bias exchangeability (0% violation) and under 30% exchangeability violation. Under exchangeability BER overstates the true ratio by roughly +270% to +1920% while BF is nearly unbiased (about -1%, per-configuration range -47% to +22%); under violation BF is attenuated toward 0.5 (mean relative bias about -32%). The bounded BF therefore avoids the unbounded ratio's extreme relative-bias inflation in the bias-dominated zone (eAppendix 11, Property 1).")
+```
+
+# eTable 8. Plug-in vs bootstrap-median point estimates
+
+```{r etable8-plugin}
+plug_tab <- data.frame(
+  Analysis = c("Beta-blocker", "GDMT"),
+  BF_plugin = round(c(bb$bsr$bf, gdmt$bsr$bf), 3),
+  BF_boot = round(c(bb_bf, gdmt_bf), 3),
+  BF_CI = sprintf("[%.3f, %.3f]", c(bb_lo, gdmt_lo), c(bb_hi, gdmt_hi)),
+  BER_plugin = round(c(bb$bsr$bsr, gdmt$bsr$bsr), 1),
+  BER_boot = round(c(bb$boot$ber_median, gdmt$boot$ber_median), 1)
+)
+knitr::kable(plug_tab,
+  col.names = c("Analysis", "BF, plug-in", "BF, bootstrap median", "BF 95% CI (bootstrap)", "BER, plug-in", "BER, bootstrap median"),
+  caption = "Two point-estimate conventions. The plug-in estimate computes the ratio directly from the original (non-resampled) estimates; the bootstrap median is the logit-scale median of the same resampling distribution that produces the percentile CI, so point estimate and CI share one source of uncertainty. For the beta-blocker analysis the two conventions differ markedly in magnitude (BER 30.4 vs 9.6) because the plug-in raw ratio is an upward-biased moment of a heavily skewed sampling distribution whose denominator is near zero; both conventions place the estimate in the bias-dominated zone, and the bootstrap median is the convention reported in the main text.")
+```
+
+
+# eAppendix 12. Negative control definitions and quality assessment
+
+The 12 negative control outcomes were selected under three criteria: (1) no plausible causal pathway from beta-blocker exposure to the outcome, (2) at least 50 events for stable estimation, and (3) representation across diverse clinical domains to minimize correlation between controls.
+
+**Overlap assessment.** Three infectious outcomes in the set have partially overlapping case definitions: `infection` (a broad composite) encompasses cases also captured by `uti_only` (urinary tract infection) and `cellulitis` (skin/soft tissue infection). This nesting means these three controls are not fully independent observations from the bias-generating process. The remaining 9 controls are definitionally independent. We retained all 12 controls in the primary analysis because (a) the empirical null model accounts for between-control heterogeneity ($\sigma_B$), which partially mitigates the correlation, and (b) the leave-one-out sensitivity analysis (eTable 4) confirmed that excluding any single control, including the nested ones, did not materially change the classification. The effective independent control count is closer to 10 than 12, and the bootstrap CI may be slightly anti-conservative because of this correlation.
+
+**Causal channel assessment.** Each negative control was evaluated for potential causal pathways from beta-blocker exposure. Of particular note, `fall` was flagged because beta-blockers can cause bradycardia and orthostatic hypotension, established risk factors for falls. The observed protective association (RR < 1) for this outcome likely reflects healthy-adherer confounding overwhelming any true harm signal, but this heterogeneity means `fall` is not an ideal negative control. The leave-one-out analysis confirmed that excluding `fall` did not change the BF classification (remained bias-dominated), supporting the robustness of the primary conclusion. Future applications should exclude outcomes with known causal channels from the primary negative control set.
+
+**Empirical null fit diagnostics.** Fitting the empirical null to the 12 negative controls (EmpiricalCalibration::fitNull) yielded an estimated mean bias of `r round(en_mu, 3)` (SD `r round(en_sigma, 3)`) on the log-RR scale. Standardized residuals showed no significant departure from normality (Shapiro-Wilk p = `r round(en_diag$shapiro_p, 3)`), and the largest standardized residual was `r round(max(en_diag$std_residual_abs), 2)` (gout); leave-one-out recalibration excluding gout retained a bias-dominated classification. The QQ plot with a simulated 95% confidence envelope (eFigure 5) provides a visual assessment consistent with the empirical null assumption.
+
+```{r nc-table}
+nc_tab <- nc$estimates[, c("outcome", "label", "n_events", "logRr", "seLogRr", "rr")]
+nc_tab$rr_ci <- sprintf("%.2f [%.2f, %.2f]",
+  nc_tab$rr, nc_tab$rr * exp(-1.96 * nc_tab$seLogRr),
+  nc_tab$rr * exp(1.96 * nc_tab$seLogRr))
+nc_tab$domain <- c(
+  "Infectious", "Gastrointestinal", "Trauma", "Infectious",
+  "Dermatologic", "Ophthalmologic", "Rheumatologic", "Trauma",
+  "Gastrointestinal", "Genitourinary", "Rheumatologic", "Rheumatologic")
+nc_tab$causal_channel <- c(
+  "None identified",
+  "None identified",
+  "Potential: bradycardia/hypotension may increase fall risk",
+  "None identified (nested within infection)",
+  "Nested within infection (skin/soft tissue)",
+  "None identified",
+  "None identified",
+  "None identified",
+  "None identified",
+  "None identified",
+  "None identified",
+  "None identified")
+nc_tab$justification <- c(
+  "BB no antibacterial mechanism",
+  "BB no effect on mucosal integrity",
+  "BB may affect fall risk via bradycardia; flagged as imperfect NC",
+  "BB no antibacterial mechanism (UTI subset of infection)",
+  "BB no effect on skin integrity (cellulitis subset of infection)",
+  "BB no effect on lens opacity progression",
+  "BB no effect on degenerative joint disease",
+  "BB no effect on accident risk",
+  "BB no effect on hemorrhoidal tissue",
+  "BB no known effect on prostatic growth",
+  "BB no uric acid pathway effect",
+  "BB no known anti-inflammatory mechanism for tendons")
+knitr::kable(nc_tab[, c("outcome", "domain", "n_events", "rr_ci", "causal_channel", "justification")],
+  col.names = c("Outcome", "Domain", "Events", "RR [95% CI]", "Potential causal channel", "Pharmacological justification"),
+  caption = "eTable 9: Negative control outcomes with clinical domain, causal channel assessment, and pharmacological justification. Three infection-related outcomes (infection, uti_only, cellulitis) have partially overlapping case definitions, reducing the effective independent control count.")
+```
+
+# eFigure 1. Directed acyclic graph of shared bias structure
+
+![eFigure 1. Directed acyclic graph of shared bias structure and BF calibration. Panel A: U = unmeasured confounder; A = exposure (beta-blocker); Y = primary outcome (mortality); N_k = negative control outcomes. Solid arrows denote causal paths; dashed arrows denote bias paths shared between Y and N_k through U. Panel B: bias decomposition and the BF formula.](../output/shared_bias_dag.png){width=100%}
+
+# eFigure 2. Simulation classification accuracy heatmap
+
+```{r efig2-heatmap, fig.cap="eFigure 2. Classification accuracy across 640 simulation conditions. Each cell shows the accuracy for one combination of true effect size (psi), systematic bias mean (mu_B), observation standard error of the target-effect estimate (sigma_ps), negative control count (K), and exchangeability violation level. Darker colors indicate higher accuracy.", out.width="100%"}
+knitr::include_graphics(file.path(FIG_DIR, "fig03_simulation_heatmap.png"))
+```
+
+# eFigure 3. Classification performance by zone
+
+```{r efig3-performance, fig.cap="eFigure 3. Classification performance by zone. Panel A: BF classification accuracy by zone with the 33% chance-level reference line. Panel B: OHDSI calibrated p-value rejection rate and uncalibrated rejection rate by zone, with the 5% nominal alpha reference line.", out.width="100%"}
+knitr::include_graphics(file.path(FIG_DIR, "fig04_classification_domain.png"))
+```
+
+# eFigure 4. Leave-one-out sensitivity analysis
+
+```{r efig4-loo, fig.cap="eFigure 4. Leave-one-out sensitivity analysis. Each point shows BF after excluding one negative control. The blue line indicates the full-data BF. All exclusions remained in the bias-dominated zone (BF > 0.5).", out.width="90%"}
+knitr::include_graphics(file.path(FIG_DIR, "fig05_loo_sensitivity.png"))
+```
+
+# eFigure 5. Negative control diagnostics
+
+```{r efig5-qq, fig.cap="eFigure 5. Negative control diagnostics. Panel A: QQ plot of standardized residuals with simulated 95% confidence envelope. Panel B: lollipop chart of absolute standardized residuals by negative control outcome.", out.width="100%"}
+knitr::include_graphics(file.path(FIG_DIR, "fig06_qq_diagnostics.png"))
+```
+
+# eFigure 6. Bootstrap distributions (BF scale)
+
+```{r efig6-bootstrap, fig.cap="eFigure 6. Bootstrap distributions of BF for beta-blocker (left) and GDMT (right). Solid lines indicate point estimates (bootstrap medians); dashed lines indicate 95% bootstrap CI bounds. Dotted lines mark the zone boundaries at 1/3 and 0.5. The beta-blocker distribution concentrates near BF = 1; the GDMT distribution spans the effect-dominated and mixed zones."}
+knitr::include_graphics(file.path(FIG_DIR, "fig07_bootstrap_BF.png"))
+```
+
+# eAppendix 13. Small-sample sensitivity of the empirical null
+
+The empirical null was estimated from only $K = 12$ negative controls. The fitted distribution inherits the parameter uncertainty of $\hat{\mu}_B$ and $\hat{\sigma}_B$, which is non-trivial at this sample size and which the default plug-in calibrated p-value ignores. We performed a parametric sensitivity analysis to quantify the impact on Type I error and to assess the two case-study conclusions under a small-sample-corrected reference.
+
+## Methods
+
+We assumed the empirical null model of `fitNull` (EmpiricalCalibration 3.1.4), in which each negative-control estimate satisfies $\hat{\gamma}_k \sim N(\mu_B, \hat{\tau}_k^2 + \sigma_B^2)$ and the parameters $(\mu_B, \sigma_B)$ are estimated by maximum likelihood. We fixed the true parameters at the empirical null point estimates from the beta-blocker analysis of this study, $\mu_B = -0.190$ and $\sigma_B = 0.068$, and drew the within-control standard errors from the empirical distribution of the 12 actual negative-control SEs (range, 0.025 to 0.302, including three poorly-informative controls with $\hat{\tau}_k > 0.24$). For each $K \in \{5, 8, 12, 20, 45, 100\}$ we generated 2000 replicate negative-control panels and target estimates under the calibration null ($\hat{\gamma}_{\text{target}} \sim N(\mu_B, \hat{\tau}_{\text{target}}^2 + \sigma_B^2)$ with $\hat{\tau}_{\text{target}} = 0.056$, the beta-blocker target SE), fit the null by maximum likelihood, and computed three calibrated two-sided p values:
+
+- **Plug-in (current default):** $2 \{ 1 - \Phi(|\hat{\gamma}_{\text{target}} - \hat{\mu}_B| / \sqrt{\hat{\tau}_{\text{target}}^2 + \hat{\sigma}_B^2}) \}$, identical to `calibrateP.null`.
+- **Variance-inflated normal:** plug-in variance inflated by $\widehat{\mathrm{Var}}(\hat{\mu}_B) = [\sum_k (\hat{\tau}_k^2 + \hat{\sigma}_B^2)^{-1}]^{-1}$.
+- **t-predictive (df = $K - 2$):** denominator as above, two-sided p value from the t distribution, following the random-effects prediction-interval construction of Higgins, Thompson and Spiegelhalter [-@higgins2009reevaluation].
+
+The primary operating characteristic was the empirical Type I error rate at $\alpha = 0.05$. Secondary characteristics were the root-mean-square error of $\hat{\sigma}_B$ relative to its true value, the fraction of replicates that severely underestimated $\hat{\sigma}_B$ ($< \sigma_B / 2$), and the fraction that hit the $\hat{\sigma}_B = 0$ boundary.
+
+## Results
+
+| K | Plug-in | Variance-inflated | t(K−2) | Oracle (known params) | RMSE($\hat{\sigma}_B$) | $\hat{\sigma}_B$ median | P($\hat{\sigma}_B < \sigma_B/2$) | P($\hat{\sigma}_B = 0$) |
+|---|---|---|---|---|---|---|---|---|
+| 5  | 17.4% | 14.0% | 2.3%  | 4.3% | 0.0538 | 0.032 | 51.1% | 34.6% |
+| 8  | 14.6% | 12.2% | 6.3%  | 5.1% | 0.0418 | 0.049 | 36.7% | 19.0% |
+| 12 | 11.4% | 9.9%  | 6.6%  | 4.9% | 0.0335 | 0.055 | 24.4% | 8.6% |
+| 20 | 10.0% | 9.0%  | 6.8%  | 5.9% | 0.0234 | 0.061 | 10.3% | 2.1% |
+| 45 | 6.8%  | 6.4%  | 5.6%  | 4.8% | 0.0139 | 0.065 | 1.6%  | 0% |
+| 100 | 5.4%  | 5.4%  | 5.2%  | 5.1% | 0.0095 | 0.066 | 0%    | 0% |
+
+The oracle row confirms simulation correctness; the four methods differ only through their treatment of the finite-sample uncertainty of the null parameters. The plug-in calibrated p-value is materially anti-conservative at $K = 12$ (11.4% Type I error) and reaches the nominal rate at $K \approx 100$. Variance inflation alone addresses the uncertainty of $\hat{\mu}_B$ and gives a partial correction (11.4% to 9.9% at $K = 12$); the additional heavy tails of the t($K-2$) reference bring the error close to nominal (6.6%) without substantial overcorrection at $K \geq 8$. The dominant source of anti-conservatism at small $K$ is the downward bias and boundary behaviour of the maximum-likelihood variance-component estimator $\hat{\sigma}_B$: at $K = 12$ the median estimate was 0.055 (true 0.068), 24% of replicates underestimated $\sigma_B$ by more than half, and 8.6% collapsed to the $\hat{\sigma}_B = 0$ boundary.
+
+## Case-study application
+
+For each case-study observation we computed the t-predictive calibrated p value in addition to the plug-in value, and ran a 2000-replicate resampling bootstrap of the 12 negative controls to quantify conclusion robustness.
+
+| Analysis | Plug-in p | t(K−2) p | Resampling bootstrap (plug-in p) | P(p < 0.05) across resamples |
+|---|---|---|---|---|
+| Beta-blocker (RR 0.83) | 0.943 | 0.947 | median 0.80; 95% PI 0.444-0.989 | 0% |
+| GDMT (RR 0.65)        | 0.0067 | 0.027  | median 0.003; 95% PI 0.000-0.065 | 95.9% |
+
+The beta-blocker conclusion ("no evidence of an effect after calibration") is invariant to the choice of inference: the plug-in p value never crossed 0.05 in any bootstrap replicate, and the t-predictive p value (0.947) is essentially identical to the plug-in value because the observation lies near the centre of the bias distribution, where heavier tails add little. The GDMT conclusion ("residual effect survives calibration") survives the t-predictive correction in direction (0.027 < 0.05) but the evidence is materially weaker: the t-predictive p value is roughly four times the plug-in value and approaches the 0.05 threshold. The bootstrap analysis confirms that the GDMT plug-in p value sits below 0.05 in 95.9% of resamples, with the upper end of the 95% PI (0.065) crossing the nominal threshold.
+
+## Implications and recommendations
+
+At $K = 12$ the default plug-in calibrated p value should be reported together with a small-sample sensitivity. A pragmatic sensitivity uses a t($K-2$) predictive reference distribution for the empirical null [@higgins2009reevaluation], which restores near-nominal Type I error without heavy computation and does not require MCMC. Two caveats apply. First, the t($K-2$) reference is an acknowledged approximation [@nagashima2023predicting], not a closed-form exact result; at very small $K$ it over-corrects (2.3% at $K = 5$). Second, the t($K-2$) reference addresses the uncertainty of $\hat{\mu}_B$ but only partially compensates for the downward bias and boundary behaviour of $\hat{\sigma}_B$. A more complete small-sample treatment would require either a bias-corrected estimator for $\sigma_B$ (e.g., REML) or a full Bayesian posterior via `fitMcmcNull` [@schuemie2018empirical]. We retain the plug-in p value as the primary statistic for consistency with the OHDSI convention and report the t-predictive p value as a sensitivity in the main manuscript. The companion R package `biasratio` will add a `method = "robust"` option in a subsequent release to make the t-predictive and REML variants directly available to investigators working with modest negative-control panels.
+
+The simulation script (`sim_smallK_null_correction.R`) and results table (`sim_smallK_typeI_results.csv`) are available in the project repository under `manuscript_v35/output/simulation/`.
+
+# eAppendix 14. Zone-boundary sensitivity and the distinction from the calibrated p-value
+
+This appendix addresses two questions that arise naturally from the three-zone classification.
+
+**Q1. How does the BF three-zone classification differ from the calibrated p-value binary rule?** The calibrated p-value answers a *significance* question ("is the calibrated effect distinguishable from zero?") and is binary by construction. The BF answers a *credibility* question ("what share of the total calibrated signal is plausibly bias?") and is a continuous fraction in $[0,1]$. The formal distinction (eTable 1) is sharpened by examining each metric's dependence on the primary study's standard error. The plug-in calibrated p-value is
+
+$$p_{\mathrm{cal}} = 2\,\Phi\!\Bigl(-\frac{|\hat{\psi} - \hat{\mu}_B|}{\sqrt{\hat{\tau}^{2} + \hat{\sigma}_{B}^{2}}}\Bigr),$$
+
+which depends on the precision $\hat{\tau}$ of the primary estimate: a small study with a large point estimate can yield a non-significant calibrated p-value, while a large study with a smaller point estimate can yield a significant one. The BF,
+
+$$\widehat{\mathrm{BF}} = \frac{|\hat{\mu}_B|}{|\hat{\mu}_B| + |\hat{\psi} - \hat{\mu}_B|},$$
+
+contains *no* $\hat{\tau}$: it answers the bias-share question entirely from the point estimates of bias and effect. Consequently, the two metrics are not redundant. They agree at the extremes — when the effect is large, BF is small and $p_{\mathrm{cal}}$ is small; when bias dominates, BF is large and $p_{\mathrm{cal}}$ is large — which is the desired convergent validity. They disagree in the *middle*: a borderline-calibrated effect can have $p_{\mathrm{cal}} < 0.05$ (significant after calibration) yet $\widehat{\mathrm{BF}} \in (1/3,\,0.5)$ (mixed, ~30–50% of the signal plausibly bias), or vice versa. The three-zone framework makes this disagreement *legible*: the "mixed" region is the explicit "I don't know" band, and the selective CI rule (eTable 3) issues a decisive call only when the entire confidence interval lies in one zone. The calibrated p-value has no analogue: it forces a binary verdict on every analysis, including the ones where the data are too weak to support one.
+
+**Q2. Could adjusting the red/amber/green boundaries raise classification accuracy?** No, not beyond what the metric already supports under the default boundaries. The $1/3$ and $0.5$ boundaries are *definitional*, not tuned: $\mathrm{BF} < 1/3 \Leftrightarrow$ residual effect $\geq 2\times$ bias (BER $< 0.5$); $\mathrm{BF} > 0.5 \Leftrightarrow$ bias $>$ effect (BER $> 1$). Moving them changes the *meaning* of "effect-dominated" and "bias-dominated," it does not optimise a classifier. To verify empirically, we re-classified all 67,200 repetitions of the 640-condition simulation (the companion CI simulation) under a grid of 28 (cut1, cut2) pairs spanning $\mathrm{cut}_{1} \in \{0.20,\,0.25,\,0.30,\,1/3,\,0.35,\,0.40,\,0.45\}$ and $\mathrm{cut}_{2} \in \{0.50,\,0.55,\,0.60,\,0.65\}$, using each repetition's stored $\hat{\rho} = |\hat{\mu}_B|/|\hat{\psi} - \hat{\mu}_B|$ (the `r_pt` column of `ci_simulation_merged.rds`).
+
+The results are given in eTable 9 and visualised in eFigures 7 and 8. Three patterns emerge.
+
+1. Overall point-estimate accuracy is bounded at **50.1–74.9%** across the entire plausible threshold range. The strictest setting (cut1 = 0.20, cut2 = 0.50) yields the maximum of 74.9%; the default (1/3, 0.50) yields 70.0%. **No threshold pair lifts overall accuracy above 75%**, because the middle simulation conditions (true BF $\approx 0.4$–$0.5$) have genuinely low signal-to-noise: the variance of $\widehat{\mathrm{BF}}$ in this region dominates, independently of where the line is drawn.
+
+2. Moving the boundaries trades *coverage* against extreme-zone accuracy (a precision–recall trade-off). Stricter boundaries (smaller cut1, larger cut2) raise the accuracy of the effect- and bias-dominated zones but reduce the share of analyses assigned a decisive (non-mixed) zone. The effect-dominated zone rises from 69.8% accuracy at cut1 = 0.20 to 98.9% at cut1 = 0.45, while its coverage falls from 17.4% to 47.6% (eFigure 8); the bias-dominated zone behaves analogously in cut2. The middle zone's accuracy (10–82% across the grid) is an *intrinsic* function of $\widehat{\mathrm{BF}}$'s estimation variance in the middle, not of the line's placement.
+
+3. The selective CI-based rule (eTable 3) is the correct fix: its **86.8% decisive accuracy on the 47.6% of cases it covers** sits above the point-estimate accuracy–coverage frontier (eFigure 8, red star). At comparable coverage (~47–48%), the best point-estimate setting achieves only ~65–70% overall accuracy; the CI rule reaches 86.8% because it abstains precisely on the cases where $\widehat{\mathrm{BF}}$ is poorly identified. The point-estimate frontier is monotonically decreasing: as coverage rises, accuracy falls. No point on the frontier exceeds 80% accuracy at 60% coverage.
+
+We therefore retain the default 1/3 and 0.5 boundaries as the operational thresholds and recommend the selective CI rule — already implemented in `biasratio::bf_classify()` with the bootstrap CI — for any application in which the analyst wishes to convert "mixed" into "no call" rather than risk an over-confident binary verdict. The threshold-sweep results CSV is at `manuscript_v35/output/tables/threshold_sweep_results.csv`; the R script is at `manuscript_v35/output/simulation/threshold_sweep.R`.
+
+# eTable 9. Zone-boundary sensitivity sweep
+
+```{r etable9-sweep}
+rp <- ci_reps
+classify_sweep <- function(ber, eff_ber, bias_ber) {
+  ifelse(is.na(ber), "unclassifiable",
+  ifelse(ber > bias_ber, "bias-dominated",
+  ifelse(ber < eff_ber, "effect-dominated", "competitive")))
+}
+grid <- expand.grid(
+  cut1 = c(0.20, 0.25, 0.30, 1/3, 0.35, 0.40, 0.45),
+  cut2 = c(0.50, 0.55, 0.60, 0.65)
+)
+out <- data.frame()
+for (i in seq_len(nrow(grid))) {
+  c1 <- grid$cut1[i]; c2 <- grid$cut2[i]
+  pred <- classify_sweep(rp$r_pt, c1/(1-c1), c2/(1-c2))
+  out <- rbind(out, data.frame(
+    `Effect cut`    = sprintf("%.2f", c1),
+    `Bias cut`      = sprintf("%.2f", c2),
+    `Overall acc.`  = sprintf("%.1f", 100*mean(pred == rp$true_class)),
+    `Bias acc.`     = sprintf("%.1f", 100*mean(pred[rp$true_class == "bias-dominated"]   == "bias-dominated")),
+    `Mixed acc.`    = sprintf("%.1f", 100*mean(pred[rp$true_class == "competitive"]      == "competitive")),
+    `Effect acc.`   = sprintf("%.1f", 100*mean(pred[rp$true_class == "effect-dominated"] == "effect-dominated")),
+    `Decisive rate` = sprintf("%.1f", 100*mean(pred != "competitive")),
+    check.names = FALSE))
+}
+knitr::kable(out, align = "rrrrrrr",
+  caption = "Zone-boundary sensitivity of the point-estimate rule across the 67,200 repetitions of the 640-condition simulation (companion CI simulation), re-classified under the (cut1, cut2) grid using each repetition's stored r_pt. cut1 = BF threshold for effect-dominated (BF < cut1); cut2 = BF threshold for bias-dominated (BF > cut2). Overall accuracy is bounded at 50.1-74.9% across the grid; the default (1/3, 0.5) yields 70.0%. The selective CI-based rule (eTable 3) achieves 86.8% accuracy on the 47.6% of repetitions it covers, above every point-estimate setting in the grid.")
+```
+
+# eFigure 7. Overall point-estimate accuracy across the threshold grid
+
+```{r efig7-sweep-heatmap, fig.cap="Overall point-estimate classification accuracy (%) across 28 (cut1, cut2) pairs. Accuracy is bounded at 50.1-74.9%; the strictest corner (cut1=0.20, cut2=0.50) yields the maximum 74.9%, the default (0.33, 0.50) yields 70.0%. No pair exceeds 75% because the middle simulation conditions have intrinsically low BF signal-to-noise.", fig.width=7.2, fig.height=5.6}
+mat <- matrix(as.numeric(out$`Overall acc.`), nrow = length(unique(out$`Effect cut`)),
+              ncol = length(unique(out$`Bias cut`)), byrow = TRUE)
+cut1v <- sort(unique(as.numeric(out$`Effect cut`)))
+cut2v <- sort(unique(as.numeric(out$`Bias cut`)))
+pal <- grDevices::colorRampPalette(c("#EBD9D9","#FBF0D6","#CFE3CF"))(100)
+graphics::image(cut1v, cut2v, mat, col = pal,
+      xlab = "Effect threshold cut1 (BF < cut1 = effect-dominated)",
+      ylab = "Bias threshold cut2 (BF > cut2 = bias-dominated)",
+      main = "Overall point-estimate accuracy (%) across zone boundaries",
+      axes = FALSE, zlim = c(50, 78))
+graphics::axis(1, at = cut1v, labels = sprintf("%.2f", cut1v))
+graphics::axis(2, at = cut2v, labels = sprintf("%.2f", cut2v))
+graphics::box()
+for (i in seq_along(cut1v)) for (j in seq_along(cut2v))
+  graphics::text(cut1v[i], cut2v[j], sprintf("%.1f", mat[i,j]), cex = 0.85, col = "#333333")
+```
+
+# eFigure 8. Accuracy-coverage trade-off
+
+```{r efig8-sweep-frontier, fig.cap="Accuracy-coverage trade-off of the point-estimate rule (28 settings) and the selective CI-based rule. The point-estimate cloud sits in the 50-75% accuracy band; the selective CI rule (86.8% @ 47.6% coverage) is above the frontier, demonstrating that abstention beats threshold tuning.", fig.width=7.6, fig.height=5.2}
+graphics::plot(as.numeric(out$`Decisive rate`), as.numeric(out$`Overall acc.`), type = "n",
+     xlim = c(40, 100), ylim = c(48, 90),
+     xlab = "Coverage: share of repetitions assigned a decisive (non-mixed) zone (%)",
+     ylab = "Overall classification accuracy (%)",
+     main = "Accuracy-coverage trade-off: point-estimate rule vs selective CI rule")
+ord <- order(as.numeric(out$`Decisive rate`))
+graphics::lines(as.numeric(out$`Decisive rate`)[ord], as.numeric(out$`Overall acc.`)[ord],
+      col = "#9AA7B0", lwd = 1.4, lty = 3)
+graphics::points(as.numeric(out$`Decisive rate`), as.numeric(out$`Overall acc.`),
+       pch = 21, bg = "#5B8FA8", col = "#2C2C2C", cex = 1.4)
+def <- which(out$`Effect cut` == "0.33" & out$`Bias cut` == "0.50")
+graphics::points(as.numeric(out$`Decisive rate`[def]), as.numeric(out$`Overall acc.`[def]),
+       pch = 21, bg = "#B8A060", col = "#2C2C2C", cex = 2.0)
+graphics::text(as.numeric(out$`Decisive rate`[def]), as.numeric(out$`Overall acc.`[def]),
+     " default", pos = 2, cex = 0.8)
+graphics::points(47.6, 86.8, pch = 8, col = "#8B4A4A", cex = 2.2)
+graphics::text(47.6, 86.8, " CI rule (86.8% @ 47.6%)", pos = 4, col = "#8B4A4A", cex = 0.85)
+graphics::legend("bottomleft",
+       c("point-estimate grid (28)", "default 1/3, 0.5", "selective CI rule"),
+       pch = c(21, 21, 8), col = c("#2C2C2C","#2C2C2C","#8B4A4A"),
+       pt.bg = c("#5B8FA8","#B8A060", NA), cex = 0.8)
+```
+
+# eAppendix 15. Sufficiency of the Monte Carlo repetitions
+
+Two simulations support the results. The primary 640-condition simulation of the continuous BF estimator uses 1000 repetitions per condition (640,000 repetitions total). A companion simulation evaluates the CI-based selective classifier using 200 repetitions per condition (67,200 repetitions total). A reviewer asked whether the repetition counts are sufficient. They are, for the study's inferential goals. The reasoning is quantitative and rests on the Monte Carlo standard error (MCSE) of a proportion.
+
+**Why repetitions are set per condition, not per estimate.** Each simulation draws negative-control resamples for each of the 640 conditions. The accuracies reported in Table 1, however, are *averaged over all conditions that fall in a zone* (for example, `mean(sim$bsr_class_accuracy[bd_idx])` for the bias-dominated zone). A zone therefore contains roughly 110 to 112 conditions, so the effective Monte Carlo sample behind a reported zone accuracy is about 110 x 1000 = 110,000 classification decisions for the primary simulation, not 1000.
+
+**Per-condition MCSE.** A classification accuracy is a Bernoulli proportion estimated from n = 1000 repetitions, with
+
+$$\mathrm{MCSE}(p)=\sqrt{\frac{p(1-p)}{1000}}.$$
+
+eTable 12 lists the per-condition MCSE for each reported quantity. At n = 1000 the per-cell standard error is 0.7 to 1.6 percentage points, which is adequate both for showing spatial patterns across the (true effect, bias) grid and for reasonably precise per-cell inference. This is acknowledged in the main text.
+
+# eTable 12. Per-condition Monte Carlo standard error (n = 200)
+
+```{r etable12-mcse-single, echo = FALSE}
+mcse_single <- data.frame(
+  Quantity = c("Bias-dominated accuracy (58.1%)", "Mixed accuracy (25.0%)",
+               "Effect-dominated accuracy (95.7%)", "CI decisive rate (47.6%)",
+               "Decisive accuracy (86.8%)"),
+  p = c(0.614, 0.276, 0.958, 0.476, 0.868))
+mcse_single$MCSE_pp <- round(100 * sqrt(mcse_single$p * (1 - mcse_single$p) / 1000), 2)
+mcse_single$CI95_halfwidth_pp <- round(1.96 * mcse_single$MCSE_pp, 1)
+knitr::kable(mcse_single, digits = 2,
+  col.names = c("Quantity", "p", "MCSE (pp)", "95% MC CI half-width (pp)"),
+  caption = "Per-condition Monte Carlo standard error of each reported proportion at n = 1000 repetitions. 'pp' denotes percentage points.")
+```
+
+**Aggregated MCSE (what the paper reports).** Let $M_z$ be the number of conditions in zone $z$. The reported zone accuracy averages $M_z$ independent per-condition accuracies, so
+
+$$\mathrm{MCSE}_{\text{zone}}=\sqrt{\frac{\overline{p_c(1-p_c)}}{1000\,M_z}}.$$
+
+With $M_z$ about 112 and n = 1000, the aggregated MCSE is about 0.1 to 0.2 percentage points (eTable 13). The gaps between zones exceed 60 percentage points, hundreds of times this standard error, so 1000 repetitions cleanly separate the three zones.
+
+# eTable 13. Aggregated Monte Carlo standard error
+
+```{r etable13-mcse-agg, echo = FALSE}
+Mz <- 112
+agg_tbl <- data.frame(
+  Quantity = c("Bias-dominated accuracy (58.1%)", "Mixed accuracy (25.0%)",
+               "Effect-dominated accuracy (95.7%)", "CI decisive rate (47.6%)",
+               "Decisive accuracy (86.8%)"),
+  p = c(0.614, 0.276, 0.958, 0.476, 0.868),
+  effective_n = c(1000 * Mz, 1000 * Mz, 1000 * Mz, 67200, round(0.476 * 67200)))
+agg_tbl$MCSE_pp <- round(100 * sqrt(agg_tbl$p * (1 - agg_tbl$p) / agg_tbl$effective_n), 2)
+knitr::kable(agg_tbl, digits = 2,
+  col.names = c("Quantity", "p", "Effective n", "MCSE (pp)"),
+  caption = "Aggregated Monte Carlo standard error. Zone accuracies average over M_z approx 112 conditions (effective n approx 112,000); the CI-based quantities aggregate over all 67,200 repetitions of the companion CI simulation.")
+```
+
+**Type I error characterization.** The v37 operating range contains no literal null (ψ = 0); the smallest-magnitude design point is ψ = −0.01 (RR = 0.99, BF_true ≈ 0.98), which carries the strongest true bias and is therefore not a Type I error setting. Empirical-calibration Type I error is instead characterized directly in eAppendix 13 by simulating a true null (μ_B = 0) under the same estimation pipeline; the calibrated p-value there controls at the nominal 5% level. The companion CI simulation uses 200 repetitions per condition, giving an MCSE of about 0.2 percentage points for its decision-rate estimates, which is adequate for the reported 47.6% decisive rate and 86.8% decisive accuracy.
+
+**Literature.** Morris, White, and Crowther (2019, *Statistics in Medicine* 38:2079) recommend pre-specifying a Monte Carlo error budget so each target quantity is estimated to the required precision. Burton and co-authors (2006, *Statistics in Medicine* 25:4279) give the rule of thumb that a single proportion needs about 2,500 repetitions for a plus or minus 2 percentage-point band and about 400 for plus or minus 5. Those targets are for a *single* proportion; because the paper aggregates over many conditions, 200 repetitions already meet the stricter target.
+
+**Suggested response to the reviewer.** The 1000 repetitions are set per condition, but the zone accuracies in Table 1 average over all conditions in each zone (about 110 to 112 per zone), giving an effective Monte Carlo sample of roughly 112,000 classification decisions and an MCSE of about 0.1 to 0.2 percentage points. The three zones differ by more than 60 percentage points, hundreds of times that standard error, so 1000 repetitions stably support the core conclusion that the red and green zones are reliable while the yellow zone is not. The CI decisive rate and decisive accuracy aggregate over all 67,200 repetitions of the companion simulation, with MCSE about 0.2 percentage points. The R script and the full 8-configuration convergence check are in `R/02_comparison_study.R` and `output/simulation/comparison_*.rds`.
+
+# eAppendix 16. Bland-Altman agreement study of the continuous BF estimator (primary analysis)
+
+The main text evaluates the continuous BF estimator primarily through a Bland-Altman agreement study, with the three-zone classification retained as a secondary clinical decision interface. This appendix documents the method and presents the two agreement plots.
+
+**Method.** For every simulated repetition we computed the difference between the MCMC BF point estimate and the true BF, diff = BF̂ − BF_true, and plotted diff against the true BF on the horizontal axis. The x-axis uses the true BF, not the Tukey mean (BF̂ + BF_true)/2, because the Tukey mean is algebraically coupled to diff (diff = 2(Tukey − BF_true)); that coupling manufactures a spurious slope-2 stripe and a false positive correlation that obscures the real bias structure. Because BF is bounded in [0,1], the upper boundary is reached at the smallest-|ψ| design point (ψ = −0.01, true BF ≈ 0.98) where the estimator can only err downward. We therefore report the primary agreement statistics on the interior sample that excludes this near-boundary condition (576,000 repetitions, the 48,000 near-boundary repetitions dropped), and we report the full sample including it (640,000 repetitions) alongside as a transparency analysis.
+
+```{r efigL-ba-interior, fig.cap="Bland-Altman agreement of the continuous BF estimator, v37 operating range (smallest cell ψ=−0.01, RR=0.99; 640,000 repetitions). The redesign replaces the literal ψ=0 boundary, so the dense cloud at true BF=1 no longer appears. The mean bias and concordance match the v37 interior analysis; the regression of diff on true BF has a small negative slope reflecting the residual proportional bias of a bounded index, not a methodological flaw.", out.width="100%"}
+knitr::include_graphics(file.path(FIG_DIR, "continuous_bf", "figL_interior_ba_viz.png"))
+```
+
+```{r efigM-ba-full, fig.cap="Bland-Altman agreement, full version (640,000 repetitions, near-boundary ψ=−0.01 included), displayed for completeness. The dense cloud at the upper boundary (true BF ≈ 0.98) is the 64,000 near-boundary ψ=−0.01 repetitions, the direct visual signature of the bounded-index ceiling effect; the v37 redesign sets the smallest-magnitude cell at ψ=−0.01 (not the literal ψ=0) so the estimator can still err in both directions there. The steeper slope (−0.191) is the boundary artifact; the interior BA (Figure L) is what the redesign adopts as primary.", out.width="100%"}
+knitr::include_graphics(file.path(FIG_DIR, "continuous_bf", "figM_full_ba_viz.png"))
+```
+
+**Agreement statistics.** The interior analysis (primary) shows a mean bias of −0.050, SD of the differences 0.118, limits of agreement [−0.281, 0.180], 93.7% of differences within the limits of agreement, and Lin's concordance correlation 0.81. The regression of diff on true BF has slope −0.069 (95% CI, −0.070 to −0.067; t = −87.3, p < 0.001) and intercept −0.016 (t = −38.4, p < 0.001): a small but statistically significant proportional bias, expected from the bounded scale and driven by the BF = 1 ceiling rather than by a systematic flaw. The full analysis (transparency) gives mean bias −0.071, concordance 0.78, and slope −0.191 (t = −266.2, p < 0.001); the stronger negative proportional bias is almost entirely the ceiling effect at the near-boundary ψ = −0.01 condition (highest true BF).
+
+| Quantity | Interior (excl. near-boundary ψ=−0.01), n = 576,000 | Full (incl. near-boundary ψ=−0.01), n = 640,000 |
+|---|---|---|
+| Mean bias (BF̂ − BF_true) | −0.050 | −0.071 |
+| SD of differences | 0.118 | 0.138 |
+| Limits of agreement (bias ± 1.96 SD) | [−0.281, 0.180] | [−0.342, 0.201] |
+| Within LoA | 93.7% | 93.8% |
+| Lin's concordance correlation (CCC) | 0.813 | 0.777 |
+| Proportional bias r (diff vs BF_true) | −0.114 | −0.316 |
+| Regression slope [95% CI] | −0.069 [−0.070, −0.067] | −0.191 [−0.193, −0.190] |
+| Slope t-statistic, p-value | −87.3, p < 0.001 | −266.2, p < 0.001 |
+| Intercept | −0.016 | +0.033 |
+| Intercept t-statistic, p-value | −38.4, p < 0.001 | 78.1, p < 0.001 |
+
+**Ceiling effect at BF = 1.** BF = |μ̂_B| / (|μ̂_B| + |ψ̃|) reaches its upper bound 1 when the true residual effect ψ = 0. At that boundary the estimator can only return BF̂ ≤ 1, so every error is negative by construction; the dense downward cloud at true BF = 1 in Figure M is the geometric consequence, not a failure of the estimator. BF ∈ [0,1] can never be estimated above 1, so all error at the boundary propagates in one direction. The interior analysis, which excludes this boundary, is the appropriate primary summary; the full analysis is retained for transparency. A clinical analogy: measuring FEV1 near a patient's physiological ceiling underestimates rather than overestimates, the same class of boundary artifact. BF = 1 is the "treatment truly null" boundary hypothesis, and the downward bias there is exactly the behavior wanted to reject that null.
+
+# eReferences

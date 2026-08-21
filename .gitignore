@@ -12,3 +12,6 @@ patch_docx.py
 
 # v34 nested clinical-data dir (MIMIC-IV derived; never commit)
 manuscript_v34/output/data/
+
+# v37 large simulation output (~19 MB; regenerate via R/16_sim_v37p1_80grid.R)
+simulation/comparison_results.rds

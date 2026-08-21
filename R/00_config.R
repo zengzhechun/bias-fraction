@@ -1,19 +1,20 @@
-# manuscript_v35: Global Configuration
-# v35 inherits the v34 metric reframing — Bias Fraction (BF) primary, bias-effect
-# ratio (BER) auxiliary. BF = |mu_B| / (|mu_B| + |psi_tilde|) = BER / (1 + BER) in [0,1].
-# v35 changes (per WorkBuddy peer review of v34, 2026-08-12):
-#   1. Null conditions (psi = 0) now retain bf_true = 1 in the simulation (finite),
-#      so BF bias/RMSE statistics include the null (review item M6/G1).
-#   2. All version-suffixed output filenames bumped v34 -> v35.
+# manuscript_v37: Global Configuration
+# v37 inherits the v34 metric reframing (BF primary, BER auxiliary) and adopts the
+# v35 continuous BF analysis. KEY v37 CHANGE (per team decision 2026-08-21):
+#   The PRIMARY analysis of the simulation study is now the Bland-Altman agreement
+#   study of the continuous BF estimator (interior version, excluding BF=1, as the
+#   primary; full version including BF=1 as transparency). The three-zone
+#   classification becomes a SECONDARY analysis that supplies the clinical
+#   decision interface. BF is treated throughout as a continuous quantity.
 # Code keeps bsr_* object names (bsr == BER) for backward compatibility with v33 RDS outputs.
 BASE_DIR <- "/Users/zengzhechun/SynologyDrive/工作/数据分析项目/心电图大模型/心电图公开数据集/02 mimic-iv-ecg/Topic1_LTMLE_Betablocker"
 DATA_DIR <- file.path(BASE_DIR, "DATA")
-V35_DIR  <- file.path(BASE_DIR, "manuscript_v35")
-OUT_DIR  <- file.path(V35_DIR, "output")
+V37_DIR  <- file.path(BASE_DIR, "manuscript_v37")
+OUT_DIR  <- file.path(V37_DIR, "output")
 FIG_DIR  <- file.path(OUT_DIR, "figures")
 TAB_DIR  <- file.path(OUT_DIR, "tables")
 SIM_DIR  <- file.path(OUT_DIR, "simulation")
-LOG_DIR  <- file.path(V35_DIR, "logs")
+LOG_DIR  <- file.path(V37_DIR, "logs")
 
 dir.create(FIG_DIR, showWarnings = FALSE, recursive = TRUE)
 dir.create(TAB_DIR, showWarnings = FALSE, recursive = TRUE)
