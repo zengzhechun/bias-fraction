@@ -14,7 +14,7 @@
   }
   *{box-sizing:border-box;}
   html{scroll-behavior:smooth;}
-  body{margin:0; background:var(--bg); color:var(--ink);
+  body{margin:0; background:var(--bg); color:var(--ink); overflow-x:clip;
        font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",-apple-system,"Segoe UI",sans-serif;
        line-height:1.75; font-size:16px;}
 .wrap{max-width:1060px; margin:0 auto; padding:0 22px 80px;}
@@ -11533,7 +11533,7 @@ ber &lt;- abs(mu_b) / abs(log_rr_cal)                 # = 30.4（原始比值；
     padding:5px 12px;font-size:12.5px}.anim-root .chip b{color:var(--aaccent)}.anim-root .chip.primary{background:#eaf2fb;border-color:var(--aaccent)}.anim-root .chip.primary b{color:var(--aaccent)}.anim-root .stage{background:var(--apanel);border:1px solid var(--aline);border-radius:12px;
     padding:14px;box-shadow:0 1px 3px rgba(20,50,90,.06)}.anim-root svg{display:block;width:100%;height:auto;background:#fbfdff;border-radius:8px}.anim-root .step-txt{min-height:74px;font-size:14px;color:var(--aink);margin-top:10px}.anim-root .step-txt .k{color:var(--aaccent);font-weight:600}.anim-root .controls{display:flex;align-items:center;gap:10px;margin-top:14px;flex-wrap:wrap}.anim-root button{background:var(--aaccent);color:#fff;border:0;border-radius:8px;padding:8px 14px;
     font-size:13.5px;cursor:pointer;transition:filter .15s}.anim-root button:hover{filter:brightness(1.08)}.anim-root button.ghost{background:#eaf2fb;color:var(--aaccent)}.anim-root .dots{display:flex;gap:6px;margin-left:auto}.anim-root .dot{width:10px;height:10px;border-radius:50%;background:var(--aline)}.anim-root .dot.on{background:var(--aaccent)}.anim-root .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--amuted);margin-top:8px}.anim-root .legend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:5px;vertical-align:-1px}.anim-root .axis-t{font-size:11px;fill:var(--amuted)}.anim-root .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}.anim-root @keyframes pop{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}.anim-root .pop{animation:pop .5s ease both}.anim-root .foot{color:var(--amuted);font-size:12px;margin-top:18px;border-top:1px solid var(--aline);padding-top:10px}
-
+.anim-root > section, .anim-root > div:not(.anim-wrap){ max-width:1060px; margin-left:auto; margin-right:auto; }
 </style>
 <div class="anim-root" id="anim-root">
 
