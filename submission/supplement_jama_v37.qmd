@@ -1,5 +1,5 @@
 ---
-title: "Supplement to: Quantifying Systematic Bias in Observational Causal Estimates Using Negative Controls: The Bias Fraction"
+title: "Supplement to: Quantifying Systematic Bias in Observational Estimates Using Negative Controls: The Bias Fraction"
 author:
   - name: Zeng Zhechun, MD, MPH
   - name: Wang Jinwen, MD, PhD
@@ -243,6 +243,37 @@ viol_tab <- data.frame(
 knitr::kable(rbind(cfg_tab, viol_tab),
   col.names = c("Simulation setting (per K and exchangeability level, 84 conditions each)", "BER relative bias, %", "BF relative bias, %", "BF RMSE"),
   caption = "Per-configuration mean relative bias of the unbounded ratio (BER) and the bounded bias fraction (BF) under bias exchangeability (0% violation) and under 30% exchangeability violation. Under exchangeability BER overstates the true ratio by roughly +270% to +1920% while BF is nearly unbiased (about -1%, per-configuration range -47% to +22%); under violation BF is attenuated toward 0.5 (mean relative bias about -32%). The bounded BF therefore avoids the unbounded ratio's extreme relative-bias inflation in the bias-dominated zone (eAppendix 11, Property 1).")
+```
+
+# eTable 8. Simulation Three-Zone Classification Accuracy
+
+```{r etable8-threezone-acc}
+bd_idx <- sim$bsr_true > 1 | is.infinite(sim$bsr_true)
+cp_idx <- sim$bsr_true >= 0.5 & sim$bsr_true <= 1
+sd_idx <- sim$bsr_true < 0.5
+sim_domain <- data.frame(
+  Domain = c("Bias-dominated (BF>0.5)", "Mixed (1/3<=BF<=0.5)", "Effect-dominated (BF<1/3)",
+             "Overall", "Exchangeability violation 0%", "Exchangeability violation 30%"),
+  N = c(sum(bd_idx), sum(cp_idx), sum(sd_idx), nrow(sim),
+        sum(sim$ex_violation == 0), sum(sim$ex_violation == 0.3)),
+  BF_Acc = c(
+    mean(sim$bsr_class_accuracy[bd_idx]),
+    mean(sim$bsr_class_accuracy[cp_idx]),
+    mean(sim$bsr_class_accuracy[sd_idx]),
+    mean(sim$bsr_class_accuracy),
+    mean(sim$bsr_class_accuracy[sim$ex_violation == 0]),
+    mean(sim$bsr_class_accuracy[sim$ex_violation == 0.3])) * 100,
+  OHDSI_Rej = c(
+    mean(sim$ohdsi_rejection_rate[bd_idx]),
+    mean(sim$ohdsi_rejection_rate[cp_idx]),
+    mean(sim$ohdsi_rejection_rate[sd_idx]),
+    mean(sim$ohdsi_rejection_rate),
+    mean(sim$ohdsi_rejection_rate[sim$ex_violation == 0]),
+    mean(sim$ohdsi_rejection_rate[sim$ex_violation == 0.3])) * 100
+)
+knitr::kable(sim_domain, digits = 1,
+  col.names = c("Domain", "No. of conditions", "BF accuracy, %", "OHDSI calibrated p<.05, %"),
+  caption = "eTable 8. Simulation classification accuracy and OHDSI empirical-calibration p-value rejection rates by zone. The OHDSI rejection rate is the proportion of repetitions where the calibrated p-value was below .05. The v37 operating range has no literal null (psi = 0); empirical-calibration Type I error is characterized at the near-null psi = -0.01 design point and in eAppendix 13 in the Supplement.")
 ```
 
 # eFigure 1. Directed Acyclic Graph of Shared Bias Structure
