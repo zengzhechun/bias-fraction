@@ -4,7 +4,7 @@
 > Companion R package: [**biasratio**](https://github.com/zengzhechun/biasratio) — Bias-Effect Ratio (BER) implementation built on OHDSI EmpiricalCalibration.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Simulator](https://img.shields.io/badge/Simulator-Online-blue.svg)](https://zengzhechun.github.io/bias-fraction/)
+[![Simulator v37](https://img.shields.io/badge/Simulator-v37-blue.svg)](https://zengzhechun.github.io/bias-fraction/)
 
 ## Overview
 
@@ -69,7 +69,7 @@ A **three-zone classification** summarizes the verdict:
 | `simulation/` | **Synthetic** 336-condition Monte-Carlo results (`.rds`) — fully reproducible, no patients |
 | `tables/` | `table02_simulation_summary_v35.csv` — simulation summary (synthetic) |
 | `simulator/` | Self-contained bilingual interactive explainer (HTML, no dependencies) |
-| `index.html` | GitHub Pages entry point = the simulator (runs in any browser) |
+| `index.html` | GitHub Pages entry point = the **v37** interactive explainer (runs in any browser) |
 | `CHANGELOG.md` | Revision log (v34 → v35, reviewer-driven) |
 | `REVIEW.md` | Reviewer comments that motivated the v35 revision |
 
@@ -89,10 +89,14 @@ A **three-zone classification** summarizes the verdict:
 ## How to use / reproduce
 
 ### Interactive simulator (no install)
-Open **<https://zengzhechun.github.io/bias-fraction/>** — a self-contained, bilingual
-(简体中文 / English) interactive explainer that walks through the BF concept, the negative-control
-calibration, the three-zone classification, and a live "lab" with the MIMIC case-study results.
-Everything runs client-side; no server or dependencies required.
+
+**Bias Fraction v37 interactive explainer (latest):** <https://zengzhechun.github.io/bias-fraction/>
+A self-contained, bilingual (简体中文 / English) interactive explainer for manuscript v37. It walks
+through the BF concept, the negative-control calibration, the three-zone classification, the
+640-condition simulation study, and a live lab with the MIMIC-IV case-study results (β-blocker
+BF = 0.91 [0.74 to 0.99], bias-dominated). Everything runs client-side. Only MathJax, used for
+formula rendering, is loaded from a CDN, so an internet connection is needed for the equations
+to display correctly.
 
 ### Reproducing the analysis (R)
 
