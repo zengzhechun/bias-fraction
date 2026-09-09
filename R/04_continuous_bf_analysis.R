@@ -1,11 +1,11 @@
 # R/04_continuous_bf_analysis.R
 # Continuous BF analysis: treat BF as a continuous estimator and quantify its
-# error structure against the known true BF across the 72 simulated conditions
+# error structure against the known true BF across the 640 simulated conditions
 # (each with 1000 Monte Carlo repetitions). Reads comparison_results_v37p1.rds produced
 # by R/02_comparison_study.R (now with per-rep 95% CI bounds stored).
 #
 # Outputs (under OUT_DIR/figures/continuous_bf/):
-#   per_condition_summary.csv / .rds  - 336 conditions x 2 methods summary
+#   per_condition_summary.csv / .rds  - 640 conditions x 2 methods summary
 #   stratified_summary.csv            - bias/rmse/coverage by method x true_zone
 #   figA_bias_vs_bftrue.png           - per-condition bias vs true BF
 #   figB_rmse_vs_bftrue.png           - per-condition RMSE vs true BF

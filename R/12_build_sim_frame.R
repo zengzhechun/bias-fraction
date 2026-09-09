@@ -1,7 +1,7 @@
 # R/12_build_sim_frame.R
 # Rebuild the 22-column "simulation_merged_v35.rds" frame consumed by the four
 # v36/v37 Quarto manuscripts, using the FRESH v37 per-repetition data
-# (comparison_results_v37p1.rds: 336 conditions x 1000 reps, no psi=0 null design point,
+# (comparison_results_v37p1.rds: 640 conditions x 1000 reps, no psi=0 null design point,
 # with OHDSI calibrated p-value cal_p and naive p-value naive_p).
 #
 # The qmd setup chunk classifies zones via bsr_true with the partition
@@ -61,7 +61,8 @@ for (k in names(res)) {
 }
 sim <- do.call(rbind, rows)
 rownames(sim) <- NULL
-stopifnot(nrow(sim) == 640, ncol(sim) == 22)
+# v38b (2026-09-01): 10 x 8 x 2 sigma_ps x 3 K x 2 exV = 960 conditions
+stopifnot(nrow(sim) == 960, ncol(sim) == 22)
 
 out_rds <- file.path(SIM_DIR, "simulation_merged_v35.rds")
 saveRDS(sim, paste0(out_rds, ".tmp"))

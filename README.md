@@ -4,7 +4,7 @@
 > Companion R package: [**biasratio**](https://github.com/zengzhechun/biasratio) — Bias-Effect Ratio (BER) implementation built on OHDSI EmpiricalCalibration.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Simulator v37](https://img.shields.io/badge/Simulator-v37-blue.svg)](https://zengzhechun.github.io/bias-fraction/)
+[![Explainer v38](https://img.shields.io/badge/Explainer-v38-blue.svg)](https://zengzhechun.github.io/bias-fraction/)
 
 ## Overview
 
@@ -60,16 +60,20 @@ A **three-zone classification** summarizes the verdict:
 
 | Path | Contents |
 |------|----------|
-| `R/` | Analysis configuration (`00_config.R`) and core BF/BER functions (`01_bsr_core.R`) |
-| `analysis/` | R scripts — figure generation, simulation merge, BSR analysis, simulation worker |
-| `manuscript/` | Full research-report source (Quarto `.qmd`) + references (BibTeX/CSL) |
+| `R/` | Full analysis pipeline, `00_config.R` through `26_adjusted_smd_iptw_gdmt.R`. `01_bsr_core.R` holds the core BF/BER functions; `16_sim_v37p1_80grid.R` generates the 960-condition grid; `18_v38_three_part_analysis.R` produces every number reported in v38 |
+| `analysis/` | Earlier standalone scripts — figure generation, simulation merge, BSR analysis, simulation worker |
+| `manuscript/` | Quarto sources for all three v38 tracks (JAMA / full report / medRxiv), references (BibTeX/CSL), and the DOCX post-processing scripts (`_post_*.py`, `_audit_*.py`, `_word_count_jama.py`) |
 | `submission/` | *JAMA Network Open* submission source (`.qmd`) + cover letter |
-| `paper/` | Rendered manuscripts (DOCX): full report, supplementary, JAMA version, JAMA supplement |
-| `figures/` | Aggregate figures (calibration, BF main, simulation heatmap, classification domains, LOO, QQ, bootstrap) + shared-bias DAG |
-| `simulation/` | **Synthetic** 336-condition Monte-Carlo results (`.rds`) — fully reproducible, no patients |
+| `paper/` | Rendered manuscripts (DOCX) for all three v38 tracks, main text + supplement each |
+| `output/tables/` | **`v38_all_numbers.json` is the single source of truth for every number in the manuscript**, plus the per-section CSV exports (Bland-Altman, lookup table, decision cascade, dual-view ROC, case verdicts) |
+| `output/figures/` | Publication figures: `v38/` (main text) and `continuous_bf/` (supplement) |
+| `figures/` | Earlier aggregate figures (calibration, BF main, simulation heatmap, classification domains, LOO, QQ, bootstrap) + shared-bias DAG |
+| `simulation/` | **Synthetic** Monte-Carlo results (`.rds`) — fully reproducible, no patients |
 | `tables/` | `table02_simulation_summary_v35.csv` — simulation summary (synthetic) |
-| `simulator/` | Self-contained bilingual interactive explainer (HTML, no dependencies) |
-| `index.html` | GitHub Pages entry point = the **v37** interactive explainer (runs in any browser) |
+| `simulator/` | Earlier self-contained bilingual interactive explainer (HTML, no dependencies) |
+| `index.html` | GitHub Pages entry point = the **v38** interactive explainer (runs in any browser) |
+| `互动讲解器_v38_三部分结构.html` | Same v38 explainer under its working filename, organised as the manuscript's three parts (agreement / screening / case studies) |
+| `算法说明_临床版_v1.html` | Plain-language algorithm walkthrough written for clinical readers |
 | `CHANGELOG.md` | Revision log (v34 → v35, reviewer-driven) |
 | `REVIEW.md` | Reviewer comments that motivated the v35 revision |
 
@@ -90,13 +94,16 @@ A **three-zone classification** summarizes the verdict:
 
 ### Interactive simulator (no install)
 
-**Bias Fraction v37 interactive explainer (latest):** <https://zengzhechun.github.io/bias-fraction/>
-A self-contained, bilingual (简体中文 / English) interactive explainer for manuscript v37. It walks
-through the BF concept, the negative-control calibration, the three-zone classification, the
-640-condition simulation study, and a live lab with the MIMIC-IV case-study results (β-blocker
-BF = 0.91 [0.74 to 0.99], bias-dominated). Everything runs client-side. Only MathJax, used for
-formula rendering, is loaded from a CDN, so an internet connection is needed for the equations
-to display correctly.
+**Bias Fraction v38 interactive explainer (latest):** <https://zengzhechun.github.io/bias-fraction/>
+A self-contained, bilingual (简体中文 / English) interactive explainer for manuscript v38, organised
+as the manuscript's three parts: (1) how closely BF tracks the truth, assessed by Bland-Altman
+agreement; (2) the two-layer screening rule that turns BF into a verdict, with its 12-bucket lookup
+table; (3) the two MIMIC-IV case studies. It covers the BF concept, negative-control calibration,
+the three-zone classification, the 960-condition (960,000-repetition) simulation study, and a live
+lab carrying the case-study results (β-blocker BF = 0.91 [0.74 to 0.99], bias-dominated;
+guideline-directed medical therapy BF = 0.51, mixed). Everything runs client-side. Only MathJax,
+used for formula rendering, is loaded from a CDN, so an internet connection is needed for the
+equations to display correctly.
 
 ### Reproducing the analysis (R)
 

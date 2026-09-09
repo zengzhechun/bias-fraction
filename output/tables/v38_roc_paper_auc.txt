@@ -1,0 +1,3 @@
+Calibrated P alone       ED view 0.7211 | BD view 0.7869
+BF-hat alone             ED view 0.9514 | BD view 0.9182
+BF-hat + CI half-width   ED view 0.9512 | BD view 0.9182

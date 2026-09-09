@@ -2,7 +2,7 @@
 # Methodological probe: does trimming extreme BF (near 0 / near 1) stabilize the
 # Bland-Altman agreement, and is it an honest operation?
 # Compares:
-#   A. full 336 conditions (incl near-boundary psi=-0.01, highest true BF)
+#   A. full 640 conditions (incl near-boundary psi=-0.01, highest true BF)
 #   B. interior: exclude psi=-0.01 (highest true BF)
 #   C. both-ends trim: BF >= 0.9 OR BF <= 0.12
 #   D. logit(BF) scale (unbounded reparametrization; psi=-0.01 excluded)

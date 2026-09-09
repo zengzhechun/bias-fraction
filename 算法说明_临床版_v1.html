@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>BF 临床应用算法说明 v1</title>
+<style>
+  :root{
+    --bg:#FFFFFF; --fg:#FFFFFF; --fg-soft:#1F2A38; --fg-mute:#525D6B; --line:#E5E8EE;
+    --accent:#1F6F8B; --ok:#1F8A5C; --warn:#C28A00; --bad:#A93226; --info:#3B556E;
+    --bg-soft:#F6F8FB; --bg-callout:#FFF9E6; --bg-code:#F2F4F7;
+    --mono: ui-monospace, SF Mono, Menlo, Consolas, monospace;
+  }
+  html,body{ background:var(--bg); color:var(--fg-soft); }
+  body{
+    font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "PingFang SC", "Microsoft YaHei", sans-serif;
+    max-width: 1100px; margin: 28px auto 64px; padding: 0 28px; line-height: 1.65;
+    font-size: 15.5px;
+  }
+  h1{ font-size: 26px; margin: 0 0 6px; color: var(--info); border-bottom: 3px solid var(--line); padding-bottom: 8px;}
+  h2{ font-size: 20px; margin: 28px 0 10px; color: var(--info); border-left: 4px solid var(--accent); padding-left: 10px;}
+  h3{ font-size: 16.5px; margin: 22px 0 8px; color: var(--fg-soft);}
+  .lede{ background: var(--bg-soft); border-left: 4px solid var(--accent); padding: 10px 16px; margin: 12px 0 18px; font-size: 14.5px;}
+  .meta{ color: var(--fg-mute); font-size: 13.5px; margin: 4px 0 16px;}
+  .callout{ background: var(--bg-callout); border: 1px solid #F2DE94; border-radius: 6px; padding: 12px 16px; margin: 14px 0;}
+  table{ border-collapse: collapse; width: 100%; margin: 10px 0; font-size: 14px;}
+  th,td{ border: 1px solid var(--line); padding: 8px 12px; vertical-align: top;}
+  th{ background: var(--bg-soft); color: var(--fg-soft); font-weight: 700; text-align: left;}
+  pre, code{ font-family: var(--mono); font-size: 13px;}
+  pre{ background: var(--bg-code); border: 1px solid var(--line); border-radius: 6px; padding: 12px 14px; overflow-x: auto; line-height: 1.5;}
+  code{ background: var(--bg-code); padding: 1px 5px; border-radius: 3px;}
+  .ok{ color: var(--ok); font-weight: 700;}
+  .warn{ color: var(--warn); font-weight: 700;}
+  .bad{ color: var(--bad); font-weight: 700;}
+  .pill{ display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 12.5px; font-weight: 700;}
+  .pill-ok{ background:#E8F5EE; color: var(--ok);}
+  .pill-mx{ background:#FBF3E0; color: #8B6B00;}
+  .pill-tie{ background:#FCEEEA; color: #8B4A14;}
+  .pill-no{ background:#FCE5E1; color: var(--bad);}
+  .pill-ns{ background:#EFF1F4; color: var(--fg-mute);}
+  .endpoints-wrap{ background: var(--bg-soft); border: 1px solid var(--line); border-radius: 8px; padding: 16px 20px; margin: 14px 0;}
+  .endpoints-wrap svg{ display:block; max-width:100%; height:auto;}
+  .legend{ font-size: 13px; color: var(--fg-mute); margin: 6px 0 0;}
+  .legend span{ display:inline-block; padding:2px 8px; margin-right:6px; border-radius:4px;}
+  .footer{ color: var(--fg-mute); font-size: 12.5px; border-top: 1px solid var(--line); margin-top: 28px; padding-top: 10px;}
+  .kbd{ font-family: var(--mono); background: var(--bg-code); border: 1px solid var(--line); border-radius: 3px; padding: 1px 5px; font-size: 12px;}
+  ol.qa > li{ margin: 10px 0; }
+  ol.qa > li b{ color: var(--info); }
+</style>
+</head>
+<body>
+
+<h1>BF 临床应用算法说明 v1</h1>
+<div class="meta">
+  对应论文稿件 v37 · 评估指标 BF（偏倚份额，bias fraction）· 受众：临床医生（无需统计学或模拟研究背景）· 文档版本：2026-08-26
+</div>
+
+<div class="lede">
+<b>一句话总结</b>：输入一篇文献报告的<b>校准 p 值</b>、<b>BF̂</b>、<b>BF 的 95% 可信区间</b>三件套，算法自动算出"真值由偏倚主导的概率" P(偏倚主导)≈X%，并把结果归到<b>两类四档</b>之一 —— <span class="ok">可作效应证据</span>、<span class="warn">混合·假设生成</span>、<span class="warn">势均力敌·暂不下结论</span>、<span class="bad">不可作效应证据</span>（再加一个 <span class="pill pill-ns">证据不足</span> 兜底）。<b>医生不需要自己判断"窄区间还是宽区间"</b> —— 这是算法内部的计算步骤。
+</div>
+
+<h2>§1 算法要回答的问题</h2>
+<p>给定一个观察性研究的因果估计，<b>它能不能直接当作"该效应的因果证据"使用？</b>注意：这个工具<b>不替医生开药</b>，也不替临床指南制定者下结论 —— 它只判定这一项观察性估计的可靠性等级。</p>
+
+<h2>§2 输入与输出（API 形式）</h2>
+
+<h3>输入（必填三项）</h3>
+<table>
+  <thead>
+    <tr><th style="width:25%">名称</th><th>含义</th><th>取值范围</th><th>从论文哪里读</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><b>校准 p 值</b><br><code>p_cal</code></td>
+      <td>经验校准后的 p 值（OHDSI EmpiricalCalibration）。</td>
+      <td>0–1</td>
+      <td>论文方法节"Empirical calibration"段落。</td>
+    </tr>
+    <tr>
+      <td><b>BF̂ 估计</b><br><code>BF_hat</code></td>
+      <td>BF̂ = |μ̂_B| / (|μ̂_B| + ψ̃)。衡量的偏倚份额。</td>
+      <td>0–1（理论边界）</td>
+      <td>同一段校准输出，通常与 μ̂_B、ψ̃ 一同报。</td>
+    </tr>
+    <tr>
+      <td><b>BF 的 95% 可信区间</b><br><code>[BF_lo, BF_hi]</code></td>
+      <td>BF̂ 的不确定性区间（plug-in 自 μ̂_B 的 CI）。</td>
+      <td>0 ≤ BF_lo ≤ BF̂ ≤ BF_hi ≤ 1</td>
+      <td>同段报为"BF (BF_lo–BF_hi)"或"BF ± half-width"。</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>输出（一句话 + 两个数）</h3>
+<table>
+  <thead>
+    <tr><th style="width:30%">字段</th><th>含义</th><th>示例</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><b>判语 verdict</b></td>
+      <td>四档之一 + 兜底一档。<br>
+        <span class="pill pill-ok">可作效应证据</span> ·
+        <span class="pill pill-mx">混合·假设生成</span> ·
+        <span class="pill pill-tie">势均力敌·暂不下结论</span> ·
+        <span class="pill pill-no">不可作效应证据</span> ·
+        <span class="pill pill-ns">证据不足</span>
+      </td>
+      <td>可作效应证据</td>
+    </tr>
+    <tr>
+      <td><b>P(偏倚主导) ≈</b></td>
+      <td>真值实际落在"偏倚主导"侧的概率（来自模拟研究的统计校正），保留 1 位小数。</td>
+      <td>P(偏倚主导) ≈ 3.1%</td>
+    </tr>
+    <tr>
+      <td><b>BF̂ 报告值</b></td>
+      <td>原样回显，便于论文对照。</td>
+      <td>BF̂ = 0.33 (0.15–0.50)</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>§3 算法流程（5 步，伪代码）</h2>
+
+<pre>
+INPUT:  p_cal, BF_hat, [BF_lo, BF_hi]
+OUTPUT: verdict, P_bias_dom
+
+  1. IF p_cal >= 0.05:
+         RETURN (verdict="证据不足", P_bias_dom=null)
+     // 第一层：校准 p 不显著 → 信号不存在，停。
+
+  2. CI_half_width = (BF_hi - BF_lo) / 2
+
+  3. BIN = locate_bin(BF_hat)        // 12 段读数桶（x 中心: 0.06, 0.17, 0.26, ...）
+         [NB, WB] = lookup_pBD(BIN)   // 从 §6 的模拟查表（12 段读数桶）：窄/宽两个 P(偏倚主导)
+
+  4. P_bias_dom = max(NB, WB)        // 取窄/宽两档的<b>较大</b>值 → 保守判读
+     // 这一步就是算法内部"自动处理"窄/宽的关键。
+     // 医生完全不需要自己判断。
+
+  5. IF    P_bias_dom <  0.15:  verdict = "可作效应证据"
+     ELIF  P_bias_dom <  0.45:  verdict = "混合·假设生成"
+     ELIF  P_bias_dom <  0.65:  verdict = "势均力敌·暂不下结论"
+     ELSE:                       verdict = "不可作效应证据"
+
+  RETURN (verdict, P_bias_dom)
+</pre>
+
+<div class="callout">
+<b>关键设计：</b>"窄/宽"这个概念<b>不暴露给医生</b>。医生提供 BF̂ 区间即可，算法在第 3–4 步自动根据 CI 半宽映射到模拟研究的概率曲线，并取保守值作为最终 P(偏倚主导)。这样临床读者只需懂<b>"BF̂ 越接近 1 = 偏倚越占主导"</b>和<b>"P 值越低 = 信号越稳"</b>两个直觉，<b>不必了解"中位数切两半""Bootstrap 宽度"等模拟方法术语</b>。
+</div>
+
+<h2>§4 阈值的来源（为什么可以信赖这几个数字）</h2>
+
+<p>四个阈值 0.05、0.15、0.45、0.65 都来自同一份实证研究 —— 64 万次（640 个条件 × 1000 次重复）模拟。模拟里同时生成了"真值"和"算法判定"，于是可以反过来统计：在某个判定输出下，真值实际落在"偏倚主导"侧的概率是多少。下面把每个阈值的出处说清楚：</p>
+
+<table>
+  <thead>
+    <tr><th>阈值</th><th>控制变量</th><th>数据来源</th><th>临床含义</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><b>0.05</b>（校准 p）</td>
+      <td>第一层"信号是否存在"的显著性水平。</td>
+      <td>沿用统计惯例（与单侧 0.05 同 spirit）。</td>
+      <td>观测值是否超出零假设 + 已测混杂所能解释的范围。</td>
+    </tr>
+    <tr>
+      <td><b>0.15</b>（P 偏倚主导）</td>
+      <td>"可作效应证据"上限。</td>
+      <td>模拟中低 BF 段即使宽 CI 仍能维持 P&lt;0.15。</td>
+      <td>偏倚份额不超过 15%，可放心使用。</td>
+    </tr>
+    <tr>
+      <td><b>0.45</b>（P 偏倚主导）</td>
+      <td>"混合·假设生成"上限。</td>
+      <td>模拟中 BF 居中段窄 CI 可落入此档。</td>
+      <td>偏倚份额在 15–45% 之间，方向有信号但强度不够，列为假设生成。</td>
+    </tr>
+    <tr>
+      <td><b>0.65</b>（P 偏倚主导）</td>
+      <td>"势均力敌"与"不可作"的分界。</td>
+      <td>模拟中高 BF 段即便窄 CI 也几乎全超此阈值。</td>
+      <td>偏倚份额过半，不能作为因果证据使用。</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="callout">
+<b>临床医生不必重做模拟</b>。本算法的全部阈值已经定型。要做的是：把一篇论文报的 p_cal、BF̂、(BF_lo–BF_hi) 三个数填进来，算法就能给出判定。<b>这就是"算法内部自动完成判断、不暴露宽/窄"的好处：</b>即使完全没读过论文模拟的人，也能正确使用本工具。
+</div>
+
+<h2>§5 BF 端点行为可视化 —— 在 BF̂ = 0 和 BF̂ = 1 附近，CI 半宽怎么算</h2>
+
+<p>BF̂ 是一个比值，理论范围 [0, 1]，但<b>实际报告的可信区间会被边界"截断"</b>。这是单调变换的固有性质：BF = g(x) = |x|/(|x|+ψ̃) 在 x 接近 0 处斜率极陡，在 x 接近 −ψ̃ 处斜率极平。这意味着：</p>
+
+<ul>
+  <li>当 BF̂ <b>接近 0</b>（偏倚份额很小）：BF̂ 区间<b>下界常贴 0</b>（CI 不会变负），实际可用信息<b>只有上半段</b>。</li>
+  <li>当 BF̂ <b>接近 1</b>（偏倚份额几乎完全解释）：BF̂ 区间<b>上界常贴 1</b>（CI 不会超过 1），实际可用信息<b>只有下半段</b>。</li>
+  <li>当 BF̂ <b>居中</b>（典型读数 0.2–0.8）：CI 通常<b>对称</b>，半宽 = (BF_hi − BF_lo)/2 即双向都可用。</li>
+</ul>
+
+<p>下面四种情况分别图示。算法在第 3–4 步会<b>自动</b>处理截断，临床医生无需手动校正。</p>
+
+<div class="endpoints-wrap">
+<svg id="bfEndpoints" viewBox="0 0 1060 520" xmlns="http://www.w3.org/2000/svg">
+  <!-- frame -->
+  <rect x="0" y="0" width="1060" height="520" fill="transparent"/>
+
+  <!-- title -->
+  <text x="30" y="30" font-size="15" font-weight="700" fill="#1F2A38">BF 端点 CI 半宽行为 · 4 个典型场景</text>
+
+  <!-- color legend -->
+  <g transform="translate(680,18)">
+    <rect x="0"   y="0" width="14" height="14" fill="#1F6F8B" rx="2"/>
+    <text x="20"  y="12" font-size="12" fill="#1F2A38">BF̂ 点估计</text>
+    <rect x="120" y="0" width="14" height="14" fill="#9AC6DA" rx="2"/>
+    <text x="140" y="12" font-size="12" fill="#1F2A38">CI 区间</text>
+    <rect x="220" y="0" width="14" height="14" fill="#D87C72" rx="2"/>
+    <text x="240" y="12" font-size="12" fill="#1F2A38">截断后的实际可用半区</text>
+  </g>
+
+  <!-- ===== axis template (used by all 4 cases) ===== -->
+  <!-- Each row: x-axis at y=Y0, range 0..1, label "BF ∈ [0,1]" -->
+
+  <!-- CASE A: typical mid -->
+  <g transform="translate(40,80)">
+    <text x="0" y="-8" font-size="13" font-weight="700" fill="#1F2A38">① 典型读数（BF̂ = 0.30）</text>
+    <text x="0" y="8" font-size="11.5" fill="#525D6B">CI = [0.18, 0.42]，双向不截断 → 半宽 = 0.12（双向均可用）</text>
+    <!-- axis -->
+    <line x1="0" y1="40" x2="980" y2="40" stroke="#1F2A38" stroke-width="1.4"/>
+    <line x1="0" y1="34" x2="0" y2="46" stroke="#1F2A38" stroke-width="1.4"/>
+    <line x1="980" y1="34" x2="980" y2="46" stroke="#1F2A38" stroke-width="1.4"/>
+    <text x="-6" y="58" font-size="11" fill="#525D6B" text-anchor="end">0</text>
+    <text x="490" y="58" font-size="11" fill="#525D6B" text-anchor="middle">0.5</text>
+    <text x="980" y="58" font-size="11" fill="#525D6B" text-anchor="start">1</text>
+    <!-- CI band -->
+    <rect x="176" y="30" width="236" height="20" fill="#9AC6DA" opacity="0.85" rx="2"/>
+    <text x="294" y="68" font-size="11" fill="#1F2A38" text-anchor="middle">CI = [0.18, 0.42]</text>
+    <!-- left half (above the line) -->
+    <rect x="176" y="22" width="118" height="8" fill="#D87C72" opacity="0.65" rx="1"/>
+    <!-- right half -->
+    <rect x="294" y="22" width="118" height="8" fill="#D87C72" opacity="0.65" rx="1"/>
+    <!-- BF point -->
+    <circle cx="294" cy="40" r="6.5" fill="#1F6F8B" stroke="#FFFFFF" stroke-width="2"/>
+    <text x="294" y="14" font-size="12" font-weight="700" fill="#1F6F8B" text-anchor="middle">BF̂ = 0.30</text>
+    <text x="235" y="20" font-size="10.5" fill="#525D6B" text-anchor="middle">左半宽 0.12</text>
+    <text x="353" y="20" font-size="10.5" fill="#525D6B" text-anchor="middle">右半宽 0.12</text>
+  </g>
+
+  <!-- CASE B: near 0 (lower clipped) -->
+  <g transform="translate(40,200)">
+    <text x="0" y="-8" font-size="13" font-weight="700" fill="#1F2A38">② 接近 0（BF̂ = 0.05）</text>
+    <text x="0" y="8" font-size="11.5" fill="#525D6B">原始 CI = [-0.07, 0.17]，下界被 [0,1] 截断 → CI = [0, 0.17]，半宽 = 0.085（仅上半段可用）</text>
+    <line x1="0" y1="40" x2="980" y2="40" stroke="#1F2A38" stroke-width="1.4"/>
+    <line x1="0" y1="34" x2="0" y2="46" stroke="#1F2A38" stroke-width="1.4"/>
+    <line x1="980" y1="34" x2="980" y2="46" stroke="#1F2A38" stroke-width="1.4"/>
+    <text x="-6" y="58" font-size="11" fill="#525D6B" text-anchor="end">0</text>
+    <text x="490" y="58" font-size="11" fill="#525D6B" text-anchor="middle">0.5</text>
+    <text x="980" y="58" font-size="11" fill="#525D6B" text-anchor="start">1</text>
+    <!-- ghost of unclipped lower (would extend below 0) -->
+    <line x1="0" y1="36" x2="0" y2="44" stroke="#A93226" stroke-width="2" stroke-dasharray="3,2"/>
+    <text x="0" y="68" font-size="10.5" fill="#A93226" text-anchor="middle">下界 0</text>
+    <!-- CI band from 0 to 0.17 -->
+    <rect x="0" y="30" width="167" height="20" fill="#9AC6DA" opacity="0.85" rx="2"/>
+    <text x="83" y="68" font-size="11" fill="#1F2A38" text-anchor="middle">截断后 CI = [0, 0.17]</text>
+    <!-- usable half (only right/up) -->
+    <rect x="49" y="22" width="118" height="8" fill="#D87C72" opacity="0.85" rx="1"/>
+    <!-- BF point -->
+    <circle cx="49" cy="40" r="6.5" fill="#1F6F8B" stroke="#FFFFFF" stroke-width="2"/>
+    <text x="49" y="14" font-size="12" font-weight="700" fill="#1F6F8B" text-anchor="middle">BF̂ = 0.05</text>
+    <text x="108" y="20" font-size="10.5" fill="#A93226" text-anchor="middle">仅右半宽可用 0.085</text>
+  </g>
+
+  <!-- CASE C: near 1 (upper clipped) -->
+  <g transform="translate(40,320)">
+    <text x="0" y="-8" font-size="13" font-weight="700" fill="#1F2A38">③ 接近 1（BF̂ = 0.92）</text>
+    <text x="0" y="8" font-size="11.5" fill="#525D6B">原始 CI = [0.78, 1.06]，上界被 [0,1] 截断 → CI = [0.78, 1.00]，半宽 = 0.11（仅下半段可用）</text>
+    <line x1="0" y1="40" x2="980" y2="40" stroke="#1F2A38" stroke-width="1.4"/>
+    <line x1="0" y1="34" x2="0" y2="46" stroke="#1F2A38" stroke-width="1.4"/>
+    <line x1="980" y1="34" x2="980" y2="46" stroke="#1F2A38" stroke-width="1.4"/>
+    <text x="-6" y="58" font-size="11" fill="#525D6B" text-anchor="end">0</text>
+    <text x="490" y="58" font-size="11" fill="#525D6B" text-anchor="middle">0.5</text>
+    <text x="980" y="58" font-size="11" fill="#525D6B" text-anchor="start">1</text>
+    <!-- ghost of unclipped upper (would extend above 1) -->
+    <line x1="980" y1="36" x2="980" y2="44" stroke="#A93226" stroke-width="2" stroke-dasharray="3,2"/>
+    <text x="980" y="68" font-size="10.5" fill="#A93226" text-anchor="middle">上界 1</text>
+    <!-- CI band from 0.78 to 1 -->
+    <rect x="764" y="30" width="216" height="20" fill="#9AC6DA" opacity="0.85" rx="2"/>
+    <text x="872" y="68" font-size="11" fill="#1F2A38" text-anchor="middle">截断后 CI = [0.78, 1.00]</text>
+    <!-- usable half (only left/down) -->
+    <rect x="804" y="22" width="118" height="8" fill="#D87C72" opacity="0.85" rx="1"/>
+    <!-- BF point -->
+    <circle cx="902" cy="40" r="6.5" fill="#1F6F8B" stroke="#FFFFFF" stroke-width="2"/>
+    <text x="902" y="14" font-size="12" font-weight="700" fill="#1F6F8B" text-anchor="middle">BF̂ = 0.92</text>
+    <text x="804" y="20" font-size="10.5" fill="#A93226" text-anchor="middle">仅左半宽可用 0.11</text>
+  </g>
+
+  <!-- CASE D: mid-range with wide CI -->
+  <g transform="translate(40,440)">
+    <text x="0" y="-8" font-size="13" font-weight="700" fill="#1F2A38">④ 中段 + 宽 CI（BF̂ = 0.50）</text>
+    <text x="0" y="8" font-size="11.5" fill="#525D6B">CI = [0.20, 0.80]，不截断但极宽 → 半宽 = 0.30（算法在内部映射到"宽区间"档）</text>
+    <line x1="0" y1="40" x2="980" y2="40" stroke="#1F2A38" stroke-width="1.4"/>
+    <line x1="0" y1="34" x2="0" y2="46" stroke="#1F2A38" stroke-width="1.4"/>
+    <line x1="980" y1="34" x2="980" y2="46" stroke="#1F2A38" stroke-width="1.4"/>
+    <text x="-6" y="58" font-size="11" fill="#525D6B" text-anchor="end">0</text>
+    <text x="490" y="58" font-size="11" fill="#525D6B" text-anchor="middle">0.5</text>
+    <text x="980" y="58" font-size="11" fill="#525D6B" text-anchor="start">1</text>
+    <rect x="196" y="30" width="588" height="20" fill="#9AC6DA" opacity="0.85" rx="2"/>
+    <text x="490" y="68" font-size="11" fill="#1F2A38" text-anchor="middle">CI = [0.20, 0.80]</text>
+    <rect x="196" y="22" width="294" height="8" fill="#D87C72" opacity="0.85" rx="1"/>
+    <rect x="490" y="22" width="294" height="8" fill="#D87C72" opacity="0.85" rx="1"/>
+    <circle cx="490" cy="40" r="6.5" fill="#1F6F8B" stroke="#FFFFFF" stroke-width="2"/>
+    <text x="490" y="14" font-size="12" font-weight="700" fill="#1F6F8B" text-anchor="middle">BF̂ = 0.50</text>
+    <text x="343" y="20" font-size="10.5" fill="#525D6B" text-anchor="middle">左半宽 0.30</text>
+    <text x="637" y="20" font-size="10.5" fill="#525D6B" text-anchor="middle">右半宽 0.30</text>
+  </g>
+</svg>
+<div class="legend">
+  <span style="background:#D87C72;color:#fff;">实际可用半区</span>
+  <span style="background:#9AC6DA;color:#1F2A38;">整段 CI（含截断）</span>
+  <span style="background:#1F6F8B;color:#fff;">BF̂ 点估计</span>
+  · ① ④ 为典型双向可用情况；② ③ 在 BF 端点处 CI 单方向可用，半宽取单向。这是算法内部取 <code>max(窄,宽)</code> 保守判读的几何来源。
+</div>
+</div>
+
+<h3>关键结论：医生只读「BF̂ + CI」即可</h3>
+<div class="callout">
+<b>医生完全不需要自己区分"窄/宽"</b>。BF̂ = 0.05 时 CI 下界被 0 截断、上半区可用；BF̂ = 0.92 时 CI 上界被 1 截断、下半区可用；BF̂ = 0.30 时双向可用。这些差异<b>全部由算法在内部自动处理</b>，输出仍是同一份"判语 + P(偏倚主导)≈X%"，<b>没有任何一步需要医生参与</b>。
+</div>
+
+<h2>§6 单篇文献应用示例</h2>
+
+<h3>模拟查表：12 段读数桶（BF̂ → P(偏倚主导)）</h3>
+<p>下面这张表就是第 3–4 步要查的「模拟查表」。它来自 64 万次模拟，按 BF̂ 大小分成 12 个读数桶；每个桶给出<b>窄区间</b>和<b>宽区间</b>两种情况下「真值实际偏倚主导」的比例，并预先取两者较大值（保守值）映射到判语。临床医生实际只需看最后一列「保守值 + 判语」；窄/宽两列仅作透明展示，算法内部自动选用。</p>
+<table>
+  <thead>
+    <tr><th style="width:10%">桶</th><th>BF̂ 读数中心</th><th>窄档 P(偏倚主导)</th><th>宽档 P(偏倚主导)</th><th>保守值 max(窄,宽)</th><th>算法判语</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>1</td><td>0.06</td><td>0.0019</td><td>0.0713</td><td>0.0713</td><td><span class="pill pill-ok">可作效应证据</span></td></tr>
+    <tr><td>2</td><td>0.169</td><td>0.0077</td><td>0.0757</td><td>0.0757</td><td><span class="pill pill-ok">可作效应证据</span></td></tr>
+    <tr><td>3</td><td>0.258</td><td>0.0269</td><td>0.1496</td><td>0.1496</td><td><span class="pill pill-ok">可作效应证据</span></td></tr>
+    <tr style="background:#EAF4F8"><td>④（本例）</td><td>0.329</td><td>0.0878</td><td>0.2650</td><td>0.2650</td><td><span class="pill pill-mx">混合·假设生成</span></td></tr>
+    <tr><td>5</td><td>0.388</td><td>0.2151</td><td>0.4160</td><td>0.4160</td><td><span class="pill pill-mx">混合·假设生成</span></td></tr>
+    <tr><td>6</td><td>0.439</td><td>0.3952</td><td>0.5660</td><td>0.5660</td><td><span class="pill pill-tie">势均力敌·暂不下结论</span></td></tr>
+    <tr><td>7</td><td>0.488</td><td>0.5829</td><td>0.7150</td><td>0.7150</td><td><span class="pill pill-no">不可作效应证据</span></td></tr>
+    <tr><td>8</td><td>0.541</td><td>0.7724</td><td>0.8030</td><td>0.8030</td><td><span class="pill pill-no">不可作效应证据</span></td></tr>
+    <tr><td>9</td><td>0.602</td><td>0.9055</td><td>0.8738</td><td>0.9055</td><td><span class="pill pill-no">不可作效应证据</span></td></tr>
+    <tr><td>10</td><td>0.679</td><td>0.9675</td><td>0.9106</td><td>0.9675</td><td><span class="pill pill-no">不可作效应证据</span></td></tr>
+    <tr><td>11</td><td>0.780</td><td>0.9906</td><td>0.9358</td><td>0.9906</td><td><span class="pill pill-no">不可作效应证据</span></td></tr>
+    <tr><td>12</td><td>0.919</td><td>0.9967</td><td>0.9389</td><td>0.9967</td><td><span class="pill pill-no">不可作效应证据</span></td></tr>
+  </tbody>
+</table>
+<p class="legend" style="margin-top:8px">注：桶号按 BF̂ 升序；判语由保守值经 §3 第 5 步阈值（&lt;0.15 / 0.15–0.45 / 0.45–0.65 / ≥0.65）判定。本例 BF̂ = 0.33 落在第 4 桶（已高亮），保守值 0.265 → 混合·假设生成。</p>
+
+<p>假设某观察性研究报告：</p>
+<ul>
+  <li>校准 p 值 = <code>0.012</code></li>
+  <li>BF̂ = <code>0.33</code></li>
+  <li>BF 的 95% CI = <code>[0.15, 0.50]</code></li>
+</ul>
+
+<p><b>手算演示：</b></p>
+<pre>
+1. p_cal = 0.012 < 0.05  → 进入第二层
+2. CI_half_width = (0.50 - 0.15) / 2 = 0.175  → 区间偏宽
+3. BIN: BF̂ = 0.33 → 落在第 4 桶（x ≈ 0.329）
+4. 查表：第 4 桶 窄档 pBD = 0.0878，宽档 pBD = 0.265
+5. P_bias_dom = max(0.0878, 0.265) = 0.265
+6. P_bias_dom = 0.265 落在 0.15–0.45 → 混合·假设生成
+</pre>
+
+<p><b>输出给医生：</b></p>
+<div style="background: var(--bg-soft); border: 1px solid var(--line); border-radius: 6px; padding: 12px 16px; margin: 10px 0;">
+  <div><b>BF̂ = 0.33 (CI 0.15–0.50)，校准 p = 0.012</b></div>
+  <div style="margin-top:8px"><span class="pill pill-mx">混合·假设生成</span>
+    &nbsp; P(偏倚主导) ≈ <b style="font-size:18px;color:#8B6B00">26.5%</b>
+  </div>
+  <div style="margin-top:6px; color: var(--fg-mute); font-size:13px;">
+    解读：偏倚份额约 1/3、信号显著，但 CI 偏宽使真值偏倚主导概率达 26.5%，落在混合区间（15–45%）。建议作为假设生成使用，需更多独立证据支持。
+  </div>
+</div>
+
+<h2>§7 何时<b>不要</b>使用本算法</h2>
+
+<ul>
+  <li><b>RCT 文献</b> —— 已经随机化，本工具不适用；按 RCT 标准判读即可。</li>
+  <li><b>未做经验校准的观察性研究</b> —— 必须先用 OHDSI EmpiricalCalibration 校准后再用本算法；未校准的 p 值不可输入。</li>
+  <li><b>极端稀有事件（n&lt;100 的阴性对照）</b> —— 校准 CI 极宽，结果不可靠；应优先报告方向而非具体概率。</li>
+  <li><b>治疗领域/人群与本模拟研究（β 受体阻滞剂、MIMIC-IV）差异巨大</b> —— 阈值 0.15/0.45/0.65 是经验值，跨场景迁移需要重新做一组 64 万次模拟。</li>
+</ul>
+
+<h2>§8 常见问题</h2>
+
+<ol class="qa">
+  <li><b>Q：算法需要我提供"窄"还是"宽"吗？</b><br>
+      A：<b>不需要</b>。你只填入 BF̂ 区间即可。算法内部自动识别区间宽度并取保守值。你唯一需要做的，是如实报告论文里的 CI。</li>
+  <li><b>Q：BF̂ = 0 怎么处理？</b><br>
+      A：BF̂ = 0 意味着校准后几乎看不到经验偏倚。如果同时校准 p &lt; 0.05，算法进入第二层；BF̂ = 0 通常对应"可作效应证据"（除非 CI 宽得离谱，但区间会触底于 0，半宽通常很小）。</li>
+  <li><b>Q：BF̂ = 1 怎么处理？</b><br>
+      A：BF̂ = 1 意味着整个效应都被系统偏倚解释。如果 p_cal &lt; 0.05（信号居然显著）但 BF̂ = 1，几乎肯定是"假信号"——算法的"不可作效应证据"档正是为这种情况设计的。</li>
+  <li><b>Q：为什么"势均力敌"是一个独立档？为什么不归到"不可作"？</b><br>
+      A：因为 BF 居中、CI 偏宽时，<b>我们不知道是真信号还是偏倚主导</b>。把它判为"不可作"会丢掉可能的真效应；判为"可作"又会引入假阳性。势均力敌档说"<b>待证据累积</b>"——不是放弃判断，是给一个更细的处理路径（参见 v38draft §9 混合区处理清单）。</li>
+  <li><b>Q：如果论文报告的是 BF（不报告 CI）怎么办？</b><br>
+      A：算法需要 BF 的 CI 才能定位 12 段读数桶。<b>缺 CI 不要硬猜</b>，请直接向作者索要 Bootstrap CI 后再判。</li>
+  <li><b>Q：算法输出"P(偏倚主导) ≈ 3.1%"，但这一位数是不是太粗？</b><br>
+      A：保留 1 位小数是设计选择。<b>刻意粗一些</b>是因为概率本身来自 64 万次模拟的经验分布，单数点估计的尾位数字不应过度解读。如有需要可在内部查 D.relia 数据拿更高精度，但给临床的输出就到这里为止。</li>
+  <li><b>Q：软件报给我的 95% CI，到底是「窄档」还是「宽档」？</b><br>
+      A：<b>只有一个 CI，它本质既不是窄也不是宽。</b>软件从你的 μ̂_B 经 Bootstrap 得到唯一一条 95% CI（如 [0.10, 0.45]），用单调变换 g 映射成 BF 的 CI，这就是你看到的全部。所谓「窄/宽」只是算法拿这条 CI 的<b>半宽</b>（如 (0.45−0.10)/2 = 0.175）去跟固定阈值 0.133 比一比、贴的内部标签，用来决定去查哪一张预计算表。<br>
+      两张表（<code>D.reliaSplit.narrow</code> / <code>.wide</code>）是 64 万次模拟<b>离线一次性算好的</b>条件概率（「在 CI 窄的前提下真偏倚主导的比例」与「在 CI 宽的前提下」的比例），<b>不是你这次运行时生成的，也不是两条不同的 CI</b>。算法读完两列后取 <code>max(窄, 宽)</code> 作保守判读，所以你最终看到的那个 P 值已经是两档里的「更坏情形」。正因如此你完全不需要知道本次被归到窄还是宽，这也是当初把它从临床界面隐掉的原因。</li>
+</ol>
+
+<h2>§9 为什么「校准 p + BF」比单独看 p 更强（写给持怀疑态度的读者）</h2>
+
+<p>不少临床同事的直觉是：校准 p &lt; 0.05 已经说明「治疗有效」，BF̂ 与它的 CI 只是把「约 1/3 是偏倚」换种说法重述一遍，和看 logistic 回归的 RR + 95% CI + p 没什么两样。下面说明这种直觉<b>对了一半、错在致命的一半</b>。</p>
+
+<div class="callout" style="border-left:4px solid #1F6F8B; background:#F2F8FB; padding:12px 16px; border-radius:6px; margin:14px 0;">
+<b>对的部分：</b>BF̂ = 0.33 确实就是在说「估计约 1/3 的表观效应来自系统性偏倚」，这点手算也能得到。<br>
+<b>错的部分：</b>「校准 p &lt; 0.05 = 治疗有效」在观察性研究里是根本性统计谬误。p 值只排除<b>偶然（随机噪声）</b>，<b>排除不了混杂</b>。校准 p 比朴素 p 强（它用阴性对照做了经验校准，去掉了这项研究本身的系统性 p 膨胀），但仍只回答「有没有区别于零的信号」，<b>不回答「信号是真的还是偏倚造成的」</b>。后者正是 BF 这一层在干的事。logistic 的 RR + CI + p 只回答「有无关联、关联多大」，对「关联里多少是偏倚」<b>结构性沉默</b>。
+</div>
+
+<h3>9.1 最有力的对照反例：两个「校准 p 完全相同」的研究</h3>
+
+<p>下面两个研究的校准 p 都是 0.012（都「显著」）。按「p &lt; 0.05 = 有效」会给出<b>完全相同</b>的结论；但框架靠 BF 第二层把研究 2 判成「不可作效应证据」。</p>
+
+<table class="tbl">
+  <thead>
+    <tr><th>项目</th><th>研究 1（§6 示例）</th><th>研究 2（反例）</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>校准 p</td><td>0.012</td><td><b>0.012（完全相同）</b></td></tr>
+    <tr><td>BF̂</td><td>0.33</td><td><b>0.85</b></td></tr>
+    <tr><td>BF 95% CI</td><td>[0.15, 0.50]</td><td>[0.75, 0.97]</td></tr>
+    <tr><td>只看 p 的朴素读法</td><td>显著 → 治疗有效</td><td>显著 → 治疗有效（与研究 1 同结论）</td></tr>
+    <tr>
+      <td>框架输出</td>
+      <td><span class="pill pill-mx">混合·假设生成</span><br>P(偏倚主导) ≈ 26.5%</td>
+      <td><span class="pill pill-red">不可作效应证据</span><br>P(偏倚主导) ≈ 94%</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>研究 2 里 BF̂ = 0.85 意味着「表观效应的 85% 是系统性偏倚」，几乎不是真效应。若临床医生按「p &lt; 0.05 = 有效」去推荐研究 2 的药物，等于把一个基本由混杂造成的<b>假性效应</b>当成真治疗效应推荐给病人。这正是 BF 层<b>独立提供、单看 p 值给不出</b>的信息，也是本框架真正的价值所在。</p>
+
+<h3>9.2 关于「P(偏倚主导) ≈ 26.5% 没增加信息」</h3>
+
+<p>你手算的「1/3」是 BF̂ 的<b>点估计</b>（本研究偏倚份额的分解）；而 26.5% 是模拟校准后的「真实处于偏倚主导体制的概率」，并且因为你的 CI 偏宽被<b>上调</b>了（同一读数桶：窄档仅 8.8%、宽档 26.5%）。这是两个不同的问题：</p>
+<ul>
+  <li>BF̂ = 0.33 → 「这个研究的效应里，估计 1/3 是偏倚」（分解）</li>
+  <li>P(偏倚主导) ≈ 26.5% → 「考虑到你的 CI 很宽，模拟里同类研究真正落在偏倚主导体制的概率是 26.5%」（体制归类 + 宽度修正）</li>
+</ul>
+<p>朴素 RR + CI + p 既给不出 26.5% 这个数，也给不出「混合」这个决策档。框架在中段 BF 的增量，是用 CI 宽度修正了你偏乐观的点估计，并给出体制归类。</p>
+
+<h3>9.3 诚实的局限（先承认，才说得服人）</h3>
+
+<p>本框架的威力是<b>不对称</b>的：在两端（红 / 绿）它很强，能拦住假性效应、也能背书真效应；在<b>中段 BF 它本就是「诚实的不确定」</b>。对研究 1 这种中等 BF，框架确实不「拍板」，它的价值恰恰是<b>拒绝让你仅凭 p &lt; 0.05 就宣布有效</b>，逼你走「生成假设、累积更多证据」这条路。所以临床同事觉得「好像没增加判断」，往往正是因为数据本来就不该让你下结论，框架只是诚实地说了出来。</p>
+
+<div class="footer">
+文档版本 v1 · 2026-08-26 · 与 v37 论文及配套互动讲解器 §8 节配套使用。修改建议请回到 §8 表格源数据（<code>D.relia</code> / <code>D.reliaSplit.narrow</code> / <code>D.reliaSplit.wide</code>）。
+</div>
+
+</body>
+</html>

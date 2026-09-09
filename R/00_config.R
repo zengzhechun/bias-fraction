@@ -1,4 +1,15 @@
-# manuscript_v37: Global Configuration
+# manuscript v38 (directory "第38版"): Global Configuration
+# v38 reorganises the paper into three sequential parts:
+#   Part I  - the metric (BF definition, bounded scale, CI construction)
+#   Part II - simulation study, two steps:
+#             Step 1  Bland-Altman agreement -> the BF estimator is accurate
+#             Step 2  two-layer decision rule (calibrated p + continuous BF + CI width)
+#                     -> BF with its CI is a valid complement to the calibrated p-value
+#   Part III- beta-blocker target trial emulation, two clinical questions
+#             (BB >=50% target dose; GDMT >=2 of 3 classes), with negative controls
+# Directory paths below point at "第38版"; all analysis outputs stay inside it.
+# ---------------------------------------------------------------------------
+# manuscript_v37 header retained for provenance:
 # v37 inherits the v34 metric reframing (BF primary, BER auxiliary) and adopts the
 # v35 continuous BF analysis. KEY v37 CHANGE (per team decision 2026-08-21):
 #   The PRIMARY analysis of the simulation study is now the Bland-Altman agreement
@@ -9,12 +20,13 @@
 # Code keeps bsr_* object names (bsr == BER) for backward compatibility with v33 RDS outputs.
 BASE_DIR <- "/Users/zengzhechun/SynologyDrive/工作/数据分析项目/心电图大模型/心电图公开数据集/02 mimic-iv-ecg/Topic1_LTMLE_Betablocker"
 DATA_DIR <- file.path(BASE_DIR, "DATA")
-V37_DIR  <- file.path(BASE_DIR, "manuscript_v37")
-OUT_DIR  <- file.path(V37_DIR, "output")
+V38_DIR  <- file.path(BASE_DIR, "第38版")
+V37_DIR  <- V38_DIR   # backward-compatible alias: scripts written for v37 keep working
+OUT_DIR  <- file.path(V38_DIR, "output")
 FIG_DIR  <- file.path(OUT_DIR, "figures")
 TAB_DIR  <- file.path(OUT_DIR, "tables")
 SIM_DIR  <- file.path(OUT_DIR, "simulation")
-LOG_DIR  <- file.path(V37_DIR, "logs")
+LOG_DIR  <- file.path(V38_DIR, "logs")
 
 dir.create(FIG_DIR, showWarnings = FALSE, recursive = TRUE)
 dir.create(TAB_DIR, showWarnings = FALSE, recursive = TRUE)
@@ -41,3 +53,11 @@ COLOR_UNCAL        <- "#8B3A3A"  # dark red
 COLOR_NEUTRAL      <- "#6E7B8B"  # cool grey
 COLOR_GRID         <- "#E8E8E8"  # very light grey for grid
 COLOR_TEXT         <- "#2C2C2C"  # dark charcoal (not pure black)
+
+# Palette keyed on the number of negative controls (K). Named, so the mapping
+# never depends on factor-level ordering. Deliberately avoids the zone colours
+# above, which carry bias/effect semantics and must not be reused for K.
+# Extend here whenever a new K level is added to the simulation grid.
+COLOR_K <- c("12" = COLOR_OHDSI,       # steel blue
+             "25" = COLOR_COMPETITIVE, # muted gold
+             "50" = "#7A6A8A")         # muted plum
