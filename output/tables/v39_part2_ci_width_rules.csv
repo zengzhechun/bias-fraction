@@ -1,0 +1,4 @@
+"reading","declare_usable_pct","bd_among_declared_pct","sens_ed_pct","spec_bd_pct"
+"pooled probability (CI width ignored)",21.4553125,2.90235033087182,81.1794444444444,98.8138888888889
+"width-specific probability",25.4769791666667,4.08865847026932,83.6872222222222,98.015873015873
+"conservative max(narrow, wide)",21.4553125,2.90235033087182,81.1794444444444,98.8138888888889

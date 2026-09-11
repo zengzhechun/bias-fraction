@@ -1,0 +1,72 @@
+===== 第39版渲染开始 2026-09-11 12:24:47 =====
+---- quarto render manuscript_jama_v39.qmd ----
+  bibliography:
+    - references.bib
+  csl: american-medical-association.csl
+  
+Output created: manuscript_jama_v39.docx
+
+   生成 12:24:51  1634581 字节
+---- quarto render manuscript_medarchive_v39.qmd ----
+  bibliography:
+    - references.bib
+  csl: american-medical-association.csl
+  
+Output created: manuscript_medarchive_v39.docx
+
+   生成 12:24:53  34821 字节
+---- quarto render manuscript_v39.qmd ----
+  bibliography:
+    - references.bib
+  csl: american-medical-association.csl
+  
+Output created: manuscript_v39.docx
+
+   生成 12:24:55  30348 字节
+---- quarto render supplementary_jama_v39.qmd ----
+[31mError:
+! object 'cases' not found
+[39m[31m
+Quitting from supplementary_jama_v39.qmd:37-108 [setup]
+[39m[31mExecution halted
+[39m[33mWARN: Error encountered when rendering files[39m
+   生成 11:18:31  25198 字节
+---- quarto render supplementary_medarchive_v39.qmd ----
+[31mError:
+! object 'cases' not found
+[39m[31m
+Quitting from supplementary_medarchive_v39.qmd:35-110 [setup]
+[39m[31mExecution halted
+[39m[33mWARN: Error encountered when rendering files[39m
+   生成 11:18:33  26070 字节
+---- quarto render supplementary_v39.qmd ----
+[31mError:
+! object 'cases' not found
+[39m[31m
+Quitting from supplementary_v39.qmd:35-96 [setup]
+[39m[31mExecution halted
+[39m[33mWARN: Error encountered when rendering files[39m
+   生成 11:16:23  23752 字节
+---- 后处理：JAMA 正稿样式 ----
+Traceback (most recent call last):
+  File "/Users/zengzhechun/SynologyDrive/工作/数据分析项目/心电图大模型/心电图公开数据集/02 mimic-iv-ecg/Topic1_LTMLE_Betablocker/第39版/manuscript/_post_format_jama.py", line 1, in <module>
+    import docx
+ModuleNotFoundError: No module named 'docx'
+Traceback (most recent call last):
+  File "/Users/zengzhechun/SynologyDrive/工作/数据分析项目/心电图大模型/心电图公开数据集/02 mimic-iv-ecg/Topic1_LTMLE_Betablocker/第39版/manuscript/_post_bold_abstract.py", line 12, in <module>
+    import docx
+ModuleNotFoundError: No module named 'docx'
+---- 后处理：纵向（双写版），逐份 ----
+removed landscape sectPr x1, empty sectPr x0
+saved manuscript_jama_v39.docx
+removed landscape sectPr x0, empty sectPr x0
+saved manuscript_medarchive_v39.docx
+removed landscape sectPr x0, empty sectPr x0
+saved manuscript_v39.docx
+removed landscape sectPr x0, empty sectPr x0
+saved supplementary_jama_v39.docx
+removed landscape sectPr x0, empty sectPr x0
+saved supplementary_medarchive_v39.docx
+removed landscape sectPr x0, empty sectPr x0
+saved supplementary_v39.docx
+===== 第39版渲染结束 2026-09-11 12:25:00  fail=0 =====

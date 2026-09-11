@@ -1,4 +1,4 @@
-# 第38版 / 任务2 (Plan A): Q2 (GDMT) baseline SMD table
+# 第39版 / 任务2 (Plan A): Q2 (GDMT) baseline SMD table
 # Mirrors R/25_adjusted_smd_iptw.R (Q1, BB) but for the GDMT question.
 # Authoritative treatment definition: scripts/run_ltmle_gdmt.R
 #   - cohort: Y_W0 == 0 (14,677 grace-period survivors, SAME as Q1 Table 3)
@@ -17,7 +17,7 @@ suppressMessages({ library(data.table) })
 
 BASE_DIR <- "/Users/zengzhechun/SynologyDrive/工作/数据分析项目/心电图大模型/心电图公开数据集/02 mimic-iv-ecg/Topic1_LTMLE_Betablocker"
 DATA_DIR <- file.path(BASE_DIR, "DATA")
-OUT_DIR  <- file.path(BASE_DIR, "第38版", "output")
+OUT_DIR  <- file.path(BASE_DIR, "第39版", "output")
 TAB_DIR  <- file.path(OUT_DIR, "tables")
 
 # ---- 1. 加载并按 run_baseline_smd.R 清洗 (与 Q1 同口径) ----

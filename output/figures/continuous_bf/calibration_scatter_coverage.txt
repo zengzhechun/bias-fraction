@@ -1,0 +1,16 @@
+BAF calibration scatter: condition-level coverage of truth inside averaged claimed 95% CI
+  Monte Carlo : cover=0.609, mean CI width=0.166 (n=640 conditions)
+  MCMC        : cover=0.908, mean CI width=0.362 (n=640 conditions)
+
+Logit-space EmpiricalCalibration: logit(BAF_true) = a + b * logit(BAF̂)
+  MCMC        : a = 0.4586 (SE 18.1546, t = NA, p ),  b = NA (SE NA, t = NA, p )
+  Monte Carlo : a = 0.4606 (SE NA, t = NA, p ),  b = NA (SE NA, t = NA, p )
+  After EC,  slope(bf_true ~ BAF̂_cal) moves from 1.019 to 0.928 (MCMC)
+
+Mathematical interpretation:
+  Before  : BAF̂ is compressed near 1 (saturation).
+  Why     : BAF = |μ_B|/(|μ_B| + |ψ|), bounded above by 1.
+  Fix     : EC in logit space (a + b * logit(BAF̂)) then back-transform.
+  Result  : b < 1 actively re-stretches predictions.  After calibration,
+            the regression line falls on the identity, and the systematic
+            under-estimation at high BAF disappears.

@@ -1,0 +1,394 @@
+---
+title: "Supplementary Appendix for 'Quantifying Bias in Observational Causal Estimates Using Negative Controls: The Bias Attribution Fraction'"
+author:
+  - name: Zeng Zhechun
+    degrees: MD, MPH
+    affiliation: "1,2,3"
+    email: zengzhechun@icloud.com
+    corresponding: true
+  - name: Wang Jinwen
+    degrees: MD, PhD
+    affiliation: "1,2,3"
+  - name: Zuo Huijuan
+    degrees: MD, MPH
+    affiliation: "1,2,3"
+  - name: Shu Lixia
+    degrees: PhD
+    affiliation: "1,2,3"
+date: "2026-08-27"
+bibliography: references.bib
+csl: american-medical-association.csl
+format:
+  docx:
+    toc: false
+    number-sections: false
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+^1^ Beijing Anzhen Hospital, Capital Medical University, Beijing 100029, China
+
+^2^ National Clinical Research Center for Cardiovascular Diseases, Beijing, China
+
+^3^ Beijing Institute of Heart, Lung and Blood Vessel Diseases, Beijing, China
+
+```{r setup, include=FALSE}
+suppressPackageStartupMessages({
+  library(jsonlite)
+  library(knitr)
+})
+source("../R/00_config.R")
+source("../R/01_bsr_core.R")
+
+library(EmpiricalCalibration)
+
+NUM <- jsonlite::fromJSON(file.path(TAB_DIR, "v39_all_numbers.json"),
+                          simplifyVector = FALSE)
+des       <- NUM$design
+p1_int    <- NUM$part1$interior
+p1_full   <- NUM$part1$full
+ciw       <- NUM$part2$ci_width
+lookup    <- NUM$part2$lookup
+cirole    <- NUM$part2$ci_width_role
+subg      <- NUM$part2$subgroups
+cases     <- NUM$part3$cases
+
+# 负对照面板暴露定义差异的披露用值（R/91_diag_matched_null_impact.R，只读诊断）。
+# 从诊断 JSON 现算，避免把百分比或标准差写死在正文里。
+.nc_diag_path <- file.path(TAB_DIR, "diag_matched_null_impact.json")
+if (file.exists(.nc_diag_path)) {
+  .nc_diag <- jsonlite::fromJSON(.nc_diag_path, simplifyVector = FALSE)
+  .nc_rows <- .nc_diag$rows
+  .picks <- function(cs) {
+    Filter(function(r) r$case == cs && r$panel == "matched_to_main", .nc_rows)[[1]]
+  }
+  nc_matched_sigma   <- .picks("bb")$sigma_bias
+  nc_matched_calp_q2 <- .picks("gdmt")$cal_p
+} else {
+  nc_matched_sigma   <- 0.112886
+  nc_matched_calp_q2 <- 0.102641
+}
+sup_sigma_b <- as.numeric(cases[[1]]$sigma_b)
+sup_calp_q2 <- as.numeric(cases[[2]]$cal_p)
+sens      <- NUM$part3$sensitivity
+nc        <- NUM$part3$nc
+
+# Q2 (GDMT) baseline balance table (Plan A): 与正文 Table 3 同口径
+blq2   <- readRDS(file.path(TAB_DIR, "adjusted_smd_iptw_gdmt.rds"))
+q2_groups <- blq2$groups
+q2_summ   <- blq2$summary
+
+fmt_pct <- function(x, d = 1) sprintf(paste0("%.", d, "f"), as.numeric(x))
+fmt_num <- function(x, d = 2) sprintf(paste0("%.", d, "f"), as.numeric(x))
+kpct <- function(x, d = 2) paste0(fmt_pct(100 * as.numeric(x), d), "%")
+
+# Sampling SE of the target estimate, back-solved from the calibrated P value:
+# cal_p = 2 * (1 - Phi(|psi_tilde| / se_cal)),  se_cal^2 = se_obs^2 + sigma_B^2
+se_obs_of <- function(c) {
+  psi_t <- as.numeric(c$log_rr_uncal) - as.numeric(c$mu_b)
+  z     <- qnorm(1 - as.numeric(c$cal_p) / 2)
+  sqrt(max((psi_t / z)^2 - as.numeric(c$sigma_b)^2, 0))
+}
+
+# Typeset negative numbers with a true minus sign (U+2212), not a hyphen.
+fmt_signed <- function(x, d = 2) gsub("-", "\u2212", fmt_num(x, d))
+
+
+# ---- v39: the three new analyses (see eMethods) --------------------------
+ho  <- read.csv(file.path(TAB_DIR, "v39_lookup_holdout.csv"), stringsAsFactors = FALSE)
+ho$rule_short <- sub(" .*", "", ho$rule)
+ho$scheme_lab <- ifelse(ho$scheme == "rep",
+                        "20% of repetitions held out",
+                        "20% of conditions held out")
+ho  <- ho[order(match(ho$scheme, c("rep", "condition")),
+                match(ho$rule_short, c("R0","R1","R2","R3","R4","C1","C2"))), ]
+ij  <- read.csv(file.path(TAB_DIR, "v39_interval_joint_propagation.csv"), stringsAsFactors = FALSE)
+gms <- read.csv(file.path(TAB_DIR, "v39_gdmt_missing_sensitivity.csv"), stringsAsFactors = FALSE)
+```
+
+This appendix provides the extended methods, the full lookup table, subgroup robustness, and case-study sensitivity analyses supporting the main manuscript. All numbers are reproduced from `output/tables/v39_all_numbers.json`.
+
+---
+
+## eMethods
+
+The simulation crossed five factors in a full factorial design (`r fmt_num(des$n_conditions, 0)` conditions x `r fmt_num(des$n_reps_per_cond, 0)` repetitions = `r format(des$n_total, big.mark = ",")`). Factors: true effect ψ (`r length(des$psi_levels)` levels, `r fmt_num(des$psi_levels[1], 2)` to `r fmt_num(des$psi_levels[length(des$psi_levels)], 2)`); bias center μ_B (`r length(des$mu_b_levels)` levels); standard error of the target estimate, σψ (`r des$sigma_ps_levels[1]`, `r des$sigma_ps_levels[2]`); number of negative controls K (`r paste(des$K_levels, collapse = ', ')`); exchangeability violation (0, 0.3). Truth composition: `r kpct(des$truth_share$bias_dominated, 1)` bias-dominated, `r kpct(des$truth_share$mixed, 1)` mixed, `r kpct(des$truth_share$effect_dominated, 1)` effect-dominated. The BAF credible interval used M = 300 retained joint posterior draws (400 Gibbs iterations, 100 discarded as warm-up), which is too few to locate the 2.5th and 97.5th percentiles precisely and is therefore itself a source of interval instability. Percentages describing truth composition refer to all `r format(des$n_total, big.mark = ",")` repetitions; all decision-rule percentages state their denominator explicitly (all repetitions, layer-1 passable repetitions, or repetitions declared usable). With this many repetitions, the Monte Carlo standard error of any reported proportion is below 0.07 percentage points. For the case study, `r fmt_num(nc$K, 0)` negative controls were selected (all protective or null; uncalibrated log RR `r fmt_num(nc$logrr_min, 3)` to `r fmt_num(nc$logrr_max, 3)`; Shapiro-Wilk p = `r fmt_num(nc$shapiro_p, 3)`).
+
+### Construction and calibration of the BAF credible interval
+
+BAF is a ratio whose denominator is itself the difference between two estimated quantities, so its uncertainty cannot be inherited from a standard error in the usual way. As $\tilde{\psi}$ approaches 0 the ratio becomes unstable, and the instability runs in one direction: the denominator shrinks, so BAF is pushed toward 1, while the upper end of the BAF scale is a hard boundary at exactly 1. An interval built on a normal approximation for $\widehat{\mathrm{BAF}}$ would be symmetric on a scale that is bounded and asymmetric near its end, and would put mass outside [0, 1]. We therefore propagate uncertainty instead of approximating it.
+
+A set of draws of $\mu_B$ is generated and each is passed through the same function, $\mathrm{BAF} = |\hat{\mu}_B| / (|\hat{\mu}_B| + |\hat{\psi}_{\mathrm{obs}} - \hat{\mu}_B|)$, with $\hat{\psi}_{\mathrm{obs}}$ held at its observed value. The interval is the 2.5th to 97.5th percentile of the resulting distribution of BAF, and the point estimate is the median of that same distribution, so an estimate always lies inside the interval reported for it. Holding $\hat{\psi}_{\mathrm{obs}}$ fixed is a deliberate choice: the interval answers how much of the calibrated signal is bias given the effect estimate that was obtained, not a joint statement about the effect estimate and the empirical null. In the simulation the number of retained joint posterior draws was deliberately modest, which is too few to locate the 2.5th and 97.5th percentiles precisely and is therefore itself a source of interval instability.
+
+The draws differ in what they represent. In the simulation they are posterior draws from the systematic error model $\hat{\gamma}_k \sim \mathrm{N}(\mu_B, \sigma_B^2 + \hat{\tau}_k^2)$, fitted by a Gibbs sampler with priors $\mu_B \sim \mathrm{N}(0, 1)$ and $\sigma_B^2 \sim \mathrm{InverseGamma}(0.5, 0.05)$, with $\hat{\psi}_{\mathrm{obs}}$ entering the BAF transform as a fixed constant rather than as a quantity being sampled. In the case study they are nonparametric bootstrap resamples of the negative control panel, with the empirical null refitted within each resample. Both constructions yield a distribution for BAF itself rather than a procedure with a long-run coverage guarantee, and a bootstrap percentile distribution can be read as an approximation to a posterior distribution under an uninformative prior (Efron and Tibshirani 1993; Rubin 1981), so we use one term for both.
+
+We call the result a credible interval, not a confidence interval, because it is a percentile range of a distribution for the quantity being estimated, not the output of a procedure constructed to cover the true value in 95% of repeated samples. No sampling distribution is inverted and no normal approximation to the sampling distribution of $\widehat{\mathrm{BAF}}$ is used, so the interval carries no guarantee of frequentist coverage, and the 95% level is a statement about where BAF lies given these data and this systematic error model, not about how often the procedure captures the truth. The distinction is not terminological. In the simulation, where $\mathrm{BAF}_{\mathrm{true}}$ is known by construction, the interval contained it in `r paste0(fmt_pct(100*ciw$coverage_overall,1), "%")` of repetitions, below the nominal 95%, and coverage was lower among narrower intervals (`r paste0(fmt_pct(100*ciw$coverage_narrow,1), "%")`) than among wider ones (`r paste0(fmt_pct(100*ciw$coverage_wide,1), "%")`). One reason is visible in the construction itself: the interval propagates uncertainty from the empirical null while holding $\hat{\psi}_{\mathrm{obs}}$ fixed, so it omits the sampling variability of the effect estimate, a second source of error in $\widehat{\mathrm{BAF}}$. Had the interval been advertised as a confidence interval, that shortfall would be a failure of the method; reported as a credible interval with its coverage stated, it is an honest statement that the propagated distribution is too narrow.
+
+We summarise each interval by its half-width, $(\widehat{\mathrm{BAF}}_{\mathrm{hi}} - \widehat{\mathrm{BAF}}_{\mathrm{lo}})/2$, and not by its two bounds, for two reasons. First, BAF is bounded, so the bounds are truncated at 0 and 1 and carry information about location as well as precision: an estimate near 0.9 cannot have an upper bound far above 0.9, and reading the bounds alone conflates where the estimate sits with how firmly it sits there. The half-width extracts the precision component, and it does so in BAF units, on the same bounded scale as the estimate itself. Second, that common scale is what lets the two be crossed: the lookup table of Step 2 classifies an estimate jointly by where it falls on the BAF scale and by how wide its interval is, splitting the half-width at its median across the simulation (`r fmt_num(ciw$median_half_width,3)`; interquartile range `r fmt_num(as.numeric(ciw$quartiles_half)[1],3)` to `r fmt_num(as.numeric(ciw$quartiles_half)[3],3)`) and returning the higher of the two stratum-specific probabilities, so that the verdict is the more conservative of the two readings (eTable 1). The half-width is not a standard error: because the bounds are truncated, it is half the share of the [0, 1] scale that the interval occupies, and near either end of the scale it is attenuated by that truncation.
+
+### Justification of the simulation factor ranges
+
+Factor levels were not chosen to represent a survey of cardiovascular observational research. Each level was anchored either to a quantity measured in the present case study or to a published estimate of adherence-related bias, as follows.
+
+```{r sup-rr-vars, include=FALSE}
+# 与主稿 Table 1 同口径：只有效应量可 exp() 换算，标准差无 RR 等价
+rr_of  <- function(x) fmt_num(exp(x), 2)
+rr_psi_sup <- paste(rr_of(max(unlist(des$psi_levels))),  "to",
+                    rr_of(min(unlist(des$psi_levels))))   # −0.01 -> −0.40
+rr_mu_sup  <- paste(rr_of(max(unlist(des$mu_b_levels))),  "to",
+                    rr_of(min(unlist(des$mu_b_levels))))   # −0.05 -> −0.40
+rr_exv_sup <- rr_of(0.15)                                  # 偏移量，未进 JSON
+```
+
+| Factor | Levels | Values | Justification | Source |
+|---|---|---|---|---|
+| True effect, ψ | 10 | −0.01 to −0.40 | Spans marginal to large protective effects on the log relative-risk scale (RR, `r rr_psi_sup`) and brackets the beta-blocker estimate observed in the case study (ln RR, `r fmt_signed(cases[[1]]$log_rr_uncal, 2)`) | Present case study |
+| Bias center, μB | 8 | −0.05 to −0.40 | (RR, `r rr_mu_sup`). Approaches, without reaching, the healthy-adherer effect reported for adherence-related exposures (odds ratio, 0.56; ln, −0.58) and brackets the empirical null fitted to the case-study panel (μ̂B, `r fmt_signed(cases[[1]]$mu_b, 2)`) | Simpson 2006; present case study |
+| Standard error of the target estimate, σψ | 2 | 0.06, 0.10 | Closely matches the standard errors of the two case-study estimates (`r fmt_num(se_obs_of(cases[[1]]), 3)` and `r fmt_num(se_obs_of(cases[[2]]), 3)`), the smaller falling marginally below the lower grid level | Present case study |
+| Number of negative controls, K | 3 | 12, 25, 50 | 12 is the number of controls in the cardiovascular panel available in MIMIC-IV; 25 is a moderately larger panel; 50 tests whether estimator performance keeps improving or plateaus once the panel far exceeds the size typically assembled in practice | Present case study; Schuemie 2018 |
+| Exchangeability violation | 2 | 0, 0.3 | 0 corresponds to an assumption that holds; 0.3 shifts 30% of controls by +0.15 (RR, `r rr_exv_sup`), a deliberately arbitrary perturbation chosen to break the assumption rather than to reproduce any empirical estimate | Design choice |
+
+Three respects in which the grid does not bracket the case study should be read as limitations of the simulation, all of which make it more favorable to the estimator than the case study itself. First, the between-control standard deviation was held fixed at 0.05, below the 0.068 fitted to the case-study panel. Second, control standard errors were drawn from a uniform distribution on 0.03 to 0.12, whereas the observed controls ranged from 0.025 to 0.302 with 3 controls above 0.24. Third, the guideline-directed medical therapy estimate (ln RR, `r fmt_signed(cases[[2]]$log_rr_uncal, 2)`) lies between grid levels, within the ψ grid whose most extreme value is −0.40.
+
+### Held-out validation of the lookup table
+
+The lookup is built from all 960,000 repetitions and then used to score the reporting rules on the same repetitions, so its reported operating characteristics are in-sample. We bounded the resulting optimism by rebuilding the entire lookup, including the bin edges, the median half-width that separates narrow from wide intervals, and the per-bin probabilities, on training data alone, and then applying it unchanged to held-out data. Two schemes were used, each repeated across five folds. In the first, 20% of repetitions were held out within every condition, so that both training and test data span the whole factorial grid; the misuse rate of every rule was then unchanged to two decimal places, which supports the argument that at least 1,000 repetitions per cell makes the in-sample optimism negligible when only repetitions are swapped. In the second, 20% of the 960 conditions were held out entirely, which additionally tests grid cells that never contributed to the lookup; the share declared usable was essentially unchanged, and the misuse rate of the strictest rule (R4) rose from 2.2% to 2.4%, the largest excursion across the five folds being 4.1% and the largest increase for any rule 0.23 percentage points (eTable 8). Generalisation to unseen cells therefore costs little, but it is not free, and the ordering of the rules is preserved.
+
+### Joint propagation of empirical-null and target-estimate uncertainty
+
+The reported credible interval propagates draws of the empirical-null mean while holding the observed target estimate fixed, so it omits the sampling variability of that estimate and undercovers. To quantify what this omission costs, we recomputed the interval with the omitted term added, drawing the calibrated target estimate from a normal distribution centred on its observed value with its own standard error. Both intervals were computed within the same repetitions, so the comparison is paired. Across the settings examined, coverage rose from 78.8% to 97.7%, the median half-width widened from 0.132 to 0.222, and the yield of the strictest interval rule fell from 24.3% to 13.2% of repetitions, with 11.2% of repetitions changing that rule's decision (eTable 9). The undercoverage reported in the main text is therefore attributable specifically to the omitted term, and the yield of the rules that consume the interval endpoints is a conservative lower bound.
+
+### Missing-data handling for the guideline-directed medical therapy exposure
+
+Of the 14,677 patients in the question-2 cohort, 3,494 (23.8%) had an indeterminate guideline-directed medical therapy score at baseline. The primary analysis classified them as not optimized, which is a design decision rather than a data fact. We therefore repeated the question-2 estimation under four conventions: indeterminate as suboptimal (the published analysis), complete case, indeterminate as optimized, and multiple imputation, in which the exposure was drawn from a logistic model of exposure on the ten baseline covariates and combined across ten imputations by Rubin's rules. The target estimate moved substantially across conventions (uncalibrated relative risk 0.68 to 0.91), but the calibrated P value never fell below .05 and no convention produced a usable determination; the bias fraction rose from 0.51 under the published convention to between 0.51 and 0.66 under the others, and three of the four conventions moved the determination to not usable as effect evidence rather than the competitive determination returned by the published convention (eTable 10). The published convention is thus the most favourable of the four, so the qualitative conclusion is not an artefact of it. The negative-control panel was fitted with the exposure contrast that counts all beta-blocker agents, whereas the target estimates use the guideline-restricted contrast; refitting the panel to match widens the empirical null (SD `r fmt_num(nc_matched_sigma,3)` versus `r fmt_num(sup_sigma_b,3)`) and raises the question-2 calibrated P value above .05 (`r fmt_num(nc_matched_calp_q2,3)` versus `r fmt_num(sup_calp_q2,3)`), so the question-2 layer-1 pass is not robust to this choice.
+
+## eTable 1. Full 12-bucket lookup table
+
+```{r jama-lookup}
+lk <- data.frame(
+  Bin = sapply(lookup, `[[`, "bin"),
+  `BAF centre` = sapply(lookup, `[[`, "bf_centre"),
+  `n narrow` = sapply(lookup, `[[`, "n_narrow"),
+  `n wide` = sapply(lookup, `[[`, "n_wide"),
+  `pBD narrow` = sapply(lookup, function(x) kpct(x$p_bd_narrow, 2)),
+  `pBD wide` = sapply(lookup, function(x) kpct(x$p_bd_wide, 2)),
+  `pBD cons.` = sapply(lookup, function(x) kpct(x$p_bd_conservative, 2)),
+  Verdict = sapply(lookup, `[[`, "verdict")
+)
+kable(lk, digits = c(0, 3, 0, 0, 0, 0, 0, 0),
+      caption = "eTable 1. Twelve-bucket lookup mapping BAFhat x interval width to probability of being bias-dominated.")
+```
+
+## eTable 2. Pooled, width-specific, and conservative readings of the lookup
+
+```{r jama-readings}
+rr <- cirole$rules
+rd <- data.frame(
+  Reading = sapply(rr, `[[`, "reading"),
+  `Misuse (%)` = sapply(rr, function(x) fmt_pct(x$bd_among_declared_pct, 2)),
+  `Declare usable (%)` = sapply(rr, function(x) fmt_pct(x$declare_usable_pct, 1)),
+  # spec_bd_pct 是 R/18 的历史命名，它算的是 P(扣下 | 真偏倚主导)，即偏倚主导视角的
+  # 灵敏度而非特异度；表头按正确语义写，变量名保持不变（改变量名要动 R/18）。
+  `Sens ED (%)` = sapply(rr, function(x) fmt_pct(x$sens_ed_pct, 1)),
+  `Sens BD (%)` = sapply(rr, function(x) fmt_pct(x$spec_bd_pct, 1))
+)
+kable(rd, digits = 0,
+      caption = paste0("eTable 2. Pooled, width-specific, and conservative readings of the lookup. ",
+                       "Sens ED, share of truly effect-dominated repetitions declared usable; ",
+                       "Sens BD, share of truly bias-dominated repetitions withheld."))
+```
+
+The conservative reading changed `r fmt_pct(cirole$pct_verdict_changed_spec_vs_pool, 2)`% of verdicts relative to the pooled reading; the maximum within-bin probability gap was `r fmt_num(cirole$max_abs_prob_gap_within_bin, 3)`.
+
+## eTable 3. Subgroup robustness
+
+```{r jama-subgroups}
+sg <- data.frame(
+  Subgroup = sapply(subg, `[[`, "subgroup"),
+  N = sapply(subg, `[[`, "n"),
+  `Layer1 pass (%)` = sapply(subg, function(x) fmt_pct(x$layer1_pass_pct, 1)),
+  `BD among pass (%)` = sapply(subg, function(x) fmt_pct(x$bd_among_layer1_pct, 1)),
+  `Declare usable (%)` = sapply(subg, function(x) fmt_pct(x$declare_usable_pct, 1)),
+  `BD among usable (%)` = sapply(subg, function(x) fmt_pct(x$bd_among_declared_pct, 2)),
+  `Median half-width` = sapply(subg, `[[`, "median_half_width")
+)
+kable(sg, digits = c(0, 0, 1, 1, 1, 2, 3),
+      caption = paste0("eTable 3. Misuse rate across ", length(subg), " pre-specified subgroups."))
+```
+
+## eTable 4. Case-study sensitivity analyses (question 1)
+
+Leave-one-out BAF̂ ranged `r fmt_num(sens$loo_bf_min, 3)` to `r fmt_num(sens$loo_bf_max, 3)` (falls exclusion `r fmt_num(sens$loo_fall_bf, 3)`). Super Learner replacement gave BAF̂ = `r fmt_num(sens$sl_bf[1], 3)` (`r fmt_num(sens$sl_bf_lo[1], 3)` to `r fmt_num(sens$sl_bf_hi[1], 3)`), `r fmt_num(sens$sl_bf[2], 3)` (`r fmt_num(sens$sl_bf_lo[2], 3)` to `r fmt_num(sens$sl_bf_hi[2], 3)`), `r fmt_num(sens$sl_bf[3], 3)` (`r fmt_num(sens$sl_bf_lo[3], 3)` to `r fmt_num(sens$sl_bf_hi[3], 3)`). Gaussian-process propensity perturbation gave calibrated RR `r fmt_num(sens$gp_cal_rr[1], 3)` to `r fmt_num(sens$gp_cal_rr[2], 3)` and BAF̂ `r fmt_num(sens$gp_bf[1], 3)` to `r fmt_num(sens$gp_bf[2], 3)`. All analyses preserved the "not usable as effect evidence" verdict for question 1 and the "competitive, no verdict" zone for question 2.
+
+## eTable 5. Case-study estimation output for the two clinical questions
+
+```{r jama-etab5}
+cs <- data.frame(
+  Question = c(cases[[1]]$exposure, cases[[2]]$exposure),
+  `Uncal RR` = c(cases[[1]]$rr_uncal, cases[[2]]$rr_uncal),
+  `Cal RR` = c(cases[[1]]$rr_cal, cases[[2]]$rr_cal),
+  `Cal P` = c(cases[[1]]$cal_p, cases[[2]]$cal_p),
+  `BAFhat` = c(cases[[1]]$bf, cases[[2]]$bf),
+  `BAF lo` = c(cases[[1]]$bf_lo, cases[[2]]$bf_lo),
+  `BAF hi` = c(cases[[1]]$bf_hi, cases[[2]]$bf_hi),
+  `p bias-dom` = c(cases[[1]]$p_bias_dominated, cases[[2]]$p_bias_dominated),
+  Verdict = c(cases[[1]]$verdict, cases[[2]]$verdict)
+)
+kable(cs, digits = c(0, 3, 3, 4, 3, 3, 3, 3, 0),
+      caption = "eTable 5. Full estimation output for the two clinical questions.")
+```
+
+## eTable 6. Negative control outcomes in the case study
+
+The 12 negative controls were selected from candidate outcomes with no plausible causal effect of the study drugs, verified to occur in at least `r NC_MIN_EVENTS` hospitalizations in MIMIC-IV, and spread across six clinical domains (infection, gastrointestinal, trauma, ophthalmology, rheumatology, and urology). Each control outcome was ascertained from ICD-9 and ICD-10 diagnosis codes in the same cohort and passed through the same estimation pipeline as the target outcome, and the uncalibrated relative risks below were used to fit the empirical null. All controls showed protective or null associations, consistent with the pervasive healthy-adherer effect reported in the main manuscript.
+
+```{r jama-etab6}
+nc_cal <- readRDS(file.path(DATA_DIR, "bias_calibration_results.rds"))$negative_controls
+stopifnot(identical(nc_cal$outcome,
+  c("infection","gi_bleed","fall","uti_only","cellulitis","cataract",
+    "osteoarthritis","traffic_accident","hemorrhoids","bph","gout","tendinitis")))
+nc_def <- data.frame(
+  Outcome = c("Infection (combined)", "Gastrointestinal bleeding", "Fall without fracture",
+              "Urinary tract infection", "Cellulitis", "Cataract", "Osteoarthritis",
+              "Traffic accident", "Hemorrhoids", "Benign prostatic hyperplasia",
+              "Gout", "Tendinitis"),
+  Domain = c("Infection", "Gastrointestinal", "Trauma", "Infection", "Infection",
+             "Ophthalmology", "Rheumatology", "Trauma", "Gastrointestinal",
+             "Urology", "Rheumatology", "Rheumatology"),
+  `ICD-10` = c("N30, N39.0, J12-J18, K35-K37, K57, K81, A40-A41, A49",
+               "K25-K28 (with hemorrhage), K29.0, K62.5, K92.0-K92.2",
+               "W00-W19",
+               "N10, N12, N15.1, N15.9, N30, N34.0, N39.0, O23.4",
+               "L03", "H25-H26", "M16-M19", "V01-V99", "K64", "N40", "M10", "M75-M77"),
+  `ICD-9` = c("595, 599.0, 480-488, 540-542, 562, 574",
+              "531-534 (with hemorrhage), 569.3, 578",
+              "E880-E889", "590, 595, 599.0", "681, 682", "366", "715",
+              "E810-E829", "455", "600", "274", "726"),
+  check.names = FALSE, stringsAsFactors = FALSE
+)
+nc_def$`Events, No.` <- format(round(nc_cal$n_events), big.mark = ",", trim = TRUE)
+nc_def$`Uncalibrated RR (95% CI)` <- paste0(
+  sprintf("%.2f", nc_cal$rr), " (", sprintf("%.2f", nc_cal$rr_ci_lower),
+  "-", sprintf("%.2f", nc_cal$rr_ci_upper), ")")
+nc_def$`P value` <- ifelse(nc_cal$p_value < 0.001, "<.001",
+                           sub("^0\\.", ".", sprintf("%.2f", nc_cal$p_value)))
+kable(nc_def, caption = "eTable 6. The 12 negative control outcomes: code definitions, event counts, and uncalibrated estimates.")
+```
+
+## eTable 7. Baseline characteristics by guideline-directed medical therapy strategy (question 2)
+
+This table mirrors Table 3 of the main manuscript (question 1, beta-blocker target dose) but for question 2. The GDMT contrast is binary (received vs not received, per the case-study analysis `scripts/run_ltmle_gdmt.R`); among the `r format(q2_summ$n_total, big.mark = ",")` eligible patients, `r format(q2_summ$n_opt, big.mark = ",")` were optimized and `r format(q2_summ$n_not, big.mark = ",")` were not optimized (the `r format(q2_summ$n_missing_gdmt, big.mark = ",")` patients with missing GDMT score were classified as not optimized, matching the analysis). Of `r length(blq2$unadj)` baseline variables, `r q2_summ$n_imb_unadj` exceeded the conventional 0.10 imbalance threshold before weighting and `r q2_summ$n_imb_adjA` remained above it after IPTW adjustment with a 16-variable propensity model.
+
+```{r jama-etab7}
+library(knitr)
+g <- q2_groups
+is_cont <- grepl("mean \\(SD\\)", g$label)
+opt_cell <- ifelse(is_cont,
+  sprintf("%.1f (%.1f)", as.numeric(g$opt), as.numeric(g$opt_n)),
+  sprintf("%d (%.1f%%)", round(as.numeric(g$opt) / 100 * as.numeric(g$opt_n)), as.numeric(g$opt)))
+not_cell <- ifelse(is_cont,
+  sprintf("%.1f (%.1f)", as.numeric(g$not), as.numeric(g$not_n)),
+  sprintf("%d (%.1f%%)", round(as.numeric(g$not) / 100 * as.numeric(g$not_n)), as.numeric(g$not))
+)
+tb <- data.frame(
+  Characteristic = g$label,
+  `Optimized GDMT (n = 1,744)` = opt_cell,
+  `Not optimized GDMT (n = 12,933)` = not_cell,
+  `Unadjusted SMD` = sprintf("%.3f", as.numeric(g$unadj)),
+  `IPTW-adjusted SMD` = sprintf("%.3f", as.numeric(g$adjA)),
+  row.names = NULL, stringsAsFactors = FALSE
+)
+tb <- tb[tb$Characteristic != "N", ]
+kable(tb, caption = paste0(
+  "eTable 7. Baseline characteristics of the ", format(q2_summ$n_total, big.mark = ","),
+  " eligible patients by guideline-directed medical therapy strategy (question 2). ",
+  "Values are mean (SD) for continuous variables and No. (%) for categorical variables. ",
+  "SMD is the absolute standardized mean difference between strategies; IPTW-adjusted SMD uses a ",
+  "stabilized inverse-probability weight from a 16-variable propensity model. Of ", length(blq2$unadj),
+  " baseline variables, ", q2_summ$n_imb_unadj, " exceeded the 0.10 threshold before weighting and ",
+  q2_summ$n_imb_adjA, " remained above it after IPTW adjustment. The GDMT contrast is binary ",
+  "(received vs not received) per the case-study analysis; patients with missing GDMT score were ",
+  "classified as not optimized."))
+```
+
+## eTable 8. Held-out validation of the lookup table
+
+```{r jama-etab8}
+ht <- data.frame(
+  `Held out` = ho$scheme_lab,
+  Rule = ho$rule_short,
+  `Declared usable, training (%)` = kpct(ho$declare_train, 1),
+  `Declared usable, test (%)` = kpct(ho$declare_test, 1),
+  `Misuse, training (%)` = kpct(ho$misuse_train, 2),
+  `Misuse, test (%)` = kpct(ho$misuse_test, 2),
+  `Misuse across folds (%)` = sprintf("%.1f\u2013%.1f", ho$misuse_test_min, ho$misuse_test_max),
+  check.names = FALSE, stringsAsFactors = FALSE
+)
+kable(ht, caption = paste0(
+  "eTable 8. Five-fold held-out validation of the BAF reliability lookup, for the seven reporting ",
+  "rules of Table 2. The lookup, including its bin edges, its median half-width, and its per-bin ",
+  "probabilities, was rebuilt on training data only and applied unchanged to the held-out data; the ",
+  "training columns report its performance on the data used to build it, so the gap between the ",
+  "training and test columns is the in-sample optimism. Misuse is the share of repetitions declared ",
+  "usable that were in truth bias-dominated."))
+```
+
+## eTable 9. Joint propagation of empirical-null and target-estimate uncertainty
+
+```{r jama-etab9}
+ij2 <- data.frame(
+  Scope = ij$scope,
+  N = format(ij$n, big.mark = ","),
+  `Coverage, reported (%)` = kpct(ij$coverage_current, 1),
+  `Coverage, joint (%)` = kpct(ij$coverage_joint, 1),
+  `Median half-width, reported` = fmt_num(ij$median_halfwidth_current, 3),
+  `Median half-width, joint` = fmt_num(ij$median_halfwidth_joint, 3),
+  `Rule yield, reported (%)` = kpct(ij$R3_yield_current, 1),
+  `Rule yield, joint (%)` = kpct(ij$R3_yield_joint, 1),
+  `Rule misuse, reported (%)` = kpct(ij$R3_misuse_current, 2),
+  `Rule misuse, joint (%)` = kpct(ij$R3_misuse_joint, 2),
+  check.names = FALSE, stringsAsFactors = FALSE
+)
+kable(ij2, caption = paste0(
+  "eTable 9. Interval coverage, precision, and rule performance when the sampling variability of ",
+  "the calibrated target estimate is propagated jointly with that of the empirical null, compared ",
+  "with the reported interval, which holds the target estimate fixed. Both intervals were computed ",
+  "within the same ", format(ij$n[1], big.mark = ","), " repetitions, so the comparison is paired. ",
+  "\u201CRule\u201D is the strictest interval rule (R3). The joint interval is wider and attains ",
+  "nominal coverage, at the cost of a lower yield."))
+```
+
+## eTable 10. Missing-data handling for the question-2 exposure
+
+```{r jama-etab10}
+gm <- data.frame(
+  `Indeterminate exposure handled as` = gms$tag,
+  N = format(gms$n, big.mark = ","),
+  `Uncalibrated RR` = fmt_num(gms$rr, 3),
+  `Uncalibrated RR 95% CI` = sprintf("%.3f\u2013%.3f", gms$rr_lo, gms$rr_hi),
+  `Calibrated P` = sub("^0\\.", ".", fmt_num(gms$cal_p, 4)),
+  BAF = fmt_num(gms$bf, 3),
+  `BAF 95% credible interval` = sprintf("%.3f\u2013%.3f", gms$bf_lo, gms$bf_hi),
+  `P(bias-dominated)` = fmt_num(gms$p_bias_dominated, 3),
+  Determination = gms$verdict,
+  check.names = FALSE, stringsAsFactors = FALSE
+)
+kable(gm, caption = paste0(
+  "eTable 10. Question 2 under four conventions for the ", format(gms$n[1] - gms$n[2], big.mark = ","),
+  " patients (", kpct(100 * (gms$n[1] - gms$n[2]) / gms$n[1], 1), ") with an indeterminate ",
+  "guideline-directed medical therapy score. The bias fraction and its credible interval are computed ",
+  "with the same bootstrap estimator and n_boot used for the published analysis, and the ",
+  "determination is read from the same lookup table, so the only quantity that varies across rows is ",
+  "the target estimate. The first row reproduces the published question-2 result exactly."))
+```
+
+## Figures
+
+Supplement 1 contains no eFigures. Every figure appears in the main text (Figures 1 to 3) or in the companion interactive explainer held with the manuscript repository, which renders the argument chain, the empirical null with its negative controls, the interval coverage, the Bland-Altman agreement, the BAF distribution, the two dual-view heatmaps, the calibration curve, the cascade, the ROC curve, the 3 by 3 confusion matrix, the decision flow, and the two case cards. Every panel is generated from the same JSON that supplies the numbers in this supplement, so the explainer and the manuscript cannot drift apart.
+
+## References
+
+1. Efron B, Tibshirani RJ. An Introduction to the Bootstrap. Chapman & Hall; 1993.
+2. Rubin DB. The Bayesian Bootstrap. Ann Stat. 1981;9(1):130-134. doi:10.1214/aos/1176345338

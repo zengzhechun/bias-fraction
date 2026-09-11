@@ -61,7 +61,7 @@ for (k in names(res)) {
 }
 sim <- do.call(rbind, rows)
 rownames(sim) <- NULL
-# v38b (2026-09-01): 10 x 8 x 2 sigma_ps x 3 K x 2 exV = 960 conditions
+# v39b (2026-09-01): 10 x 8 x 2 sigma_ps x 3 K x 2 exV = 960 conditions
 stopifnot(nrow(sim) == 960, ncol(sim) == 22)
 
 out_rds <- file.path(SIM_DIR, "simulation_merged_v35.rds")
@@ -77,7 +77,7 @@ finite_idx <- is.finite(sim$bsr_true)
 cat("\n=== SANITY CHECK (should match v37 manuscript) ===\n")
 cat(sprintf("N bias-dom / mixed / effect-dom / overall = %d / %d / %d / %d\n",
             sum(bd_idx), sum(cp_idx), sum(sd_idx), nrow(sim)))
-cat(sprintf("BF_Acc bias-dom / mixed / effect-dom / overall = %.1f / %.1f / %.1f / %.1f\n",
+cat(sprintf("BAF_Acc bias-dom / mixed / effect-dom / overall = %.1f / %.1f / %.1f / %.1f\n",
             100*mean(sim$bsr_class_accuracy[bd_idx]),
             100*mean(sim$bsr_class_accuracy[cp_idx]),
             100*mean(sim$bsr_class_accuracy[sd_idx]),

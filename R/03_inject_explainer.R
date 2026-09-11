@@ -75,7 +75,7 @@ agg <- jsonlite::fromJSON(AGG_JSON)
 n_rep <- 1000L  # full design: 1000 repetitions per condition (set in 02_comparison_study.R)
 ds <- list(
   configs = "2 (sigma_ps) x 2 (K) x 2 (ex_violation) = 8 configs",
-  psi_grid = "10 levels (-0.01, -0.05, -0.10, -0.14, -0.18, -0.23, -0.27, -0.31, -0.36, -0.40); v37.1 extended grid refines the high-BF (small |psi|) region for sharper bias characterization; ψ=−0.01 (RR=0.99) replaces the true-null ψ=0 to remove the BF=1 singularity",
+  psi_grid = "10 levels (-0.01, -0.05, -0.10, -0.14, -0.18, -0.23, -0.27, -0.31, -0.36, -0.40); v37.1 extended grid refines the high-BAF (small |psi|) region for sharper bias characterization; ψ=−0.01 (RR=0.99) replaces the true-null ψ=0 to remove the BAF=1 singularity",
   mu_b_grid = "8 levels (-0.05, -0.10, -0.15, -0.20, -0.25, -0.30, -0.35, -0.40)",
   n_rep = n_rep,
   mcmc_iter = 400L,

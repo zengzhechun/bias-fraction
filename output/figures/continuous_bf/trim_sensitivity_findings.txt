@@ -1,0 +1,36 @@
+TRIM / BOUNDEDNESS SENSITIVITY - BAF Bland-Altman (v37.1, 640 cond x 1000 rep)
+==============================================
+
+Q: The BAF metric is bounded in [0,1]; the highest-BAF near-boundary level (psi=-0.01) has true BAF approx 0.83-0.98.
+   Can we trim extreme BAF (near 0 / near 1) like IPTW weight trimming to get a 'more stable' agreement estimate?
+
+ANSWER (short):
+- The highest-BAF near-boundary (psi=-0.01) is NOT an outlier like an extreme IPTW weight. It is a DELIBERATE DESIGN CONDITION
+  (near-boundary psi=-0.01, the highest true BAF), 64,000 of 640,000 reps = 10.0%. The strong negative r_prop is a
+  CEILING/FLOOR ARTIFACT of the BAF metric being bounded in [0,1]: at the highest true BAF (approx 0.98) the estimator
+  (bounded <=1) can only err DOWNWARD, so diff<0; at BAF_true near 0 it can only err UPWARD.
+  This mechanically induces negative cor(diff, true). It is NOT a substantive estimator bias.
+- CAPPING TRUE VALUES (BAF=1 -> 0.99) is FABRICATION of ground truth. In a simulation the truth
+  is known exactly; altering it to improve apparent agreement is dishonest and would fail review.
+  DO NOT cap true values.
+- EXCLUDING the boundary design point(s) from the agreement summary (scope restriction /
+  sensitivity analysis) IS legitimate, provided it is disclosed. Below: trimming removes the
+  boundary ceiling effect and reveals near-flat interior behavior.
+- CLEANEST fix: reparametrize to an UNBOUNDED scale (logit BAF or log BSR = log(bias/effect)).
+  On logit scale r_prop ~ 0 (panel D), confirming boundedness was the sole driver.
+
+BA stats by scenario:
+  A full            MC:   bias=-0.070 sd=0.150 CCC=0.763 r_prop=-0.243
+  A full            MCMC: bias=-0.071 sd=0.138 CCC=0.777 r_prop=-0.316
+  B interior(excl1) MC:   bias=-0.051 sd=0.128 CCC=0.795 r_prop=-0.050
+  B interior(excl1) MCMC: bias=-0.050 sd=0.118 CCC=0.813 r_prop=-0.114
+  C both-ends trim  MC:   bias=-0.057 sd=0.141 CCC=0.748
+  C both-ends trim  MCMC: bias=-0.056 sd=0.128 CCC=0.773
+  D logit scale (psi=-0.01 excl): r_prop ~ 0 (ceiling artifact disappears)
+
+RECOMMENDATION:
+1. Do NOT cap/fabricate true BAF. Report the boundary effect honestly in text.
+2. For the manuscript BA, present FULL (with the ceiling-effect note) AND an INTERIOR
+   sensitivity panel (exclude psi=-0.01) so readers see agreement is near-flat off the boundary.
+3. Better: move the primary agreement metric to log(BSR) or logit(BAF), where boundedness
+   vanishes and no trimming is needed.

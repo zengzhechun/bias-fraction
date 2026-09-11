@@ -16,7 +16,7 @@ import xml.etree.ElementTree as ET
 W = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
 M = "{http://schemas.openxmlformats.org/officeDocument/2006/math}"
 
-PATH = "/Users/zengzhechun/SynologyDrive/工作/数据分析项目/心电图大模型/心电图公开数据集/02 mimic-iv-ecg/Topic1_LTMLE_Betablocker/第38版/manuscript/manuscript_jama_v38.docx"
+PATH = "/Users/zengzhechun/SynologyDrive/工作/数据分析项目/心电图大模型/心电图公开数据集/02 mimic-iv-ecg/Topic1_LTMLE_Betablocker/第39版/manuscript/manuscript_jama_v39.docx"
 
 START = {"Introduction"}
 STOP = {"References", "Article Information", "Figure Legends"}

@@ -5,7 +5,7 @@
 #   transparency analysis). Each carries the regression slope/intercept significance
 #   tests (t-stat, p-value) and a legend ordered to match the left-to-right plot
 #   (green = effect-dominated, yellow = mixed, red = bias-dominated).
-# 重做 BA 可视化：纵向大图、参数齐全；interior 版 + 全量（含 BF=1）版各一张。
+# 重做 BA 可视化：纵向大图、参数齐全；interior 版 + 全量（含 BAF=1）版各一张。
 # 统计量除 BA 标准外加 diff ~ true 的回归斜率/截距，统一拼成横向参数条。
 suppressMessages({
   library(dplyr); library(ggplot2); library(patchwork)
@@ -26,7 +26,7 @@ rows <- lapply(keys, function(k){
 })
 df <- do.call(rbind, rows)
 df$diff <- df$est_mcmc - df$bf_true
-# Force zone factor levels in visual order (low BF -> high BF) so the legend
+# Force zone factor levels in visual order (low BAF -> high BAF) so the legend
 # reads left-to-right the same way the plot does: effect-dominated (green),
 # mixed (yellow), bias-dominated (red). Without this, ggplot2 uses
 # alphabetical order (bias-dominated, effect-dominated, mixed), which is
@@ -36,7 +36,7 @@ df$zone <- factor(df$zone, levels = c("effect-dominated", "mixed", "bias-dominat
 zc <- c("effect-dominated" = "#1B7A3A", "mixed" = "#D4A017", "bias-dominated" = "#B83227")
 
 # ---- helper: build BA stats for a given subset ----
-# Regression of diff on true BF: coefficients, 95% CI (t-based), SE, t, p.
+# Regression of diff on true BAF: coefficients, 95% CI (t-based), SE, t, p.
 # p-values = significance test of H0: slope/intercept = 0 (proportional bias / mean bias).
 mk_stats <- function(d, label){
   n <- nrow(d)
@@ -69,7 +69,7 @@ mk_stats <- function(d, label){
 interior <- df %>% filter(psi != -0.01)
 full_set <- df
 cat("Interior (excl psi=-0.01): ", nrow(interior), "  Full: ", nrow(full_set), "\n")
-cat(sprintf("Near-boundary reps (psi=-0.01, true BF > 0.95): %d\n",
+cat(sprintf("Near-boundary reps (psi=-0.01, true BAF > 0.95): %d\n",
             sum(full_set$psi == -0.01)))
 
 # ---- helper: build the BA scatter + density stacked panel ----
@@ -104,8 +104,8 @@ mk_panels <- function(d, subtitle_extra){
     scale_color_manual(values = zc) +
     labs(title = "Top. Jittered scatter (horizontally broadened)",
          subtitle = subtitle_extra,
-         x = "True BF",
-         y = "Estimated BF - True BF (MCMC)") +
+         x = "True BAF",
+         y = "Estimated BAF - True BAF (MCMC)") +
     theme_minimal(base_size = 12) +
     theme(legend.position = "bottom", legend.title = element_blank(),
           plot.title = element_text(face = "bold"),
@@ -145,8 +145,8 @@ mk_panels <- function(d, subtitle_extra){
     labs(title = "Middle. 2D density (warm ramp on white)",
          subtitle = sprintf("mass of %s reps; warm color = higher point concentration",
                             format(nrow(d), big.mark = ",")),
-         x = "True BF",
-         y = "Estimated BF - True BF (MCMC)") +
+         x = "True BAF",
+         y = "Estimated BAF - True BAF (MCMC)") +
     coord_cartesian(xlim = range(d$bf_true) * c(0.96, 1.04),
                     ylim = range(d$diff) * c(1.08, 1.08),
                     expand = FALSE) +
@@ -176,7 +176,7 @@ mk_param_ribbon <- function(st){
       "Outside LoA (reps)",
       "Lin's CCC",
       "Prop. bias r (Pearson, diff vs true)",
-      "Regression slope: diff ~ true BF",
+      "Regression slope: diff ~ true BAF",
       "  slope [95% CI]",
       "  slope t-stat, p-value",
       "  intercept",
@@ -236,14 +236,14 @@ print(st_full[, c("n","bias","sd_diff","in_pct","ccc","r_prop",
                   "reg_intercept","reg_int_t","reg_int_p")])
 
 # ---- build figure: figL (interior) ----
-panels_int <- mk_panels(interior, "interior (excludes near-boundary psi=-0.01); one cloud per true-BF level")
+panels_int <- mk_panels(interior, "interior (excludes near-boundary psi=-0.01); one cloud per true-BAF level")
 ribbon_int <- mk_param_ribbon(st_int)
 figL_new <- panels_int$top / panels_int$mid / ribbon_int +
   plot_layout(heights = c(3, 2.6, 2.2))
 ggsave("output/figures/continuous_bf/figL_interior_ba_viz.png", figL_new,
        width = 9, height = 15, dpi = 150, bg = "white")
 
-# ---- build figure: figM (full 640 conditions, includes BF=1) ----
+# ---- build figure: figM (full 640 conditions, includes BAF=1) ----
 panels_full <- mk_panels(full_set, "full design (640 conditions x 1000 reps, includes near-boundary psi=-0.01)")
 ribbon_full <- mk_param_ribbon(st_full)
 figM_new <- panels_full$top / panels_full$mid / ribbon_full +

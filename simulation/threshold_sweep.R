@@ -5,8 +5,8 @@ suppressMessages({
 })
 rp <- ci_sim$reps
 # r_pt = estimated BER (bias-effect ratio, unbounded); true_class = ground-truth zone.
-# Classify on BER scale given BF thresholds (cut1 effect, cut2 bias):
-#   BF<cut1 <=> BER < cut1/(1-cut1);  BF>cut2 <=> BER > cut2/(1-cut2)
+# Classify on BER scale given BAF thresholds (cut1 effect, cut2 bias):
+#   BAF<cut1 <=> BER < cut1/(1-cut1);  BAF>cut2 <=> BER > cut2/(1-cut2)
 classify <- function(ber, eff_ber, bias_ber) {
   ifelse(is.na(ber), "unclassifiable",
   ifelse(ber > bias_ber, "bias-dominated",
@@ -41,7 +41,7 @@ for (i in seq_len(nrow(sweep_grid))) {
     cov_comp = round(100*cov_comp,1),
     cov_eff  = round(100*cov_eff,1)))
 }
-cat("=== SWEEP RESULTS (point-estimate rule, BER thresholds derived from BF cuts) ===\n")
+cat("=== SWEEP RESULTS (point-estimate rule, BER thresholds derived from BAF cuts) ===\n")
 print(results, row.names = FALSE)
 
 # --- Validation: default thresholds should reproduce published 69.8 / 80.0 / 41.8 / 95.1 ---
@@ -62,8 +62,8 @@ cut1v <- sort(unique(results$cut1)); cut2v <- sort(unique(results$cut2))
 mat <- matrix(results$overall_acc, nrow = length(cut1v), ncol = length(cut2v),
               byrow = TRUE, dimnames = list(cut1v, cut2v))
 pal <- colorRampPalette(c("#F2C9C9","#FBF0D6","#CFE3CF"))(100)
-image(cut1v, cut2v, mat, col = pal, xlab = "Effect threshold (BF < cut1 = effect-dominated)",
-      ylab = "Bias threshold (BF > cut2 = bias-dominated)",
+image(cut1v, cut2v, mat, col = pal, xlab = "Effect threshold (BAF < cut1 = effect-dominated)",
+      ylab = "Bias threshold (BAF > cut2 = bias-dominated)",
       main = "Overall point-estimate classification accuracy (%) across zone boundaries",
       axes = FALSE, zlim = c(min(mat)-2, max(mat)+2))
 axis(1, at = cut1v, labels = sprintf("%.2f", cut1v)); axis(2, at = cut2v, labels = sprintf("%.2f", cut2v))
@@ -77,12 +77,12 @@ png("/tmp/fig_sweep_tradeoff.png", width = 820, height = 420, res = 110)
 par(mfrow = c(1,2), mar = c(4.2,4.2,3.2,1.2))
 sub_eff <- results[results$cut2 == 0.50, ]
 plot(sub_eff$cut1, sub_eff$eff_acc, type="b", col="#5A7A5A", lwd=2, ylim=c(0,100),
-     xlab="Effect BF threshold (cut1)", ylab="%", main="Effect-dominated zone: accuracy vs coverage")
+     xlab="Effect BAF threshold (cut1)", ylab="%", main="Effect-dominated zone: accuracy vs coverage")
 lines(sub_eff$cut1, sub_eff$cov_eff, type="b", col="#B8A060", lwd=2, lty=2)
 legend("bottomleft", c("accuracy","coverage"), col=c("#5A7A5A","#B8A060"), lty=c(1,2), lwd=2, cex=0.8)
 sub_bias <- results[results$cut1 == 1/3, ]
 plot(sub_bias$cut2, sub_bias$bias_acc, type="b", col="#8B4A4A", lwd=2, ylim=c(0,100),
-     xlab="Bias BF threshold (cut2)", ylab="%", main="Bias-dominated zone: accuracy vs coverage")
+     xlab="Bias BAF threshold (cut2)", ylab="%", main="Bias-dominated zone: accuracy vs coverage")
 lines(sub_bias$cut2, sub_bias$cov_bias, type="b", col="#B8A060", lwd=2, lty=2)
 legend("bottomright", c("accuracy","coverage"), col=c("#8B4A4A","#B8A060"), lty=c(1,2), lwd=2, cex=0.8)
 dev.off()

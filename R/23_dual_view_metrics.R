@@ -27,10 +27,10 @@
 #
 # Input : output/simulation/comparison_results_v37p1.rds
 #         (960 conditions x 1000 reps = 960,000 repetitions)
-# Output: output/tables/v38_dual_view_strategy.csv
-#         output/tables/v38_dual_view_roc.csv
-#         output/tables/v38_dual_view_auc.csv
-#         output/tables/v38_dual_view.json
+# Output: output/tables/v39_dual_view_strategy.csv
+#         output/tables/v39_dual_view_roc.csv
+#         output/tables/v39_dual_view_auc.csv
+#         output/tables/v39_dual_view.json
 
 suppressPackageStartupMessages({
   library(jsonlite)
@@ -130,7 +130,7 @@ STRAT <- cbind(rule = names(strat),
                do.call(rbind, lapply(strat, oc_dual)),
                stringsAsFactors = FALSE)
 row.names(STRAT) <- NULL
-write.csv(STRAT, file.path(TAB_DIR, "v38_dual_view_strategy.csv"), row.names = FALSE)
+write.csv(STRAT, file.path(TAB_DIR, "v39_dual_view_strategy.csv"), row.names = FALSE)
 print(STRAT, digits = 4)
 
 ## -- sanity checks ----------------------------------------------------------
@@ -174,8 +174,8 @@ set.seed(20260827)
 m_bfci <- glm(bd_tru ~ bf + half, data = S, family = binomial())
 SCR <- list(
   `Calibrated P alone`     = S$cal_p,
-  `BF-hat alone`           = S$bf,
-  `BF-hat + CI half-width` = as.numeric(predict(m_bfci, type = "link"))
+  `BAF-hat alone`           = S$bf,
+  `BAF-hat + CI half-width` = as.numeric(predict(m_bfci, type = "link"))
 )
 AUC <- data.frame(
   score = names(SCR),
@@ -183,7 +183,7 @@ AUC <- data.frame(
   auc_bd = sapply(SCR, function(s) auc_mw( s, S$bd_tru)),
   stringsAsFactors = FALSE
 )
-write.csv(AUC, file.path(TAB_DIR, "v38_dual_view_auc.csv"), row.names = FALSE)
+write.csv(AUC, file.path(TAB_DIR, "v39_dual_view_auc.csv"), row.names = FALSE)
 print(AUC, digits = 4)
 
 roc_pair <- function(score, n = 300) {
@@ -197,7 +197,7 @@ roc_pair <- function(score, n = 300) {
 ROC <- do.call(rbind, lapply(names(SCR), function(nm)
   cbind(score = nm, roc_pair(SCR[[nm]]))))
 row.names(ROC) <- NULL
-write.csv(ROC, file.path(TAB_DIR, "v38_dual_view_roc.csv"), row.names = FALSE)
+write.csv(ROC, file.path(TAB_DIR, "v39_dual_view_roc.csv"), row.names = FALSE)
 
 ## -- export -----------------------------------------------------------------
 out <- list(
@@ -209,5 +209,5 @@ out <- list(
   auc        = AUC
 )
 write(toJSON(out, digits = 6, auto_unbox = TRUE, pretty = TRUE),
-      file.path(TAB_DIR, "v38_dual_view.json"))
-cat("saved v38_dual_view.{strategy,auc,roc}.csv and v38_dual_view.json\n")
+      file.path(TAB_DIR, "v39_dual_view.json"))
+cat("saved v39_dual_view.{strategy,auc,roc}.csv and v39_dual_view.json\n")

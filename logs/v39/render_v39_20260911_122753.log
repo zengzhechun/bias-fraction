@@ -1,0 +1,67 @@
+===== 第39版渲染开始 2026-09-11 12:27:53 =====
+---- quarto render manuscript_jama_v39.qmd ----
+  bibliography:
+    - references.bib
+  csl: american-medical-association.csl
+  
+Output created: manuscript_jama_v39.docx
+
+   生成 12:27:57  1634583 字节
+---- quarto render manuscript_medarchive_v39.qmd ----
+  bibliography:
+    - references.bib
+  csl: american-medical-association.csl
+  
+Output created: manuscript_medarchive_v39.docx
+
+   生成 12:27:59  34817 字节
+---- quarto render manuscript_v39.qmd ----
+  bibliography:
+    - references.bib
+  csl: american-medical-association.csl
+  
+Output created: manuscript_v39.docx
+
+   生成 12:28:01  30349 字节
+---- quarto render supplementary_jama_v39.qmd ----
+  bibliography:
+    - references.bib
+  csl: american-medical-association.csl
+  
+Output created: supplementary_jama_v39.docx
+
+   生成 12:28:03  25362 字节
+---- quarto render supplementary_medarchive_v39.qmd ----
+  bibliography:
+    - references.bib
+  csl: american-medical-association.csl
+  
+Output created: supplementary_medarchive_v39.docx
+
+   生成 12:28:04  26236 字节
+---- quarto render supplementary_v39.qmd ----
+  bibliography:
+    - references.bib
+  csl: american-medical-association.csl
+  
+Output created: supplementary_v39.docx
+
+   生成 12:28:06  23922 字节
+---- 后处理：JAMA 正稿样式 ----
+caption styles -> 9pt single: 2 ['Image Caption', 'Table Caption']
+formatted styles: 10 ['Normal', 'Heading 1', 'Heading 2', 'Heading 3', 'Heading 4', 'Heading 5'] ...
+bolded 7 abstract labels (paragraphs 17..23)
+---- 后处理：纵向（双写版），逐份 ----
+removed landscape sectPr x1, empty sectPr x1
+saved manuscript_jama_v39.docx
+removed landscape sectPr x0, empty sectPr x0
+saved manuscript_medarchive_v39.docx
+removed landscape sectPr x0, empty sectPr x0
+saved manuscript_v39.docx
+removed landscape sectPr x0, empty sectPr x0
+saved supplementary_jama_v39.docx
+removed landscape sectPr x0, empty sectPr x0
+saved supplementary_medarchive_v39.docx
+removed landscape sectPr x0, empty sectPr x0
+saved supplementary_v39.docx
+===== 第39版渲染结束 2026-09-11 12:28:06  fail=0 =====

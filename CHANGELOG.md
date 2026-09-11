@@ -91,3 +91,95 @@ cover letter, simulator, README):
   binary calibrated p-value to a bounded, continuous diagnostic).
 - Simulator: bilingual (zh/en) provenance statements added at hero, framework section, animation
   B/D steps, metric dictionary, glossary (new EmpiricalCalibration entry), and footer.
+
+## 2026-09-11 — v39: BAF renaming, three v39 validation analyses, negative-control disclosure
+
+### 1. Metric renamed BF → Bias Attribution Fraction (BAF)
+
+The acronym *BF* collided with the Bayes factor. From v39 onward the diagnostic quantity and the
+rule tables use **BAF** everywhere (manuscripts in all three tracks, supplements, figures,
+tables, explainers, code output, and the `biasratio` R package, which moved to **v0.3.1**).
+
+- Lowercase `bf` is **deliberately unchanged**: it is an internal code identifier
+  (`bf_classify()`, `bf_rules()`, `BF_THRESH_BIAS`) and renaming it would break the API.
+- Files and documents predating v39 (v34–v38 audit records, review reports) **intentionally keep
+  BF** as published. This is not an oversight.
+- `output/tables/table01_BF_results.csv` → `table01_BAF_results.csv` (headers renamed too).
+
+### 2. New in v39: three validation analyses
+
+| Script | Analysis | Result |
+|---|---|---|
+| `R/27_lookup_holdout.R` | 5-fold hold-out validation of the 12-bucket lookup table (two schemes: hold out repetitions, hold out conditions) | Misuse rate unchanged to two decimals; worst-rule 2.2% → 2.4%, five-fold spread ≤ 4.1% |
+| `R/28_interval_joint_propagation.R` | Joint propagation of interval uncertainty | Coverage 78.8% → 97.7% |
+| `R/29_gdmt_missing_sensitivity.R` | GDMT missing-exposure sensitivity, four definitions | Reported in Table S12 / eTable 10 |
+
+All three landed in every track: long report and medRxiv use Table S10/S11/S12, JAMA uses
+eTable 8/9/10.
+
+### 3. Cohort flow made explicit and scripted
+
+The manuscript previously reported only the analysis cohort. The flow is now stated and
+cross-checked: **15,053 hospitalisations assessed for eligibility → 376 excluded (death within the
+7-day grace period, `Y_W0 == 1`) → 14,677 analysed** (1,772 exposed / 12,905 control). The setup
+block recomputes all three from the LTMLE input file and asserts consistency with Table 3 via
+`stopifnot`, so no number can drift on its own.
+
+> Earlier internal notes described "15,053 vs 14,677" as a population inconsistency against
+> Table 3. That diagnosis was **wrong**: both numbers are correct and sit upstream/downstream in
+> the same flow. The apparent "43% vs 12% adherence" gap has a different cause, below.
+
+### 4. 🔴 Negative-control exposure definition disclosed
+
+Direct inspection disproved the previously recorded explanation (that the negative controls used a
+weaker two-point treatment node, a censoring node, or a survival outcome). Both sides are in fact
+single-point (`Anodes = "A_W0"`), have no censoring node, are non-survival, share the same 10
+baseline covariates, and apply the same grace-period exclusion. The real difference is that the
+two panels are read from **different covariate tables**, where `A_W0` encodes different exposures:
+
+| | Panel | `A_W0` counts | Share at or above target dose |
+|---|---|---|---|
+| Target estimates | `ltmle_wide_K2_guideline.rds` | carvedilol / metoprolol succinate / bisoprolol, ≥50% of target dose | 11.8% |
+| Negative controls | `ltmle_wide_K2.rds` | all β-blocker agents | 43.0% |
+
+3,993 rows coded `A_W0 = 2` in the K2 file are coded 0 in the guideline file. Quantified impact
+(scripts `R/90`–`R/91`, whose K2 arm reproduces the published empirical null bit-for-bit as a
+self-check):
+
+| Quantity | As published | Panel refitted to the target cohort |
+|---|---|---|
+| `mu_B` | −0.1905 | −0.1678 |
+| `sigma_B` | 0.0680 | 0.1129 (+66.1%) |
+| Question 1 calibrated *P* / BAF | 0.946 / 0.907 [0.739, 0.993] | 0.894 / 0.875 [0.385, 0.992] |
+| Question 2 calibrated *P* / BAF | 0.045 / 0.510 [0.356, 0.603] | 0.103 / 0.460 [0.186, 0.619] |
+| Verdict labels | not usable / competitive | **unchanged** |
+
+Question 2 would no longer clear the first screening layer, and 2 of 12 negative controls turn
+positive (fall without fracture RR 1.195; gout RR 1.136). The disclosure is written into Methods,
+Limitations, and the supplement across all three tracks. The decision whether to re-run the
+negative controls on the guideline cohort is still open; it would move every case-study BAF number
+and the Abstract, Key Points, Results, Discussion, and eTable 6.
+
+### 5. Cover letters and explainers brought back into sync
+
+- Three different title variants were in circulation; all three cover letters now quote the
+  manuscript title being submitted. A duplicated word-count sentence was removed, and the count
+  updated **6,471 → 6,665** (the v39 negative-control disclosure added 194 words).
+- `Cover_Letter.txt` still carried v33-era figures (640 conditions; zone accuracy 58.1/95.7/25.0;
+  GDMT BAF 0.45). Replaced with the v39 values from `v39_all_numbers.json`.
+- Interval naming corrected to "95% credible interval" (the manuscript defines it as a credible,
+  not a confidence, interval).
+- Em dashes removed from the explainers. **Rule applied: only the doubled CJK dash `——` is
+  rewritten**; single `—` characters are left alone because many are empty-cell placeholders in
+  tables and JS (`d = '—'`), which are data, not punctuation.
+- `算法说明_临床版_v1.html` also had **stale simulation sizes** (`64 万次` / `640 个条件`) left over
+  from the old design; corrected to `96 万次` / `960 个条件`.
+- `index.html` now serves the **v39** explainer; the v38 explainer remains in the repo for
+  provenance.
+
+### 6. Repository contents
+
+Added for v39: `R/27`–`R/29`, `R/90`–`R/91`, six v39 `.qmd` sources, six rendered `.docx`
+manuscripts, the v39 figure and table exports, `Target/` (TARGET reporting materials), and
+`docs/`. Large simulation objects (tens of MB) and the row-level LTMLE frames remain excluded.
+

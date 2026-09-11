@@ -49,7 +49,7 @@
 <body>
 <div class="wrap">
   <h1>一个条件如何抽出 200 个样本</h1>
-  <div class="sub">条件: ψ=−0.30, μ_B=−0.20, σ_B=0.05, K=12, 交互性违反=30% · 真实落点 <b>BF=0.40 → 黄区 (competitive)</b></div>
+  <div class="sub">条件: ψ=−0.30, μ_B=−0.20, σ_B=0.05, K=12, 交互性违反=30% · 真实落点 <b>BAF=0.40 → 黄区 (competitive)</b></div>
   <div class="chips" id="chips"></div>
 
   <div class="stage">
@@ -86,24 +86,24 @@ function scale(d0,d1,p0,p1){return v=>p0+(v-d0)/(d1-d0)*(p1-p0);}
 const cv=document.getElementById("cv");
 const P=DATA.params;
 const STEPS=[
-  {t:"固定条件 (BF 视角)", d:"这一行是模拟里<b>永不改变</b>的 5 个因子。本论文以 <b>BF（偏倚分数）为主指标</b>：BF = |μ_B|/(|μ_B|+|ψ|) = 0.20/0.50 = <span class='k'>0.40</span>，落在 1/3 与 0.5 之间, 即<span class='k'>黄区</span>(competitive)。200 次重复要估计的就是这个固定真值, 每次用重抽出来的样本去估, 估计值会围绕真值波动。"},
+  {t:"固定条件 (BAF 视角)", d:"这一行是模拟里<b>永不改变</b>的 5 个因子。本论文以 <b>BAF（偏倚分数）为主指标</b>：BAF = |μ_B|/(|μ_B|+|ψ|) = 0.20/0.50 = <span class='k'>0.40</span>，落在 1/3 与 0.5 之间, 即<span class='k'>黄区</span>(competitive)。200 次重复要估计的就是这个固定真值, 每次用重抽出来的样本去估, 估计值会围绕真值波动。"},
   {t:"第 1 步 · 抽 12 个负对照", d:"每个负对照的观测效应 <span class='mono'>nc_log_rr ~ N(其均值, σ_B=0.05)</span>。前 8 个均值=−0.20 (蓝, 干净), 后 4 个均值=−0.05 (橙, 被违反)。每条横线是该对照的标准误 nc_se。这就是「样本数据框」的 12 行。"},
   {t:"第 2 步 · 拟合经验零分布 fitNull", d:"用 12 个负对照拟合高斯, 得到经验零均值 <span class='k'>μ_b</span> 与离散度 σ_b。本轮回合 μ_b=−0.1506, 比真值 −0.20 <b>偏高</b>, 因为 4 个被违反对照(橙)把分布往右拉了。这正是「交互性违反」的污染源。"},
   {t:"第 3 步 · 抽主研究观测", d:"主研究观测 <span class='mono'>obs = ψ + μ_B + N(0, 0.06) = −0.50 + 噪声</span>。本轮回合 obs=−0.4494 (紫点)。注意 obs − μ_B(真实) = −0.30 = ψ, 即去偏后的真实效应。"},
-  {t:"第 4 步 · 算 BF 并分类", d:"BF_est = |μ_b|/(|μ_b|+|obs−μ_b|) = 0.1506/0.4494 = <span class='k'>0.335</span>。介于 1/3 与 0.5 之间, 落在黄区 (competitive)。本轮回合碰巧判对, 但 μ_b 被污染会让很多回合误判为绿区。"},
-  {t:"第 5 步 · 重复 200 次并汇总", d:"把 200 个 BF_est 画成直方图 (绿=BF&lt;1/3, 黄=1/3~0.5, 红=BF&gt;0.5)。真值在黄区, 但点估计大量落在绿区 (73.5%), 只有 26.5% 落在黄区。<span class='k'>这正是黄区准确率只有 ~42% 的由来</span>: 不是分界线位置问题, 而是 μ_b 估计方差 + 违反污染的内在极限。正确对策是 v35 的 bootstrap CI 选择性规则 (保守弃权)。"}
+  {t:"第 4 步 · 算 BAF 并分类", d:"BAF_est = |μ_b|/(|μ_b|+|obs−μ_b|) = 0.1506/0.4494 = <span class='k'>0.335</span>。介于 1/3 与 0.5 之间, 落在黄区 (competitive)。本轮回合碰巧判对, 但 μ_b 被污染会让很多回合误判为绿区。"},
+  {t:"第 5 步 · 重复 200 次并汇总", d:"把 200 个 BAF_est 画成直方图 (绿=BAF&lt;1/3, 黄=1/3~0.5, 红=BAF&gt;0.5)。真值在黄区, 但点估计大量落在绿区 (73.5%), 只有 26.5% 落在黄区。<span class='k'>这正是黄区准确率只有 ~42% 的由来</span>: 不是分界线位置问题, 而是 μ_b 估计方差 + 违反污染的内在极限。正确对策是 v35 的 bootstrap CI 选择性规则 (保守弃权)。"}
 ];
 let step=0, timer=null;
 
 function chipsHTML(){
-  // BF_true 高亮为主指标, BER 作为辅助
+  // BAF_true 高亮为主指标, BER 作为辅助
   return [
     {p:`ψ=<b>${P.psi}</b>`},
     {p:`μ_B=<b>${P.muB}</b>`},
     {p:`σ_B=<b>${P.sigmaB}</b>`},
     {p:`K=<b>${P.K}</b>`},
     {p:`违反=<b>${P.exV}</b>`},
-    {p:`BF_true=<b>${P.bf_true}</b>`, pri:true},
+    {p:`BAF_true=<b>${P.bf_true}</b>`, pri:true},
     {p:`BER_true=<b>${P.bsr_true}</b>`},
     {p:`种子=<b>${P.cond_seed}</b>`}
   ].map(c=>`<span class="chip ${c.pri?'primary':''}">${c.p}</span>`).join("");
@@ -111,19 +111,19 @@ function chipsHTML(){
 
 function clear(){while(cv.firstChild)cv.removeChild(cv.firstChild);}
 
-// 步骤 0: 静态条件卡 (BF 为主)
+// 步骤 0: 静态条件卡 (BAF 为主)
 function render0(){
   clear();
   const g=el("g",{}); cv.appendChild(g);
-  g.appendChild(txt(300,40,"该条件的固定因子与唯一真值 (BF)",null,"middle"));
+  g.appendChild(txt(300,40,"该条件的固定因子与唯一真值 (BAF)",null,"middle"));
   const rows=[
     ["主研究真实效应 ψ", P.psi],
     ["真实系统偏倚 μ_B", P.muB],
     ["负对照离散度 σ_B", P.sigmaB],
     ["负对照个数 K", P.K],
     ["交互性违反比例", P.exV+" (→ "+((P.K*P.exV).toFixed(0))+" 个被违反)"],
-    ["BF_true = |μ_B|/(|μ_B|+|ψ|)", P.bf_true+"  →  黄区 (主指标)"],
-    ["BER_true = |μ_B|/|ψ|  (辅助)", P.bsr_true+" (= BF/(1−BF))"],
+    ["BAF_true = |μ_B|/(|μ_B|+|ψ|)", P.bf_true+"  →  黄区 (主指标)"],
+    ["BER_true = |μ_B|/|ψ|  (辅助)", P.bsr_true+" (= BAF/(1−BAF))"],
     ["条件种子 cond_seed", P.cond_seed+" (保证可复现)"]
   ];
   let y=78;
@@ -133,8 +133,8 @@ function render0(){
     y+=28;
   });
   g.appendChild(el("rect",{x:430,y:62,width:140,height:170,rx:10,fill:"#fff7da",stroke:"#e6b800"}));
-  g.appendChild(txt(500,88,"真值落点 (BF)",null,"middle"));
-  g.appendChild(txt(500,120,"BF = 0.40",null,"middle"));
+  g.appendChild(txt(500,88,"真值落点 (BAF)",null,"middle"));
+  g.appendChild(txt(500,120,"BAF = 0.40",null,"middle"));
   g.appendChild(txt(500,150,"黄区 competitive",null,"middle"));
   g.appendChild(txt(500,182,"介于 1/3 与 0.5",null,"middle"));
   g.appendChild(txt(500,208,"最难判断的区间",null,"middle"));
@@ -213,12 +213,12 @@ function render3(){
   m.appendChild(el("path",{d:"M0,0 L6,3 L0,6 Z",fill:"#888"})); defs.appendChild(m); cv.appendChild(defs);
 }
 
-// 步骤 4: BF 分类
+// 步骤 4: BAF 分类
 function render4(){
   clear();
-  cv.appendChild(txt(300,50,"第 1 轮回合的 BF 计算 (主指标)",null,"middle"));
+  cv.appendChild(txt(300,50,"第 1 轮回合的 BAF 计算 (主指标)",null,"middle"));
   const lines=[
-    "BF_est = |μ_b| / (|μ_b| + |obs − μ_b|)",
+    "BAF_est = |μ_b| / (|μ_b| + |obs − μ_b|)",
     "        = |−0.1506| / (|−0.1506| + |−0.4494 − (−0.1506)|)",
     "        = 0.1506 / (0.1506 + 0.2988)",
     "        = 0.1506 / 0.4494 = 0.335",
@@ -232,16 +232,16 @@ function render4(){
   cv.appendChild(b); cv.appendChild(txt(300,278,"黄区 competitive","axis-t","middle"));
 }
 
-// 步骤 5: 200 次汇总 (BF 直方图)
+// 步骤 5: 200 次汇总 (BAF 直方图)
 function render5(){
   clear();
   const reps=DATA.reps200;
-  // 按 BF 分类统计 (cls 已经是 BF 尺度的分类)
+  // 按 BAF 分类统计 (cls 已经是 BAF 尺度的分类)
   const counts={green:0,yellow:0,red:0};
   reps.forEach(r=>{ if(r.cls==="effect-dominated")counts.green++; else if(r.cls==="competitive")counts.yellow++; else counts.red++; });
 
-  // 左: BF 直方图 (x 轴 0~1, 阈值 1/3 与 0.5)
-  cv.appendChild(txt(150,28,"200 个 BF_est 落区分布 (BF 尺度)",null,"middle"));
+  // 左: BAF 直方图 (x 轴 0~1, 阈值 1/3 与 0.5)
+  cv.appendChild(txt(150,28,"200 个 BAF_est 落区分布 (BAF 尺度)",null,"middle"));
   const total=200, y0=80, h=170, bw=170;
   const bfMin=0, bfMax=1;
   const bands=[["green",0,1/3,"var(--green)","绿区 <1/3"],["yellow",1/3,0.5,"var(--yellow)","黄区 1/3–0.5"],["red",0.5,1,"var(--red)","红区 >0.5"]];
@@ -249,19 +249,19 @@ function render5(){
     const x0=40+b[1]/bfMax*bw, x1=40+b[2]/bfMax*bw;
     cv.appendChild(el("rect",{x:x0,y:y0,width:x1-x0,height:h,fill:b[3],opacity:.18}));
   });
-  // 区名 + BF 阈值图例 (独立行, 比例数交给右图堆叠条)
+  // 区名 + BAF 阈值图例 (独立行, 比例数交给右图堆叠条)
   const bandText = bands.map(b=>{
     const s={green:"绿",yellow:"黄",red:"红"}[b[0]];
     const label={green:"<1/3",yellow:"1/3–0.5",red:">0.5"}[b[0]];
     return s+"区 "+label;
   }).join("   |   ");
   cv.appendChild(txt(40+bw/2, y0+h+30, bandText, null, "middle"));
-  // 真值线 (BF_true = 0.40) + 白底标签,避免与 x 轴刻度重叠
+  // 真值线 (BAF_true = 0.40) + 白底标签,避免与 x 轴刻度重叠
   const xt=40+P.bf_true/bfMax*bw;
   cv.appendChild(el("line",{x1:xt,y1:y0-2,x2:xt,y2:y0+h,stroke:"#1f2d3d","stroke-dasharray":"4 3"}));
   // 白底矩形 (铺在 x 轴刻度上方), 尺寸按字符估宽, 锚点 middle
   cv.appendChild(el("rect",{x:xt-46,y:y0-26,width:92,height:18,fill:"#fbfdff",opacity:.96}));
-  cv.appendChild(txt(xt,y0-13,"真值 BF=0.40",null,"middle"));
+  cv.appendChild(txt(xt,y0-13,"真值 BAF=0.40",null,"middle"));
   // x 轴刻度 (避开真值文字)
   const xticks=[0, 0.25, 0.5, 0.75, 1];
   xticks.forEach(v=>{
@@ -271,8 +271,8 @@ function render5(){
   });
 
   // 右: 堆叠条 + 辅助信息
-  cv.appendChild(txt(490,32,"点估计 vs 真值 (BF 尺度)",null,"middle"));
-  cv.appendChild(txt(490,58,"真值: 黄区 (BF=0.40)",null,"middle"));
+  cv.appendChild(txt(490,32,"点估计 vs 真值 (BAF 尺度)",null,"middle"));
+  cv.appendChild(txt(490,58,"真值: 黄区 (BAF=0.40)",null,"middle"));
   const sx=420, sy=78, sh=150, sw=130;
   let yy=sy;
   [["green",counts.green,"绿区"],["yellow",counts.yellow,"黄区"],["red",counts.red,"红区"]].forEach(b=>{
@@ -306,7 +306,7 @@ document.getElementById("reset").onclick=()=>{stop();go(0);};
 
 document.getElementById("chips").innerHTML=chipsHTML();
 document.getElementById("foot").innerHTML=
-  "数据来自 bias-fraction/analysis/run_sim_worker_v35.R 的真实机制 (种子 cond_seed=551)。本论文以 <b>BF</b> 为主指标、<b>BER</b> 为辅助展示。第1轮负对照与 μ_b=−0.1506、obs=−0.4494、BF_est=0.335 均为真实抽样值。黄区准确率低的来源: μ_b 估计方差 + 违反污染, 非分界线位置问题。";
+  "数据来自 bias-fraction/analysis/run_sim_worker_v35.R 的真实机制 (种子 cond_seed=551)。本论文以 <b>BAF</b> 为主指标、<b>BER</b> 为辅助展示。第1轮负对照与 μ_b=−0.1506、obs=−0.4494、BAF_est=0.335 均为真实抽样值。黄区准确率低的来源: μ_b 估计方差 + 违反污染, 非分界线位置问题。";
 render();
 </script>
 </body>

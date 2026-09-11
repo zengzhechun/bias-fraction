@@ -24,8 +24,8 @@ from docx import Document
 from docx.oxml.ns import qn
 
 # ---------------------------------------------------------------- 路径配置
-QMD_PATH = "/Users/zengzhechun/SynologyDrive/工作/数据分析项目/心电图大模型/心电图公开数据集/02 mimic-iv-ecg/Topic1_LTMLE_Betablocker/第38版/Submit/JAMA Network Open/manuscript/manuscript_jama_v38.qmd"
-DOCX_PATH = "/Users/zengzhechun/SynologyDrive/工作/数据分析项目/心电图大模型/心电图公开数据集/02 mimic-iv-ecg/Topic1_LTMLE_Betablocker/第38版/Submit/JAMA Network Open/manuscript/manuscript_jama_v38.docx"
+QMD_PATH = "/Users/zengzhechun/SynologyDrive/工作/数据分析项目/心电图大模型/心电图公开数据集/02 mimic-iv-ecg/Topic1_LTMLE_Betablocker/第39版/Submit/JAMA Network Open/manuscript/manuscript_jama_v39.qmd"
+DOCX_PATH = "/Users/zengzhechun/SynologyDrive/工作/数据分析项目/心电图大模型/心电图公开数据集/02 mimic-iv-ecg/Topic1_LTMLE_Betablocker/第39版/Submit/JAMA Network Open/manuscript/manuscript_jama_v39.docx"
 
 BODY_SECTIONS = ("Introduction", "Methods", "Results", "Discussion",
                  "Limitations", "Conclusions")

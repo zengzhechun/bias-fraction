@@ -1,4 +1,4 @@
-# 第38版 / 任务2 (A+): Table 3 "调整后 SMD" 列
+# 第39版 / 任务2 (A+): Table 3 "调整后 SMD" 列
 # 严格复用 run_baseline_smd.R 的清洗口径 (clean_num 范围 + 派生二值 + 性别特异性QTc阈值)
 # 计算 stabilized IPTW 加权 SMD，与未调整 SMD 同分母约定 (未加权合并SD)，保证可比。
 # 两种口径:

@@ -2,7 +2,7 @@
 """List every numeric literal written directly into qmd prose.
 
 Numbers inside inline R (`` `r ...` ``) or fenced code blocks are computed from
-v38_all_numbers.json and update themselves. Numbers typed into prose do not: they
+v39_all_numbers.json and update themselves. Numbers typed into prose do not: they
 are the ones that rot when the data changes (eg "six pre-specified subgroups"
 after the K=50 level was added, or "2 negative-control outcomes" where K is a
 count, not a level count).

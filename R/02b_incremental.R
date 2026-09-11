@@ -11,7 +11,7 @@ out_rds  <- file.path(OUT_SIM, "comparison_results.rds")
 prog_txt <- file.path(OUT_SIM, "run_progress.txt")
 
 # ---- grids (full design) ----
-psi_vals  <- c(-0.01, -0.05, -0.10, -0.15, -0.20, -0.30, -0.40)   # 7 levels; v37 redesign replaces ψ=0 with ψ=−0.01 (RR=0.99) to remove the BF=1 singularity (ratio metric degeneracy at true null)
+psi_vals  <- c(-0.01, -0.05, -0.10, -0.15, -0.20, -0.30, -0.40)   # 7 levels; v37 redesign replaces ψ=0 with ψ=−0.01 (RR=0.99) to remove the BAF=1 singularity (ratio metric degeneracy at true null)
 mu_b_vals <- c(-0.05, -0.10, -0.15, -0.20, -0.30, -0.40)      # 6 levels
 sigma_ps_vals     <- c(0.06, 0.10)
 K_vals            <- c(12, 25)

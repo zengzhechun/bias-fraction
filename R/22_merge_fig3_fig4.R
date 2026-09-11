@@ -1,9 +1,9 @@
-# 合并 Figure 3（经验零分布）与 Figure 4（BF 三区）为双面板图（A/B 纵向堆叠）
+# 合并 Figure 3（经验零分布）与 Figure 4（BAF 三区）为双面板图（A/B 纵向堆叠）
 # 目的：腾出一个图表位给基线特征表（JAMA ≤5 tables/figures）
 suppressMessages(library(magick))
 
 fig_dir <- file.path("output", "figures")
-out_dir <- file.path(fig_dir, "v38")
+out_dir <- file.path(fig_dir, "v39")
 dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 
 a <- image_trim(image_read(file.path(fig_dir, "fig01_calibration_plot.png")))

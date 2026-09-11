@@ -1,0 +1,5 @@
+"case","panel","n_nc","mu_bias","sigma_bias","rr_uncal","rr_cal","cal_p","layer1_pass","baf_plugin","baf","baf_lo","baf_hi","half_width","ci_class","lookup_bin","p_bias_dominated","verdict","boot_fail"
+"bb","matched_to_main",12,-0.167792,0.112886,0.831453,0.983351,0.893963,FALSE,0.909042,0.874723,0.384688,0.992177,0.303744,"wide",12,0.996873,"not usable as effect evidence",0
+"bb","published_k2",12,-0.190499,0.06797,0.831453,1.005936,0.946373,FALSE,0.969868,0.906746,0.738856,0.9928,0.126972,"narrow",12,0.996873,"not usable as effect evidence",0
+"gdmt","matched_to_main",12,-0.167792,0.112886,0.682069,0.806676,0.102641,FALSE,0.438529,0.45964,0.185576,0.618552,0.216488,"wide",6,0.501928,"competitive, no verdict",0
+"gdmt","published_k2",12,-0.190499,0.06797,0.682069,0.825204,0.045188,TRUE,0.497876,0.510057,0.35643,0.603259,0.123415,"narrow",7,0.648247,"competitive, no verdict",0

@@ -7,7 +7,7 @@
 # _rebuild_after_K50.sh, which gates on the RDS actually holding 960
 # conditions before touching anything.
 # ============================================================================
-BASE="/Users/zengzhechun/SynologyDrive/工作/数据分析项目/心电图大模型/心电图公开数据集/02 mimic-iv-ecg/Topic1_LTMLE_Betablocker/第38版"
+BASE="/Users/zengzhechun/SynologyDrive/工作/数据分析项目/心电图大模型/心电图公开数据集/02 mimic-iv-ecg/Topic1_LTMLE_Betablocker/第39版"
 cd "$BASE" || exit 1
 
 PAT='Resources/bin/exec/R.*16_sim_v37p1_80grid'

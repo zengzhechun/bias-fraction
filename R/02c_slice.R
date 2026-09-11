@@ -26,7 +26,7 @@ out_rds  <- file.path(OUT_SIM, sprintf("comparison_results_cfg%d.rds", slice))
 prog_txt <- file.path(OUT_SIM, sprintf("run_progress_cfg%d.txt", slice))
 
 # ---- grids (full v37 design: psi starts at -0.01, not 0) ----
-psi_vals  <- c(-0.01, -0.05, -0.10, -0.15, -0.20, -0.30, -0.40)   # 7 levels; v37 removes BF=1 singularity
+psi_vals  <- c(-0.01, -0.05, -0.10, -0.15, -0.20, -0.30, -0.40)   # 7 levels; v37 removes BAF=1 singularity
 mu_b_vals <- c(-0.05, -0.10, -0.15, -0.20, -0.30, -0.40)         # 6 levels
 sigma_ps_vals     <- c(0.06, 0.10)
 K_vals            <- c(12, 25)

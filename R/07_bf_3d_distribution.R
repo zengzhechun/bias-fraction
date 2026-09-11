@@ -1,7 +1,7 @@
 # R/07_bf_3d_distribution.R
-# Interactive 3D distribution of BF estimation error.
-#   X = |true systematic bias|  |mu_B|            (BF numerator)
-#   Y = |mu_B + psi|  (absolute observed log-RR)  (BF denominator = "systematic error + true effect")
+# Interactive 3D distribution of BAF estimation error.
+#   X = |true systematic bias|  |mu_B|            (BAF numerator)
+#   Y = |mu_B + psi|  (absolute observed log-RR)  (BAF denominator = "systematic error + true effect")
 #   Z = error metric, selectable via dropdown:
 #         (1) |BF_hat - BF_true|   (absolute error, per replicate cloud)
 #         (2) (BF_hat - BF_true)^2 (MSE, per replicate cloud)
@@ -40,8 +40,8 @@ d <- bind_rows(rows)
 cat("total replicates:", nrow(d), "\n")
 
 # user-requested axes (absolute magnitudes)
-d$absX <- abs(d$mu_b)                 # BF numerator  = |systematic bias|
-d$absY <- abs(d$mu_b + d$psi)        # BF denominator = |systematic error + true effect| (observed log-RR)
+d$absX <- abs(d$mu_b)                 # BAF numerator  = |systematic bias|
+d$absY <- abs(d$mu_b + d$psi)        # BAF denominator = |systematic error + true effect| (observed log-RR)
 d$err_abs_mc   <- abs(d$bf_mc   - d$bf_true)
 d$err_abs_mcmc <- abs(d$bf_mcmc - d$bf_true)
 d$err_sq_mc    <- (d$bf_mc   - d$bf_true)^2
@@ -106,7 +106,7 @@ btn_abs <- list(
   args = list(list(
     z = list(samp_mc$err_abs_mc, samp_mcmc$err_abs_mcmc),
     visible = list(TRUE, TRUE, FALSE, FALSE),
-    "scene.zaxis.title" = list(text = "Z = |BF_hat - BF_true|  (absolute error)")
+    "scene.zaxis.title" = list(text = "Z = |BAF_hat - BAF_true|  (absolute error)")
   ), c(0, 1, 2, 3)),
   label = "|error| (absolute)")
 
@@ -115,7 +115,7 @@ btn_mse <- list(
   args = list(list(
     z = list(samp_mc$err_sq_mc, samp_mcmc$err_sq_mcmc),
     visible = list(TRUE, TRUE, FALSE, FALSE),
-    "scene.zaxis.title" = list(text = "Z = (BF_hat - BF_true)^2  (MSE)")
+    "scene.zaxis.title" = list(text = "Z = (BAF_hat - BAF_true)^2  (MSE)")
   ), c(0, 1, 2, 3)),
   label = "MSE (squared)")
 
@@ -129,18 +129,18 @@ btn_rmse <- list(
 
 p <- p %>% layout(
   title = list(
-    text = "3D distribution of BF estimation error: X = |systematic bias| (BF numerator), Y = |mu_B + psi| (BF denominator), Z = error metric (select below)",
+    text = "3D distribution of BAF estimation error: X = |systematic bias| (BAF numerator), Y = |mu_B + psi| (BAF denominator), Z = error metric (select below)",
     font = list(size = 14, family = "Arial Black")),
   scene = list(
-    xaxis = list(title = "X = |true systematic bias|  |mu_B|  (BF numerator)",
+    xaxis = list(title = "X = |true systematic bias|  |mu_B|  (BAF numerator)",
                  zeroline = TRUE, zerolinecolor = "#222222", zerolinewidth = 2,
                  showgrid = TRUE, gridcolor = "#888888",
                  color = "#222222", titlefont = list(size = 13), tickfont = list(size = 11)),
-    yaxis = list(title = "Y = |mu_B + psi|  observed log-RR (BF denominator)",
+    yaxis = list(title = "Y = |mu_B + psi|  observed log-RR (BAF denominator)",
                  zeroline = TRUE, zerolinecolor = "#222222", zerolinewidth = 2,
                  showgrid = TRUE, gridcolor = "#888888",
                  color = "#222222", titlefont = list(size = 13), tickfont = list(size = 11)),
-    zaxis = list(title = "Z = |BF_hat - BF_true|  (absolute error)",
+    zaxis = list(title = "Z = |BAF_hat - BAF_true|  (absolute error)",
                  showgrid = TRUE, gridcolor = "#888888",
                  color = "#222222", titlefont = list(size = 13), tickfont = list(size = 11)),
     # camera oriented so the (0,0) absolute-value corner is toward the viewer
@@ -159,7 +159,7 @@ p <- p %>% layout(
 
 out_html <- file.path(OUT_FIG, "figJ_3d_bf_error.html")
 htmlwidgets::saveWidget(p, out_html, selfcontained = TRUE,
-                        title = "BF error 3D distribution")
+                        title = "BAF error 3D distribution")
 cat("Saved", out_html, "\n")
 cat(sprintf("X range |mu_B|: [%.3f, %.3f]\n", min(d$absX), max(d$absX)))
 cat(sprintf("Y range |mu_B+psi|: [%.3f, %.3f]\n", min(d$absY), max(d$absY)))

@@ -1,0 +1,148 @@
+Templates for reporting the target trial protocol
+
+
+Contents	
+TARGET checklist items for the target trial protocol and observational emulation	2
+Template 1: Target trial protocol and observational emulation	3
+Template 2: Index trial and target trial protocols with observational emulation	4
+
+Introduction to using these templates
+
+These tables provide templates to help authors report the protocol of a target trial and how it was emulated with the observational data (the observational emulation). The target trial serves as a tool to communicate the estimand (causal question) to readers in the form of a randomised trial. The target trial reported in a manuscript can benefit from being defined with regard to the variables available in the data (i.e., so the target trial is able to be closely emulated). All variables used to emulate the target trial should be defined in the observational emulation column, or in an appendix. 
+
+If investigators deem it relevant to outline a target trial that differs from that which can be emulated with the data a third column outlining this trial protocol should be added. A common example is when the aim is to compare results with a planned, ongoing, or completed randomised trial, a third column outlining this trial protocol, referred to as the index trial. Template 2 is provided for this scenario.
+
+TARGET Checklist items to report the specification of the target trial protocol and its observational emulation
+
+
+
+Target trial
+Observational emulation 
+Causal estimand
+Eligibility criteria
+Describe the eligibility criteria.
+Describe how the eligibility criteria were operationalized with the data.
+
+Treatment strategies
+Describe the treatment strategies that would be compared.
+Describe how the treatment strategies were operationalized with the data.
+
+Assignment procedures
+Report that eligible individuals would be randomly assigned to treatment strategies and may be aware of their treatment allocation.
+Describe how assignment to treatment strategies was operationalized with the data.
+
+Follow-up
+Clarify that follow-up would start at time of assignment to the treatment strategies. Specify when follow-up would end.
+Clarify that follow-up starts at the time individuals were assigned to the treatment strategies. Describe how the end of follow-up was operationalized with the data.
+
+Outcome(s)
+Describe the outcomes.
+Describe how the outcomes were operationalized with the data.
+
+Causal contrast(s)
+Describe the causal contrasts of interest, including effect measures.
+Describe how the causal contrasts were operationalized with the data, including effect measures.
+
+Identifying assumptions*
+Describe assumptions that would be made to identify each causal estimand. Describe the variables, if any, related to these assumptions.
+	•	For each causal estimand, describe assumptions made to identify it, including assumptions regarding baseline confounding due to lack of randomization.
+
+	•	Describe how the variables related to these assumptions were operationalized with the data.
+
+Data analysis*
+For each causal estimand, describe the data analysis procedures and any associated statistical modelling assumptions, including approaches for handling missing data.
+	•	For each causal estimand, describe the data analysis procedures and any associated statistical modelling assumptions, including approaches for handling missing data.
+
+	•	For each causal estimand, describe any additional analyses conducted to assess the sensitivity of the results to the choice of operationalizations, assumptions and analysis.
+For more information, visit: https://www.target-guideline.org/
+
+For more information, visit: https://www.target-guideline.org/
+
+Template 1: Target trial protocol and observational emulation
+
+Specification of the protocol of the target trial and its observational emulation
+
+
+Target trial
+Observational emulation 
+Eligibility criteria
+
+
+Treatment strategies
+
+
+Assignment procedures
+
+
+Follow-up
+
+
+Outcome(s)
+
+
+Causal contrast(s)
+
+
+Identifying assumptions
+
+
+Data analysis plan
+
+
+For more information, visit: https://www.target-guideline.org/
+
+
+For more information, visit: https://www.target-guideline.org/
+
+
+Template 2: For more information, visit: https://www.target-guideline.org/
+
+
+For more information, visit: https://www.target-guideline.org/
+
+
+
+Protocol of the index trial, specification of the target trial and its observational emulation
+
+
+Index trial
+Target trial
+Observational emulation 
+Eligibility criteria
+
+
+
+Treatment strategies
+
+
+
+Assignment procedures
+
+
+
+Follow-up
+
+
+
+Outcome(s)
+
+
+
+Causal contrast(s)
+
+
+
+Identifying assumptions
+
+
+
+Data analysis plan
+
+
+
+For more information, visit: https://www.target-guideline.org/
+
+
+For more information, visit: https://www.target-guideline.org/
+
+

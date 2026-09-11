@@ -24,3 +24,11 @@ output/data/
 *copy*.docx
 *.bak*
 _prerender_backup/
+
+# v39: large simulation objects (tens of MB; regenerate via R/16 and R/27-R/29)
+simulation/v39_ba_gibbs_reps.rds
+simulation/v39_interval_joint_reps.rds
+
+# 同步/渲染过程中产生的备份目录
+*_backup*/
+_prerender_backup_*/

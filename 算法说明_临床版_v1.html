@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-<meta charset="UTF-8">
-<title>BF 临床应用算法说明 v1</title>
+<html lang="zh-CN" data-page-node-id="5Gup1VtenykYISWeeLcyWA">
+<head data-page-node-id="yiOZbQe1v368WyIIqAe9ns">
+<meta charset="UTF-8" data-page-node-id="33mNaLBraLHiQuCGFl1Ah2">
+<title>BAF 临床应用算法说明 v1</title>
 <style>
   :root{
     --bg:#FFFFFF; --fg:#FFFFFF; --fg-soft:#1F2A38; --fg-mute:#525D6B; --line:#E5E8EE;
@@ -47,95 +47,95 @@
   ol.qa > li b{ color: var(--info); }
 </style>
 </head>
-<body>
+<body data-page-node-id="A5vHIAVfShk92bDEhuXN3y">
 
-<h1>BF 临床应用算法说明 v1</h1>
-<div class="meta">
-  对应论文稿件 v37 · 评估指标 BF（偏倚份额，bias fraction）· 受众：临床医生（无需统计学或模拟研究背景）· 文档版本：2026-08-26
+<h1 data-page-node-id="zovBun5hHliaca6V7B7pbg">BAF 临床应用算法说明 v1</h1>
+<div class="meta" data-page-node-id="m7GkKITQpFWZrVYv0pV2SF">
+  对应论文稿件 v37 · 评估指标 BAF（偏倚份额，bias attribution fraction）· 受众：临床医生（无需统计学或模拟研究背景）· 文档版本：2026-08-26
 </div>
 
-<div class="lede">
-<b>一句话总结</b>：输入一篇文献报告的<b>校准 p 值</b>、<b>BF̂</b>、<b>BF 的 95% 可信区间</b>三件套，算法自动算出"真值由偏倚主导的概率" P(偏倚主导)≈X%，并把结果归到<b>两类四档</b>之一 —— <span class="ok">可作效应证据</span>、<span class="warn">混合·假设生成</span>、<span class="warn">势均力敌·暂不下结论</span>、<span class="bad">不可作效应证据</span>（再加一个 <span class="pill pill-ns">证据不足</span> 兜底）。<b>医生不需要自己判断"窄区间还是宽区间"</b> —— 这是算法内部的计算步骤。
+<div class="lede" data-page-node-id="vXAtZBVO3zTg9loQMprlCb">
+<b data-page-node-id="iO3HhoGTmmJSwly9NcyWhC">一句话总结</b>：输入一篇文献报告的<b data-page-node-id="Rhl4fDLl71qGTxQajkAJ3f">校准 p 值</b>、<b data-page-node-id="TGmGr7PfJPBksjDqk71tGr">BAF̂</b>、<b data-page-node-id="pwC6ID9l5Uzkc2kAw25uGH">BAF 的 95% 可信区间</b>三件套，算法自动算出"真值由偏倚主导的概率" P(偏倚主导)≈X%，并把结果归到<b data-page-node-id="BtIpyBFdudAwOJzfU6sEHL">两类四档</b>之一：<span class="ok" data-page-node-id="1Piqqvd2zGbj6Lg7Gp5yQt">可作效应证据</span>、<span class="warn" data-page-node-id="aT6MZw15YMwQIPoHnAgA6n">混合·假设生成</span>、<span class="warn" data-page-node-id="zeNQblym62tyBrxoIaiLyB">势均力敌·暂不下结论</span>、<span class="bad" data-page-node-id="Wkh3E33Qc3BXQP5jdCVfLE">不可作效应证据</span>（再加一个 <span class="pill pill-ns" data-page-node-id="THcmhJIfpFHLIPeRzy3cA6">证据不足</span> 兜底）。<b data-page-node-id="3VcCrfv64jGgXkUGowUezl">医生不需要自己判断"窄区间还是宽区间"</b>，这是算法内部的计算步骤。
 </div>
 
-<h2>§1 算法要回答的问题</h2>
-<p>给定一个观察性研究的因果估计，<b>它能不能直接当作"该效应的因果证据"使用？</b>注意：这个工具<b>不替医生开药</b>，也不替临床指南制定者下结论 —— 它只判定这一项观察性估计的可靠性等级。</p>
+<h2 data-page-node-id="cLEN88mGuDlHBE3fMRkGHK">§1 算法要回答的问题</h2>
+<p data-page-node-id="c5IA3yHiO7OtB4IgU6TVrd">给定一个观察性研究的因果估计，<b data-page-node-id="q7QLYDF5fUDMqjqFFsq9Nt">它能不能直接当作"该效应的因果证据"使用？</b>注意：这个工具<b data-page-node-id="6JzgYgbuOLxbXw1aQf2bO5">不替医生开药</b>，也不替临床指南制定者下结论，它只判定这一项观察性估计的可靠性等级。</p>
 
-<h2>§2 输入与输出（API 形式）</h2>
+<h2 data-page-node-id="ztS00cu6NYbXlamKwO1cbZ">§2 输入与输出（API 形式）</h2>
 
-<h3>输入（必填三项）</h3>
-<table>
-  <thead>
-    <tr><th style="width:25%">名称</th><th>含义</th><th>取值范围</th><th>从论文哪里读</th></tr>
+<h3 data-page-node-id="h4jmxArbDpZ8uguGAUpdXh">输入（必填三项）</h3>
+<table data-page-node-id="3Xkv7mb2BItD6MAEfj0i9n">
+  <thead data-page-node-id="VFtuCYbSscNa9oXqKGbeGI">
+    <tr data-page-node-id="Pazi0l2Ss4bg0jJQHiK8NC"><th style="width:25%" data-page-node-id="IBIeDIZqmn3FNHQflPJvaJ">名称</th><th data-page-node-id="FB489eZnXQWdzvhU1at1mE">含义</th><th data-page-node-id="1dWN7ZaEQLhSiEClhYpxxE">取值范围</th><th data-page-node-id="lb455ggfoR2mIRo2PBwOPG">从论文哪里读</th></tr>
   </thead>
-  <tbody>
-    <tr>
-      <td><b>校准 p 值</b><br><code>p_cal</code></td>
-      <td>经验校准后的 p 值（OHDSI EmpiricalCalibration）。</td>
-      <td>0–1</td>
-      <td>论文方法节"Empirical calibration"段落。</td>
+  <tbody data-page-node-id="dmLPXHBDtee2dMzfqZMCtb">
+    <tr data-page-node-id="MmyVcTW4xKUhnovqqSLdaA">
+      <td data-page-node-id="uTJ8wiJO1uS25YWssXMRlX"><b data-page-node-id="r1dzPEnTJGH4E1oVFHsE89">校准 p 值</b><br data-page-node-id="EU94U1s3nUPKv5AhH2mbDM"><code data-page-node-id="rkTwkeOsxU10upnNz56oNO">p_cal</code></td>
+      <td data-page-node-id="TbWFUcDqxxsIC4Xy3whFHZ">经验校准后的 p 值（OHDSI EmpiricalCalibration）。</td>
+      <td data-page-node-id="3lDvyWIE3s85DoHf69Oy74">0–1</td>
+      <td data-page-node-id="Q7bh1gTgK0CmlKPPSTkXWr">论文方法节"Empirical calibration"段落。</td>
     </tr>
-    <tr>
-      <td><b>BF̂ 估计</b><br><code>BF_hat</code></td>
-      <td>BF̂ = |μ̂_B| / (|μ̂_B| + ψ̃)。衡量的偏倚份额。</td>
-      <td>0–1（理论边界）</td>
-      <td>同一段校准输出，通常与 μ̂_B、ψ̃ 一同报。</td>
+    <tr data-page-node-id="EZ7JJ7HSgSDAEtqwO157Nq">
+      <td data-page-node-id="jqAhSng4RpoieA0Smt58rZ"><b data-page-node-id="jLWCko8DkcYbW9ZWLMnymd">BAF̂ 估计</b><br data-page-node-id="mJbFrth7rLEFVIzMRtLuQI"><code data-page-node-id="BoJlOjigCcyMKTtACgsreo">BAF_hat</code></td>
+      <td data-page-node-id="DcejoRWPgCSfc6w3bS0pLZ">BAF̂ = |μ̂_B| / (|μ̂_B| + ψ̃)。衡量的偏倚份额。</td>
+      <td data-page-node-id="RyqsPX5Hl54eHl5aXfnWLf">0–1（理论边界）</td>
+      <td data-page-node-id="qC0BDxn5cqLFg1NTAHwcKq">同一段校准输出，通常与 μ̂_B、ψ̃ 一同报。</td>
     </tr>
-    <tr>
-      <td><b>BF 的 95% 可信区间</b><br><code>[BF_lo, BF_hi]</code></td>
-      <td>BF̂ 的不确定性区间（plug-in 自 μ̂_B 的 CI）。</td>
-      <td>0 ≤ BF_lo ≤ BF̂ ≤ BF_hi ≤ 1</td>
-      <td>同段报为"BF (BF_lo–BF_hi)"或"BF ± half-width"。</td>
+    <tr data-page-node-id="YXeaWye9YrBy3VSV9CSQAS">
+      <td data-page-node-id="ua5RtTXF2qBFTsloRpitlk"><b data-page-node-id="ALmZh291d9Ln4Bze6tsvip">BAF 的 95% 可信区间</b><br data-page-node-id="PtbrbpAaZPWNnABhAr47OA"><code data-page-node-id="hhWRVX9GO5QtbDvHhcVOTR">[BAF_lo, BAF_hi]</code></td>
+      <td data-page-node-id="GKbbPvOSkqPL9apegM59uG">BAF̂ 的不确定性区间（plug-in 自 μ̂_B 的 CI）。</td>
+      <td data-page-node-id="HudjmEf5uapkh3aFJeDBEr">0 ≤ BAF_lo ≤ BAF̂ ≤ BAF_hi ≤ 1</td>
+      <td data-page-node-id="fo4WvnsNmNy2kb1eqFY6v3">同段报为"BAF (BAF_lo–BAF_hi)"或"BAF ± half-width"。</td>
     </tr>
   </tbody>
 </table>
 
-<h3>输出（一句话 + 两个数）</h3>
-<table>
-  <thead>
-    <tr><th style="width:30%">字段</th><th>含义</th><th>示例</th></tr>
+<h3 data-page-node-id="U916UIbmhxJHW8llaXIqpu">输出（一句话 + 两个数）</h3>
+<table data-page-node-id="qTbyparqfohcjRDxQRl40P">
+  <thead data-page-node-id="DW0HGRxuP8jqCmYKOqK88x">
+    <tr data-page-node-id="gkTKanKC5ZqBX5sqssD0fj"><th style="width:30%" data-page-node-id="qXaSg6dhIQ5bOgD3C53z85">字段</th><th data-page-node-id="efCWfFDMLoOojEbYfSd3jD">含义</th><th data-page-node-id="o4x6ZJjcQKhJK0K2QrTzFv">示例</th></tr>
   </thead>
-  <tbody>
-    <tr>
-      <td><b>判语 verdict</b></td>
-      <td>四档之一 + 兜底一档。<br>
-        <span class="pill pill-ok">可作效应证据</span> ·
-        <span class="pill pill-mx">混合·假设生成</span> ·
-        <span class="pill pill-tie">势均力敌·暂不下结论</span> ·
-        <span class="pill pill-no">不可作效应证据</span> ·
-        <span class="pill pill-ns">证据不足</span>
+  <tbody data-page-node-id="dlthHm5n6eaDB8qKKtUCDS">
+    <tr data-page-node-id="sc3LBmvdfx1jtEYYjEdBLj">
+      <td data-page-node-id="hyMqC2lwsWxMZ1bQKyXyxQ"><b data-page-node-id="ycK5T6kLGvE5mWBDQABQjz">判语 verdict</b></td>
+      <td data-page-node-id="TU33qvrr7sUbunBYnUKidZ">四档之一 + 兜底一档。<br data-page-node-id="KWKvYHrFY69U3BZUe3GgFr">
+        <span class="pill pill-ok" data-page-node-id="gv28pxtYtJE14KftL4jvh5">可作效应证据</span> ·
+        <span class="pill pill-mx" data-page-node-id="DvrnTGnnlE653kT2teJoCX">混合·假设生成</span> ·
+        <span class="pill pill-tie" data-page-node-id="WZw2O8ZfAie3uP72ekZwGD">势均力敌·暂不下结论</span> ·
+        <span class="pill pill-no" data-page-node-id="kUkYoiRniaYVxmYlv2P0XK">不可作效应证据</span> ·
+        <span class="pill pill-ns" data-page-node-id="TeylPsura6v4EnZCElCW8S">证据不足</span>
       </td>
-      <td>可作效应证据</td>
+      <td data-page-node-id="EErlrGiMxvfRHKou1paZCT">可作效应证据</td>
     </tr>
-    <tr>
-      <td><b>P(偏倚主导) ≈</b></td>
-      <td>真值实际落在"偏倚主导"侧的概率（来自模拟研究的统计校正），保留 1 位小数。</td>
-      <td>P(偏倚主导) ≈ 3.1%</td>
+    <tr data-page-node-id="Jwz35NBjQ9X71QkSTsch7H">
+      <td data-page-node-id="SEAVKmSMEiDImzJrN0WiEd"><b data-page-node-id="O1JG4qSMapwZOssbqs24Mm">P(偏倚主导) ≈</b></td>
+      <td data-page-node-id="9LaoMZS9ENe9EME1SMBl1Y">真值实际落在"偏倚主导"侧的概率（来自模拟研究的统计校正），保留 1 位小数。</td>
+      <td data-page-node-id="aNFDFAFbaRwu1b3j8ESvdR">P(偏倚主导) ≈ 3.1%</td>
     </tr>
-    <tr>
-      <td><b>BF̂ 报告值</b></td>
-      <td>原样回显，便于论文对照。</td>
-      <td>BF̂ = 0.33 (0.15–0.50)</td>
+    <tr data-page-node-id="LyxtzkGiJcE7FspWI2s1nw">
+      <td data-page-node-id="TFX5XzKd0EqCMYHPfquijv"><b data-page-node-id="FX9TtuyAwjRW70nCdN3gH0">BAF̂ 报告值</b></td>
+      <td data-page-node-id="vrihpDPMIAU8THclU1MkpA">原样回显，便于论文对照。</td>
+      <td data-page-node-id="qFyy4X6jVL0q5HF0tDyB1e">BAF̂ = 0.33 (0.15–0.50)</td>
     </tr>
   </tbody>
 </table>
 
-<h2>§3 算法流程（5 步，伪代码）</h2>
+<h2 data-page-node-id="6pIACgaVbBu0Gnmkl6dUj5">§3 算法流程（5 步，伪代码）</h2>
 
-<pre>
-INPUT:  p_cal, BF_hat, [BF_lo, BF_hi]
+<pre data-page-node-id="KuHrIa3TbwJy9GLq9r9xYn">
+INPUT:  p_cal, BAF_hat, [BAF_lo, BAF_hi]
 OUTPUT: verdict, P_bias_dom
 
   1. IF p_cal >= 0.05:
          RETURN (verdict="证据不足", P_bias_dom=null)
      // 第一层：校准 p 不显著 → 信号不存在，停。
 
-  2. CI_half_width = (BF_hi - BF_lo) / 2
+  2. CI_half_width = (BAF_hi - BAF_lo) / 2
 
-  3. BIN = locate_bin(BF_hat)        // 12 段读数桶（x 中心: 0.06, 0.17, 0.26, ...）
+  3. BIN = locate_bin(BAF_hat)        // 12 段读数桶（x 中心: 0.06, 0.17, 0.26, ...）
          [NB, WB] = lookup_pBD(BIN)   // 从 §6 的模拟查表（12 段读数桶）：窄/宽两个 P(偏倚主导)
 
-  4. P_bias_dom = max(NB, WB)        // 取窄/宽两档的<b>较大</b>值 → 保守判读
+  4. P_bias_dom = max(NB, WB)        // 取窄/宽两档的<b data-page-node-id="mCSnoZOSKRvMoGM7oc7ahv">较大</b>值 → 保守判读
      // 这一步就是算法内部"自动处理"窄/宽的关键。
      // 医生完全不需要自己判断。
 
@@ -147,318 +147,318 @@ OUTPUT: verdict, P_bias_dom
   RETURN (verdict, P_bias_dom)
 </pre>
 
-<div class="callout">
-<b>关键设计：</b>"窄/宽"这个概念<b>不暴露给医生</b>。医生提供 BF̂ 区间即可，算法在第 3–4 步自动根据 CI 半宽映射到模拟研究的概率曲线，并取保守值作为最终 P(偏倚主导)。这样临床读者只需懂<b>"BF̂ 越接近 1 = 偏倚越占主导"</b>和<b>"P 值越低 = 信号越稳"</b>两个直觉，<b>不必了解"中位数切两半""Bootstrap 宽度"等模拟方法术语</b>。
+<div class="callout" data-page-node-id="q6LNaULgCt0AS1roD4pXTH">
+<b data-page-node-id="ACTIS3TIYDxjpf2m20BSzX">关键设计：</b>"窄/宽"这个概念<b data-page-node-id="mf0m6GuXg9LGT87ptQINMi">不暴露给医生</b>。医生提供 BAF̂ 区间即可，算法在第 3–4 步自动根据 CI 半宽映射到模拟研究的概率曲线，并取保守值作为最终 P(偏倚主导)。这样临床读者只需懂<b data-page-node-id="lHc9Mae2NgE6JYaB98EXjA">"BAF̂ 越接近 1 = 偏倚越占主导"</b>和<b data-page-node-id="Ad4ht7LM76yAlanyWZH3Gz">"P 值越低 = 信号越稳"</b>两个直觉，<b data-page-node-id="Ke75ckTGcHA8qMDVsxnBCM">不必了解"中位数切两半""Bootstrap 宽度"等模拟方法术语</b>。
 </div>
 
-<h2>§4 阈值的来源（为什么可以信赖这几个数字）</h2>
+<h2 data-page-node-id="Z5rL2YuxeR8y9NFoU0hRQa">§4 阈值的来源（为什么可以信赖这几个数字）</h2>
 
-<p>四个阈值 0.05、0.15、0.45、0.65 都来自同一份实证研究 —— 64 万次（640 个条件 × 1000 次重复）模拟。模拟里同时生成了"真值"和"算法判定"，于是可以反过来统计：在某个判定输出下，真值实际落在"偏倚主导"侧的概率是多少。下面把每个阈值的出处说清楚：</p>
+<p data-page-node-id="K4ie7CMVn3kE0T6KzlJRJI">四个阈值 0.05、0.15、0.45、0.65 都来自同一份实证研究：96 万次（960 个条件 × 1000 次重复）模拟。模拟里同时生成了"真值"和"算法判定"，于是可以反过来统计：在某个判定输出下，真值实际落在"偏倚主导"侧的概率是多少。下面把每个阈值的出处说清楚：</p>
 
-<table>
-  <thead>
-    <tr><th>阈值</th><th>控制变量</th><th>数据来源</th><th>临床含义</th></tr>
+<table data-page-node-id="LyUuWhzUK7B8DuKNXQoFJC">
+  <thead data-page-node-id="vmosGsADCvkrWaZcG6Tedc">
+    <tr data-page-node-id="Z67oE13iaHjHPJy9T7wTiO"><th data-page-node-id="TKXOApXc7ySw4gyHeVZjyE">阈值</th><th data-page-node-id="LdZ2kuHHwVjcuWNLkRkKFL">控制变量</th><th data-page-node-id="dGSLVrlMDbQoD2hn9ZZPGm">数据来源</th><th data-page-node-id="zVVj1t6WRTj9Z6HlEpjPCf">临床含义</th></tr>
   </thead>
-  <tbody>
-    <tr>
-      <td><b>0.05</b>（校准 p）</td>
-      <td>第一层"信号是否存在"的显著性水平。</td>
-      <td>沿用统计惯例（与单侧 0.05 同 spirit）。</td>
-      <td>观测值是否超出零假设 + 已测混杂所能解释的范围。</td>
+  <tbody data-page-node-id="OSOI1jaY08dybMAoowGkPU">
+    <tr data-page-node-id="sQ9WXJvP5LLwxCt9HlxoDq">
+      <td data-page-node-id="6lcJ6g4zyqAAaEqtxpe39H"><b data-page-node-id="6QrEyrKeU3LhHFVslpGdNB">0.05</b>（校准 p）</td>
+      <td data-page-node-id="ETLtLh10RLtKs5kb6OxiDb">第一层"信号是否存在"的显著性水平。</td>
+      <td data-page-node-id="9OHXa5XZGN9S54Ac2FUCFs">沿用统计惯例（与单侧 0.05 同 spirit）。</td>
+      <td data-page-node-id="Jk6LnDPFGQjq9paUECuQtc">观测值是否超出零假设 + 已测混杂所能解释的范围。</td>
     </tr>
-    <tr>
-      <td><b>0.15</b>（P 偏倚主导）</td>
-      <td>"可作效应证据"上限。</td>
-      <td>模拟中低 BF 段即使宽 CI 仍能维持 P&lt;0.15。</td>
-      <td>偏倚份额不超过 15%，可放心使用。</td>
+    <tr data-page-node-id="9CwM36UuYcXPlPJ090oRTk">
+      <td data-page-node-id="EzpUGFSg1cKJJONfdfyp7E"><b data-page-node-id="Z0p8rAvjDcXrgKjtBYNRFP">0.15</b>（P 偏倚主导）</td>
+      <td data-page-node-id="kAitqXtKy11qtOow23RfLr">"可作效应证据"上限。</td>
+      <td data-page-node-id="sqDE2lB8R6cRaItJvBzwhN">模拟中低 BAF 段即使宽 CI 仍能维持 P&lt;0.15。</td>
+      <td data-page-node-id="fkjdULH4hLHRtKIrQBgl0b">偏倚份额不超过 15%，可放心使用。</td>
     </tr>
-    <tr>
-      <td><b>0.45</b>（P 偏倚主导）</td>
-      <td>"混合·假设生成"上限。</td>
-      <td>模拟中 BF 居中段窄 CI 可落入此档。</td>
-      <td>偏倚份额在 15–45% 之间，方向有信号但强度不够，列为假设生成。</td>
+    <tr data-page-node-id="jlD8UfSdyAzjlms0FaaedH">
+      <td data-page-node-id="lip6jFZIp6GLvXuDmXNWbv"><b data-page-node-id="fjW2GFPX9z2M6u7YpwvBZr">0.45</b>（P 偏倚主导）</td>
+      <td data-page-node-id="PFvG55GUytYzDGGhHeoL9g">"混合·假设生成"上限。</td>
+      <td data-page-node-id="8N5piznC30Qnb31sW0Y2Np">模拟中 BAF 居中段窄 CI 可落入此档。</td>
+      <td data-page-node-id="lXW9mNssTGmkHVbOKR54BI">偏倚份额在 15–45% 之间，方向有信号但强度不够，列为假设生成。</td>
     </tr>
-    <tr>
-      <td><b>0.65</b>（P 偏倚主导）</td>
-      <td>"势均力敌"与"不可作"的分界。</td>
-      <td>模拟中高 BF 段即便窄 CI 也几乎全超此阈值。</td>
-      <td>偏倚份额过半，不能作为因果证据使用。</td>
+    <tr data-page-node-id="85I7zNCzpdNTp5EoH8COQ9">
+      <td data-page-node-id="EqBdV2YnytIrAoo4JFo450"><b data-page-node-id="YUUHashlsIpSJep0AFIJvk">0.65</b>（P 偏倚主导）</td>
+      <td data-page-node-id="TNxGEGlGNXc7nMQszY2SSs">"势均力敌"与"不可作"的分界。</td>
+      <td data-page-node-id="9YtPDMRYpLbM5NAlzGHBvx">模拟中高 BAF 段即便窄 CI 也几乎全超此阈值。</td>
+      <td data-page-node-id="FGePrqmxOeHLawv7k4aO6O">偏倚份额过半，不能作为因果证据使用。</td>
     </tr>
   </tbody>
 </table>
 
-<div class="callout">
-<b>临床医生不必重做模拟</b>。本算法的全部阈值已经定型。要做的是：把一篇论文报的 p_cal、BF̂、(BF_lo–BF_hi) 三个数填进来，算法就能给出判定。<b>这就是"算法内部自动完成判断、不暴露宽/窄"的好处：</b>即使完全没读过论文模拟的人，也能正确使用本工具。
+<div class="callout" data-page-node-id="2pVDOoURKiJ7vjLBFIF14b">
+<b data-page-node-id="uNFssqGCFCxlmR1y8RRnkg">临床医生不必重做模拟</b>。本算法的全部阈值已经定型。要做的是：把一篇论文报的 p_cal、BAF̂、(BAF_lo–BAF_hi) 三个数填进来，算法就能给出判定。<b data-page-node-id="xHErTGkXSpZTmyn1lWOUUi">这就是"算法内部自动完成判断、不暴露宽/窄"的好处：</b>即使完全没读过论文模拟的人，也能正确使用本工具。
 </div>
 
-<h2>§5 BF 端点行为可视化 —— 在 BF̂ = 0 和 BF̂ = 1 附近，CI 半宽怎么算</h2>
+<h2 data-page-node-id="6exHuq0psRrHO3xg5G6Pmp">§5 BAF 端点行为可视化：在 BAF̂ = 0 和 BAF̂ = 1 附近，CI 半宽怎么算</h2>
 
-<p>BF̂ 是一个比值，理论范围 [0, 1]，但<b>实际报告的可信区间会被边界"截断"</b>。这是单调变换的固有性质：BF = g(x) = |x|/(|x|+ψ̃) 在 x 接近 0 处斜率极陡，在 x 接近 −ψ̃ 处斜率极平。这意味着：</p>
+<p data-page-node-id="fP6N7FmFMFTQheyk5VbQGT">BAF̂ 是一个比值，理论范围 [0, 1]，但<b data-page-node-id="qMs1vG6F2BDpHviLGUpDoz">实际报告的可信区间会被边界"截断"</b>。这是单调变换的固有性质：BAF = g(x) = |x|/(|x|+ψ̃) 在 x 接近 0 处斜率极陡，在 x 接近 −ψ̃ 处斜率极平。这意味着：</p>
 
-<ul>
-  <li>当 BF̂ <b>接近 0</b>（偏倚份额很小）：BF̂ 区间<b>下界常贴 0</b>（CI 不会变负），实际可用信息<b>只有上半段</b>。</li>
-  <li>当 BF̂ <b>接近 1</b>（偏倚份额几乎完全解释）：BF̂ 区间<b>上界常贴 1</b>（CI 不会超过 1），实际可用信息<b>只有下半段</b>。</li>
-  <li>当 BF̂ <b>居中</b>（典型读数 0.2–0.8）：CI 通常<b>对称</b>，半宽 = (BF_hi − BF_lo)/2 即双向都可用。</li>
+<ul data-page-node-id="ceOrixdpyNDDbepJkkOVWL">
+  <li data-page-node-id="7CK1vNnd4S5GzNC6AshKaF">当 BAF̂ <b data-page-node-id="FEsM9xM2OE6bcp8a3DqNud">接近 0</b>（偏倚份额很小）：BAF̂ 区间<b data-page-node-id="aiVe5TDwYC8nUQGf7n4DjH">下界常贴 0</b>（CI 不会变负），实际可用信息<b data-page-node-id="xxIZzhoFRCXe9FznAkmaCo">只有上半段</b>。</li>
+  <li data-page-node-id="phg7iyuOl3ymMVjCrODojy">当 BAF̂ <b data-page-node-id="F7QwaA1e4tlFzpik4m37ix">接近 1</b>（偏倚份额几乎完全解释）：BAF̂ 区间<b data-page-node-id="T5GtDGG46BeMAO8lysHW29">上界常贴 1</b>（CI 不会超过 1），实际可用信息<b data-page-node-id="xBP3mRIAFVxXARZCyh95Zz">只有下半段</b>。</li>
+  <li data-page-node-id="gNBAlkLeytaD1EM1yWEncq">当 BAF̂ <b data-page-node-id="gs2MDSRzkuFBvxawXCpZGm">居中</b>（典型读数 0.2–0.8）：CI 通常<b data-page-node-id="n6Hkchh89NN7BvpaBpCEa7">对称</b>，半宽 = (BAF_hi − BAF_lo)/2 即双向都可用。</li>
 </ul>
 
-<p>下面四种情况分别图示。算法在第 3–4 步会<b>自动</b>处理截断，临床医生无需手动校正。</p>
+<p data-page-node-id="ofwMoNI5Y8qqEGoQ2Uh2B8">下面四种情况分别图示。算法在第 3–4 步会<b data-page-node-id="paJ98COdds7alpLvx4nICi">自动</b>处理截断，临床医生无需手动校正。</p>
 
-<div class="endpoints-wrap">
-<svg id="bfEndpoints" viewBox="0 0 1060 520" xmlns="http://www.w3.org/2000/svg">
+<div class="endpoints-wrap" data-page-node-id="Vg2EKA8aVFohR2WDSVLXaj">
+<svg id="bfEndpoints" viewBox="0 0 1060 520" xmlns="http://www.w3.org/2000/svg" data-page-node-id="CbMAu0PkzTvNLjx9nezAZp">
   <!-- frame -->
-  <rect x="0" y="0" width="1060" height="520" fill="transparent"/>
+  <rect x="0" y="0" width="1060" height="520" fill="transparent" data-page-node-id="5Sdesmgf0r2Xa3aYGGi6Jc"/>
 
   <!-- title -->
-  <text x="30" y="30" font-size="15" font-weight="700" fill="#1F2A38">BF 端点 CI 半宽行为 · 4 个典型场景</text>
+  <text x="30" y="30" font-size="15" font-weight="700" fill="#1F2A38" data-page-node-id="SWFYUSG5qg3q3r2o8TWs8n">BAF 端点 CI 半宽行为 · 4 个典型场景</text>
 
   <!-- color legend -->
-  <g transform="translate(680,18)">
-    <rect x="0"   y="0" width="14" height="14" fill="#1F6F8B" rx="2"/>
-    <text x="20"  y="12" font-size="12" fill="#1F2A38">BF̂ 点估计</text>
-    <rect x="120" y="0" width="14" height="14" fill="#9AC6DA" rx="2"/>
-    <text x="140" y="12" font-size="12" fill="#1F2A38">CI 区间</text>
-    <rect x="220" y="0" width="14" height="14" fill="#D87C72" rx="2"/>
-    <text x="240" y="12" font-size="12" fill="#1F2A38">截断后的实际可用半区</text>
+  <g transform="translate(680,18)" data-page-node-id="5UVjqBvTHQFfKpts5dgGYM">
+    <rect x="0"   y="0" width="14" height="14" fill="#1F6F8B" rx="2" data-page-node-id="wJ4vnRuEM0KboIDl3oBJaO"/>
+    <text x="20"  y="12" font-size="12" fill="#1F2A38" data-page-node-id="SPewVfTZYnc9wnZElK1viO">BAF̂ 点估计</text>
+    <rect x="120" y="0" width="14" height="14" fill="#9AC6DA" rx="2" data-page-node-id="N8Im1CjFfV2abCsZWLW1l6"/>
+    <text x="140" y="12" font-size="12" fill="#1F2A38" data-page-node-id="LNWwxqyS0O87GwMUG1W3Cy">CI 区间</text>
+    <rect x="220" y="0" width="14" height="14" fill="#D87C72" rx="2" data-page-node-id="EdDtRaNosRPMtHUflA18nS"/>
+    <text x="240" y="12" font-size="12" fill="#1F2A38" data-page-node-id="FsGetGvq5pCkYEbegbxIuE">截断后的实际可用半区</text>
   </g>
 
   <!-- ===== axis template (used by all 4 cases) ===== -->
-  <!-- Each row: x-axis at y=Y0, range 0..1, label "BF ∈ [0,1]" -->
+  <!-- Each row: x-axis at y=Y0, range 0..1, label "BAF ∈ [0,1]" -->
 
   <!-- CASE A: typical mid -->
-  <g transform="translate(40,80)">
-    <text x="0" y="-8" font-size="13" font-weight="700" fill="#1F2A38">① 典型读数（BF̂ = 0.30）</text>
-    <text x="0" y="8" font-size="11.5" fill="#525D6B">CI = [0.18, 0.42]，双向不截断 → 半宽 = 0.12（双向均可用）</text>
+  <g transform="translate(40,80)" data-page-node-id="HZcZJRjj9iZDLIwK9qVjT3">
+    <text x="0" y="-8" font-size="13" font-weight="700" fill="#1F2A38" data-page-node-id="OEdSO4EoWpy0FeCaBBc2xs">① 典型读数（BAF̂ = 0.30）</text>
+    <text x="0" y="8" font-size="11.5" fill="#525D6B" data-page-node-id="TjGk0kaqlUrv9SZckkhyQx">CI = [0.18, 0.42]，双向不截断 → 半宽 = 0.12（双向均可用）</text>
     <!-- axis -->
-    <line x1="0" y1="40" x2="980" y2="40" stroke="#1F2A38" stroke-width="1.4"/>
-    <line x1="0" y1="34" x2="0" y2="46" stroke="#1F2A38" stroke-width="1.4"/>
-    <line x1="980" y1="34" x2="980" y2="46" stroke="#1F2A38" stroke-width="1.4"/>
-    <text x="-6" y="58" font-size="11" fill="#525D6B" text-anchor="end">0</text>
-    <text x="490" y="58" font-size="11" fill="#525D6B" text-anchor="middle">0.5</text>
-    <text x="980" y="58" font-size="11" fill="#525D6B" text-anchor="start">1</text>
+    <line x1="0" y1="40" x2="980" y2="40" stroke="#1F2A38" stroke-width="1.4" data-page-node-id="HKi2zlzY8FpE33zu8Dmn6K"/>
+    <line x1="0" y1="34" x2="0" y2="46" stroke="#1F2A38" stroke-width="1.4" data-page-node-id="l1OF2zTRZKqwImLOsqQHoR"/>
+    <line x1="980" y1="34" x2="980" y2="46" stroke="#1F2A38" stroke-width="1.4" data-page-node-id="kUWPdPsS2GrcChlkD8lZy7"/>
+    <text x="-6" y="58" font-size="11" fill="#525D6B" text-anchor="end" data-page-node-id="g7mjEmxPM3kIkTx4O3yAVL">0</text>
+    <text x="490" y="58" font-size="11" fill="#525D6B" text-anchor="middle" data-page-node-id="JWlrN78NXsLXNs1DGAwIEZ">0.5</text>
+    <text x="980" y="58" font-size="11" fill="#525D6B" text-anchor="start" data-page-node-id="lZBUYRMpVOjSmhJXGL5T6W">1</text>
     <!-- CI band -->
-    <rect x="176" y="30" width="236" height="20" fill="#9AC6DA" opacity="0.85" rx="2"/>
-    <text x="294" y="68" font-size="11" fill="#1F2A38" text-anchor="middle">CI = [0.18, 0.42]</text>
+    <rect x="176" y="30" width="236" height="20" fill="#9AC6DA" opacity="0.85" rx="2" data-page-node-id="CG9ZxXdJdrLWOtzaU2wSmH"/>
+    <text x="294" y="68" font-size="11" fill="#1F2A38" text-anchor="middle" data-page-node-id="vGgelZSbMkmN11pOxC6eH9">CI = [0.18, 0.42]</text>
     <!-- left half (above the line) -->
-    <rect x="176" y="22" width="118" height="8" fill="#D87C72" opacity="0.65" rx="1"/>
+    <rect x="176" y="22" width="118" height="8" fill="#D87C72" opacity="0.65" rx="1" data-page-node-id="63AJxxmyTGCwhafXzisnKH"/>
     <!-- right half -->
-    <rect x="294" y="22" width="118" height="8" fill="#D87C72" opacity="0.65" rx="1"/>
-    <!-- BF point -->
-    <circle cx="294" cy="40" r="6.5" fill="#1F6F8B" stroke="#FFFFFF" stroke-width="2"/>
-    <text x="294" y="14" font-size="12" font-weight="700" fill="#1F6F8B" text-anchor="middle">BF̂ = 0.30</text>
-    <text x="235" y="20" font-size="10.5" fill="#525D6B" text-anchor="middle">左半宽 0.12</text>
-    <text x="353" y="20" font-size="10.5" fill="#525D6B" text-anchor="middle">右半宽 0.12</text>
+    <rect x="294" y="22" width="118" height="8" fill="#D87C72" opacity="0.65" rx="1" data-page-node-id="EFtRVBGbNQGc1Ial5PHh5Z"/>
+    <!-- BAF point -->
+    <circle cx="294" cy="40" r="6.5" fill="#1F6F8B" stroke="#FFFFFF" stroke-width="2" data-page-node-id="v64GCSGYQBWTOfHiqpJZY6"/>
+    <text x="294" y="14" font-size="12" font-weight="700" fill="#1F6F8B" text-anchor="middle" data-page-node-id="37qpBQKmZKhp0BkvjtxJZq">BAF̂ = 0.30</text>
+    <text x="235" y="20" font-size="10.5" fill="#525D6B" text-anchor="middle" data-page-node-id="xnE875QksEOJbZ00i9SboC">左半宽 0.12</text>
+    <text x="353" y="20" font-size="10.5" fill="#525D6B" text-anchor="middle" data-page-node-id="uRAM7h5mnFPhy3XViXDZPu">右半宽 0.12</text>
   </g>
 
   <!-- CASE B: near 0 (lower clipped) -->
-  <g transform="translate(40,200)">
-    <text x="0" y="-8" font-size="13" font-weight="700" fill="#1F2A38">② 接近 0（BF̂ = 0.05）</text>
-    <text x="0" y="8" font-size="11.5" fill="#525D6B">原始 CI = [-0.07, 0.17]，下界被 [0,1] 截断 → CI = [0, 0.17]，半宽 = 0.085（仅上半段可用）</text>
-    <line x1="0" y1="40" x2="980" y2="40" stroke="#1F2A38" stroke-width="1.4"/>
-    <line x1="0" y1="34" x2="0" y2="46" stroke="#1F2A38" stroke-width="1.4"/>
-    <line x1="980" y1="34" x2="980" y2="46" stroke="#1F2A38" stroke-width="1.4"/>
-    <text x="-6" y="58" font-size="11" fill="#525D6B" text-anchor="end">0</text>
-    <text x="490" y="58" font-size="11" fill="#525D6B" text-anchor="middle">0.5</text>
-    <text x="980" y="58" font-size="11" fill="#525D6B" text-anchor="start">1</text>
+  <g transform="translate(40,200)" data-page-node-id="nCCd8RHpP2WQDK7BcpQf5I">
+    <text x="0" y="-8" font-size="13" font-weight="700" fill="#1F2A38" data-page-node-id="AVhSNmVgF4gmhofBdtwo7s">② 接近 0（BAF̂ = 0.05）</text>
+    <text x="0" y="8" font-size="11.5" fill="#525D6B" data-page-node-id="0TlYJMtH8YRBedzZnFDHEv">原始 CI = [-0.07, 0.17]，下界被 [0,1] 截断 → CI = [0, 0.17]，半宽 = 0.085（仅上半段可用）</text>
+    <line x1="0" y1="40" x2="980" y2="40" stroke="#1F2A38" stroke-width="1.4" data-page-node-id="sI8etNDM8g2cIhWHIFRTEi"/>
+    <line x1="0" y1="34" x2="0" y2="46" stroke="#1F2A38" stroke-width="1.4" data-page-node-id="uunZAaEC688ntzQoupdrb8"/>
+    <line x1="980" y1="34" x2="980" y2="46" stroke="#1F2A38" stroke-width="1.4" data-page-node-id="zjqpuKzEETvmxJlcYu4bkU"/>
+    <text x="-6" y="58" font-size="11" fill="#525D6B" text-anchor="end" data-page-node-id="BCJ3utTT5FvpZDqbbH79B8">0</text>
+    <text x="490" y="58" font-size="11" fill="#525D6B" text-anchor="middle" data-page-node-id="Uz4WMJHGHYX5w0MHafKtQd">0.5</text>
+    <text x="980" y="58" font-size="11" fill="#525D6B" text-anchor="start" data-page-node-id="15qs148DWuC9NKAOT0MYKb">1</text>
     <!-- ghost of unclipped lower (would extend below 0) -->
-    <line x1="0" y1="36" x2="0" y2="44" stroke="#A93226" stroke-width="2" stroke-dasharray="3,2"/>
-    <text x="0" y="68" font-size="10.5" fill="#A93226" text-anchor="middle">下界 0</text>
+    <line x1="0" y1="36" x2="0" y2="44" stroke="#A93226" stroke-width="2" stroke-dasharray="3,2" data-page-node-id="gCbA4nbnaFygpPC14xdQuS"/>
+    <text x="0" y="68" font-size="10.5" fill="#A93226" text-anchor="middle" data-page-node-id="wUnhsLEdyHFPhrBMs0buxx">下界 0</text>
     <!-- CI band from 0 to 0.17 -->
-    <rect x="0" y="30" width="167" height="20" fill="#9AC6DA" opacity="0.85" rx="2"/>
-    <text x="83" y="68" font-size="11" fill="#1F2A38" text-anchor="middle">截断后 CI = [0, 0.17]</text>
+    <rect x="0" y="30" width="167" height="20" fill="#9AC6DA" opacity="0.85" rx="2" data-page-node-id="pdAQZM91hprUh3DozKyblp"/>
+    <text x="83" y="68" font-size="11" fill="#1F2A38" text-anchor="middle" data-page-node-id="JItvBF324McoCEaBiNy8Hi">截断后 CI = [0, 0.17]</text>
     <!-- usable half (only right/up) -->
-    <rect x="49" y="22" width="118" height="8" fill="#D87C72" opacity="0.85" rx="1"/>
-    <!-- BF point -->
-    <circle cx="49" cy="40" r="6.5" fill="#1F6F8B" stroke="#FFFFFF" stroke-width="2"/>
-    <text x="49" y="14" font-size="12" font-weight="700" fill="#1F6F8B" text-anchor="middle">BF̂ = 0.05</text>
-    <text x="108" y="20" font-size="10.5" fill="#A93226" text-anchor="middle">仅右半宽可用 0.085</text>
+    <rect x="49" y="22" width="118" height="8" fill="#D87C72" opacity="0.85" rx="1" data-page-node-id="1J0ZpJtuxjDByPsNbCT4Hv"/>
+    <!-- BAF point -->
+    <circle cx="49" cy="40" r="6.5" fill="#1F6F8B" stroke="#FFFFFF" stroke-width="2" data-page-node-id="HMZQv5YRzofFc8e799JF19"/>
+    <text x="49" y="14" font-size="12" font-weight="700" fill="#1F6F8B" text-anchor="middle" data-page-node-id="opWY6sgML31ArEotCRWPvn">BAF̂ = 0.05</text>
+    <text x="108" y="20" font-size="10.5" fill="#A93226" text-anchor="middle" data-page-node-id="xjIv8TAM7ezrOm51zrGc4a">仅右半宽可用 0.085</text>
   </g>
 
   <!-- CASE C: near 1 (upper clipped) -->
-  <g transform="translate(40,320)">
-    <text x="0" y="-8" font-size="13" font-weight="700" fill="#1F2A38">③ 接近 1（BF̂ = 0.92）</text>
-    <text x="0" y="8" font-size="11.5" fill="#525D6B">原始 CI = [0.78, 1.06]，上界被 [0,1] 截断 → CI = [0.78, 1.00]，半宽 = 0.11（仅下半段可用）</text>
-    <line x1="0" y1="40" x2="980" y2="40" stroke="#1F2A38" stroke-width="1.4"/>
-    <line x1="0" y1="34" x2="0" y2="46" stroke="#1F2A38" stroke-width="1.4"/>
-    <line x1="980" y1="34" x2="980" y2="46" stroke="#1F2A38" stroke-width="1.4"/>
-    <text x="-6" y="58" font-size="11" fill="#525D6B" text-anchor="end">0</text>
-    <text x="490" y="58" font-size="11" fill="#525D6B" text-anchor="middle">0.5</text>
-    <text x="980" y="58" font-size="11" fill="#525D6B" text-anchor="start">1</text>
+  <g transform="translate(40,320)" data-page-node-id="emsT37pcZWOeICV4yC4Hh0">
+    <text x="0" y="-8" font-size="13" font-weight="700" fill="#1F2A38" data-page-node-id="hdUKDCbaxkEGmjZfivUAbP">③ 接近 1（BAF̂ = 0.92）</text>
+    <text x="0" y="8" font-size="11.5" fill="#525D6B" data-page-node-id="O72rziaRw3IDLzNDVLP439">原始 CI = [0.78, 1.06]，上界被 [0,1] 截断 → CI = [0.78, 1.00]，半宽 = 0.11（仅下半段可用）</text>
+    <line x1="0" y1="40" x2="980" y2="40" stroke="#1F2A38" stroke-width="1.4" data-page-node-id="p3NUWyqSed50E33k3NJyyo"/>
+    <line x1="0" y1="34" x2="0" y2="46" stroke="#1F2A38" stroke-width="1.4" data-page-node-id="lbe3cWDRJYmKHhDsc4opRr"/>
+    <line x1="980" y1="34" x2="980" y2="46" stroke="#1F2A38" stroke-width="1.4" data-page-node-id="rHgQNonQgF0QuyI0jv4h59"/>
+    <text x="-6" y="58" font-size="11" fill="#525D6B" text-anchor="end" data-page-node-id="EI9DOlAZADHuXK5rPODzMC">0</text>
+    <text x="490" y="58" font-size="11" fill="#525D6B" text-anchor="middle" data-page-node-id="uycpl4EGTQt1HOlimgfP8I">0.5</text>
+    <text x="980" y="58" font-size="11" fill="#525D6B" text-anchor="start" data-page-node-id="hawQzhO4M5yw7Fcvi8EISX">1</text>
     <!-- ghost of unclipped upper (would extend above 1) -->
-    <line x1="980" y1="36" x2="980" y2="44" stroke="#A93226" stroke-width="2" stroke-dasharray="3,2"/>
-    <text x="980" y="68" font-size="10.5" fill="#A93226" text-anchor="middle">上界 1</text>
+    <line x1="980" y1="36" x2="980" y2="44" stroke="#A93226" stroke-width="2" stroke-dasharray="3,2" data-page-node-id="eaDzdbt0HDQa3Np1V5nRjm"/>
+    <text x="980" y="68" font-size="10.5" fill="#A93226" text-anchor="middle" data-page-node-id="Ll4g3poz0IMFhkuUOBjiHd">上界 1</text>
     <!-- CI band from 0.78 to 1 -->
-    <rect x="764" y="30" width="216" height="20" fill="#9AC6DA" opacity="0.85" rx="2"/>
-    <text x="872" y="68" font-size="11" fill="#1F2A38" text-anchor="middle">截断后 CI = [0.78, 1.00]</text>
+    <rect x="764" y="30" width="216" height="20" fill="#9AC6DA" opacity="0.85" rx="2" data-page-node-id="ChJY9scPRfAMD42iVHX1Af"/>
+    <text x="872" y="68" font-size="11" fill="#1F2A38" text-anchor="middle" data-page-node-id="C88o1AIdrNXE1BI9C5HX8x">截断后 CI = [0.78, 1.00]</text>
     <!-- usable half (only left/down) -->
-    <rect x="804" y="22" width="118" height="8" fill="#D87C72" opacity="0.85" rx="1"/>
-    <!-- BF point -->
-    <circle cx="902" cy="40" r="6.5" fill="#1F6F8B" stroke="#FFFFFF" stroke-width="2"/>
-    <text x="902" y="14" font-size="12" font-weight="700" fill="#1F6F8B" text-anchor="middle">BF̂ = 0.92</text>
-    <text x="804" y="20" font-size="10.5" fill="#A93226" text-anchor="middle">仅左半宽可用 0.11</text>
+    <rect x="804" y="22" width="118" height="8" fill="#D87C72" opacity="0.85" rx="1" data-page-node-id="TpTKb5gRBrVrHZgF0It8TN"/>
+    <!-- BAF point -->
+    <circle cx="902" cy="40" r="6.5" fill="#1F6F8B" stroke="#FFFFFF" stroke-width="2" data-page-node-id="TqLHjIE0PvCEtIc3vIzYX3"/>
+    <text x="902" y="14" font-size="12" font-weight="700" fill="#1F6F8B" text-anchor="middle" data-page-node-id="TtXwa528Jbl5oiSbnuMt68">BAF̂ = 0.92</text>
+    <text x="804" y="20" font-size="10.5" fill="#A93226" text-anchor="middle" data-page-node-id="38Y54dHwpnqcNldQCkiEOn">仅左半宽可用 0.11</text>
   </g>
 
   <!-- CASE D: mid-range with wide CI -->
-  <g transform="translate(40,440)">
-    <text x="0" y="-8" font-size="13" font-weight="700" fill="#1F2A38">④ 中段 + 宽 CI（BF̂ = 0.50）</text>
-    <text x="0" y="8" font-size="11.5" fill="#525D6B">CI = [0.20, 0.80]，不截断但极宽 → 半宽 = 0.30（算法在内部映射到"宽区间"档）</text>
-    <line x1="0" y1="40" x2="980" y2="40" stroke="#1F2A38" stroke-width="1.4"/>
-    <line x1="0" y1="34" x2="0" y2="46" stroke="#1F2A38" stroke-width="1.4"/>
-    <line x1="980" y1="34" x2="980" y2="46" stroke="#1F2A38" stroke-width="1.4"/>
-    <text x="-6" y="58" font-size="11" fill="#525D6B" text-anchor="end">0</text>
-    <text x="490" y="58" font-size="11" fill="#525D6B" text-anchor="middle">0.5</text>
-    <text x="980" y="58" font-size="11" fill="#525D6B" text-anchor="start">1</text>
-    <rect x="196" y="30" width="588" height="20" fill="#9AC6DA" opacity="0.85" rx="2"/>
-    <text x="490" y="68" font-size="11" fill="#1F2A38" text-anchor="middle">CI = [0.20, 0.80]</text>
-    <rect x="196" y="22" width="294" height="8" fill="#D87C72" opacity="0.85" rx="1"/>
-    <rect x="490" y="22" width="294" height="8" fill="#D87C72" opacity="0.85" rx="1"/>
-    <circle cx="490" cy="40" r="6.5" fill="#1F6F8B" stroke="#FFFFFF" stroke-width="2"/>
-    <text x="490" y="14" font-size="12" font-weight="700" fill="#1F6F8B" text-anchor="middle">BF̂ = 0.50</text>
-    <text x="343" y="20" font-size="10.5" fill="#525D6B" text-anchor="middle">左半宽 0.30</text>
-    <text x="637" y="20" font-size="10.5" fill="#525D6B" text-anchor="middle">右半宽 0.30</text>
+  <g transform="translate(40,440)" data-page-node-id="EkOhVAR7yf6NtYDjCVWXU1">
+    <text x="0" y="-8" font-size="13" font-weight="700" fill="#1F2A38" data-page-node-id="9ZKu6wI4V2la6Wyqc0JdGv">④ 中段 + 宽 CI（BAF̂ = 0.50）</text>
+    <text x="0" y="8" font-size="11.5" fill="#525D6B" data-page-node-id="WnC0KBL73rgA6TcESBz97o">CI = [0.20, 0.80]，不截断但极宽 → 半宽 = 0.30（算法在内部映射到"宽区间"档）</text>
+    <line x1="0" y1="40" x2="980" y2="40" stroke="#1F2A38" stroke-width="1.4" data-page-node-id="NKKfZZacAu5i5H0pFN4KIM"/>
+    <line x1="0" y1="34" x2="0" y2="46" stroke="#1F2A38" stroke-width="1.4" data-page-node-id="VthrsiyCDjNpWIVhzYHHFR"/>
+    <line x1="980" y1="34" x2="980" y2="46" stroke="#1F2A38" stroke-width="1.4" data-page-node-id="2H5zuCLvH87Sfs5cj84mB9"/>
+    <text x="-6" y="58" font-size="11" fill="#525D6B" text-anchor="end" data-page-node-id="eL3AWx8WbHUKbIV7znA6Zh">0</text>
+    <text x="490" y="58" font-size="11" fill="#525D6B" text-anchor="middle" data-page-node-id="1AfZ7ookNcUxuKpZF0Iu3G">0.5</text>
+    <text x="980" y="58" font-size="11" fill="#525D6B" text-anchor="start" data-page-node-id="OG9mvVo5CrJEE38eYBPyME">1</text>
+    <rect x="196" y="30" width="588" height="20" fill="#9AC6DA" opacity="0.85" rx="2" data-page-node-id="y6uyXNofHrgMcBZR6NvbbZ"/>
+    <text x="490" y="68" font-size="11" fill="#1F2A38" text-anchor="middle" data-page-node-id="yYQqF7Gl8oFrRx549DQNqY">CI = [0.20, 0.80]</text>
+    <rect x="196" y="22" width="294" height="8" fill="#D87C72" opacity="0.85" rx="1" data-page-node-id="0TqNAKk132BsaWkzs0Ctnd"/>
+    <rect x="490" y="22" width="294" height="8" fill="#D87C72" opacity="0.85" rx="1" data-page-node-id="vI5f12QktQxKZMcjxzXd2L"/>
+    <circle cx="490" cy="40" r="6.5" fill="#1F6F8B" stroke="#FFFFFF" stroke-width="2" data-page-node-id="uyBmHMiEM9mFesWpr1PTLG"/>
+    <text x="490" y="14" font-size="12" font-weight="700" fill="#1F6F8B" text-anchor="middle" data-page-node-id="6Mi4RLUjqUdUDekKO0CBZT">BAF̂ = 0.50</text>
+    <text x="343" y="20" font-size="10.5" fill="#525D6B" text-anchor="middle" data-page-node-id="6wGisifad1x249LWsZVBGA">左半宽 0.30</text>
+    <text x="637" y="20" font-size="10.5" fill="#525D6B" text-anchor="middle" data-page-node-id="d0nnygUsr5RISXigvgreP7">右半宽 0.30</text>
   </g>
 </svg>
-<div class="legend">
-  <span style="background:#D87C72;color:#fff;">实际可用半区</span>
-  <span style="background:#9AC6DA;color:#1F2A38;">整段 CI（含截断）</span>
-  <span style="background:#1F6F8B;color:#fff;">BF̂ 点估计</span>
-  · ① ④ 为典型双向可用情况；② ③ 在 BF 端点处 CI 单方向可用，半宽取单向。这是算法内部取 <code>max(窄,宽)</code> 保守判读的几何来源。
+<div class="legend" data-page-node-id="u9DuuHksibwQzspmbvNmlL">
+  <span style="background:#D87C72;color:#fff;" data-page-node-id="zsjSqKyfeDkDGH2dqvsO4D">实际可用半区</span>
+  <span style="background:#9AC6DA;color:#1F2A38;" data-page-node-id="BOshkMqxOhFENVUGMVjWMR">整段 CI（含截断）</span>
+  <span style="background:#1F6F8B;color:#fff;" data-page-node-id="iVuGIhkRElYTRBp8BJCaLn">BAF̂ 点估计</span>
+  · ① ④ 为典型双向可用情况；② ③ 在 BAF 端点处 CI 单方向可用，半宽取单向。这是算法内部取 <code data-page-node-id="mg1mpryIi2IL8GClbtFrSL">max(窄,宽)</code> 保守判读的几何来源。
 </div>
 </div>
 
-<h3>关键结论：医生只读「BF̂ + CI」即可</h3>
-<div class="callout">
-<b>医生完全不需要自己区分"窄/宽"</b>。BF̂ = 0.05 时 CI 下界被 0 截断、上半区可用；BF̂ = 0.92 时 CI 上界被 1 截断、下半区可用；BF̂ = 0.30 时双向可用。这些差异<b>全部由算法在内部自动处理</b>，输出仍是同一份"判语 + P(偏倚主导)≈X%"，<b>没有任何一步需要医生参与</b>。
+<h3 data-page-node-id="Qt9rBk3tZzz5s3LfamCX0k">关键结论：医生只读「BAF̂ + CI」即可</h3>
+<div class="callout" data-page-node-id="E6fY9lylKU80BLEDxhyh9w">
+<b data-page-node-id="jBUOy2UcFLyBeQ2qvVm82H">医生完全不需要自己区分"窄/宽"</b>。BAF̂ = 0.05 时 CI 下界被 0 截断、上半区可用；BAF̂ = 0.92 时 CI 上界被 1 截断、下半区可用；BAF̂ = 0.30 时双向可用。这些差异<b data-page-node-id="0SUt2Vkpi7tUJbh6XQePtB">全部由算法在内部自动处理</b>，输出仍是同一份"判语 + P(偏倚主导)≈X%"，<b data-page-node-id="neO4sBF8BCmGoJciKS0TkR">没有任何一步需要医生参与</b>。
 </div>
 
-<h2>§6 单篇文献应用示例</h2>
+<h2 data-page-node-id="kweyHhQFR4urM00M8OvCFl">§6 单篇文献应用示例</h2>
 
-<h3>模拟查表：12 段读数桶（BF̂ → P(偏倚主导)）</h3>
-<p>下面这张表就是第 3–4 步要查的「模拟查表」。它来自 64 万次模拟，按 BF̂ 大小分成 12 个读数桶；每个桶给出<b>窄区间</b>和<b>宽区间</b>两种情况下「真值实际偏倚主导」的比例，并预先取两者较大值（保守值）映射到判语。临床医生实际只需看最后一列「保守值 + 判语」；窄/宽两列仅作透明展示，算法内部自动选用。</p>
-<table>
-  <thead>
-    <tr><th style="width:10%">桶</th><th>BF̂ 读数中心</th><th>窄档 P(偏倚主导)</th><th>宽档 P(偏倚主导)</th><th>保守值 max(窄,宽)</th><th>算法判语</th></tr>
+<h3 data-page-node-id="9uFcuijtnsCT9ytYnWHHPF">模拟查表：12 段读数桶（BAF̂ → P(偏倚主导)）</h3>
+<p data-page-node-id="9mV69KSCGKh3IKCOIwMuJ7">下面这张表就是第 3–4 步要查的「模拟查表」。它来自 96 万次模拟，按 BAF̂ 大小分成 12 个读数桶；每个桶给出<b data-page-node-id="XsihlDPcckQUvm82rxTM7G">窄区间</b>和<b data-page-node-id="Wlz5o1y295BceVxab4y8dU">宽区间</b>两种情况下「真值实际偏倚主导」的比例，并预先取两者较大值（保守值）映射到判语。临床医生实际只需看最后一列「保守值 + 判语」；窄/宽两列仅作透明展示，算法内部自动选用。</p>
+<table data-page-node-id="wdlVuPL8Xq2NFBhw3hzFqk">
+  <thead data-page-node-id="DB4P3A67MlwyCX6dVEY2hi">
+    <tr data-page-node-id="Ar5wARDj0C4n7yJ6TEPQkE"><th style="width:10%" data-page-node-id="HW6PcKfTFRSfLTvHWDjm2Q">桶</th><th data-page-node-id="65z8aoP5kIjIoWH8EcGVoc">BAF̂ 读数中心</th><th data-page-node-id="AVHJChhAEukYHep6Fb2z2z">窄档 P(偏倚主导)</th><th data-page-node-id="hv9BfHpYjhg9MFTJQ6RVni">宽档 P(偏倚主导)</th><th data-page-node-id="HjzjEZEs92NWuiMkH6kYg3">保守值 max(窄,宽)</th><th data-page-node-id="TjEc6lEVY8suSeQwzbMFtg">算法判语</th></tr>
   </thead>
-  <tbody>
-    <tr><td>1</td><td>0.06</td><td>0.0019</td><td>0.0713</td><td>0.0713</td><td><span class="pill pill-ok">可作效应证据</span></td></tr>
-    <tr><td>2</td><td>0.169</td><td>0.0077</td><td>0.0757</td><td>0.0757</td><td><span class="pill pill-ok">可作效应证据</span></td></tr>
-    <tr><td>3</td><td>0.258</td><td>0.0269</td><td>0.1496</td><td>0.1496</td><td><span class="pill pill-ok">可作效应证据</span></td></tr>
-    <tr style="background:#EAF4F8"><td>④（本例）</td><td>0.329</td><td>0.0878</td><td>0.2650</td><td>0.2650</td><td><span class="pill pill-mx">混合·假设生成</span></td></tr>
-    <tr><td>5</td><td>0.388</td><td>0.2151</td><td>0.4160</td><td>0.4160</td><td><span class="pill pill-mx">混合·假设生成</span></td></tr>
-    <tr><td>6</td><td>0.439</td><td>0.3952</td><td>0.5660</td><td>0.5660</td><td><span class="pill pill-tie">势均力敌·暂不下结论</span></td></tr>
-    <tr><td>7</td><td>0.488</td><td>0.5829</td><td>0.7150</td><td>0.7150</td><td><span class="pill pill-no">不可作效应证据</span></td></tr>
-    <tr><td>8</td><td>0.541</td><td>0.7724</td><td>0.8030</td><td>0.8030</td><td><span class="pill pill-no">不可作效应证据</span></td></tr>
-    <tr><td>9</td><td>0.602</td><td>0.9055</td><td>0.8738</td><td>0.9055</td><td><span class="pill pill-no">不可作效应证据</span></td></tr>
-    <tr><td>10</td><td>0.679</td><td>0.9675</td><td>0.9106</td><td>0.9675</td><td><span class="pill pill-no">不可作效应证据</span></td></tr>
-    <tr><td>11</td><td>0.780</td><td>0.9906</td><td>0.9358</td><td>0.9906</td><td><span class="pill pill-no">不可作效应证据</span></td></tr>
-    <tr><td>12</td><td>0.919</td><td>0.9967</td><td>0.9389</td><td>0.9967</td><td><span class="pill pill-no">不可作效应证据</span></td></tr>
+  <tbody data-page-node-id="KS5NitQoLqLkaYgXcV2j4L">
+    <tr data-page-node-id="7Pr0uPLwpOUfjo8bAgRFar"><td data-page-node-id="6tJ9IAGkiSEnw98oVx4oA7">1</td><td data-page-node-id="xpe5pje93CcIAs7WvXkbAZ">0.06</td><td data-page-node-id="5G3YDdBWyHB7swDI9uCQIG">0.0019</td><td data-page-node-id="kK7PVAIwNJWNofaNMJaDqV">0.0713</td><td data-page-node-id="3WH4a0iaukphMGS9PRbVYG">0.0713</td><td data-page-node-id="YzFVMK0Q3WKcfahNG7j3Sm"><span class="pill pill-ok" data-page-node-id="rytcKeivQGtqckia25TXs8">可作效应证据</span></td></tr>
+    <tr data-page-node-id="I53F3Yr0cWqR83tyO48TNn"><td data-page-node-id="0MNdISLgpQBnMIb54ePY3y">2</td><td data-page-node-id="C10wyQKXovj7nCdqTJXtg0">0.169</td><td data-page-node-id="4qSROeVW6zZPDNPiV2t1G5">0.0077</td><td data-page-node-id="GxOSM14OYwci9aujghVmt8">0.0757</td><td data-page-node-id="3bDUBH7lf8UQs9deg2GE7c">0.0757</td><td data-page-node-id="HA91AfLkiutdHjSDTYSGLa"><span class="pill pill-ok" data-page-node-id="6HDlz0eVpBa9HOfC5W7PKD">可作效应证据</span></td></tr>
+    <tr data-page-node-id="zdptl9bNquV72AHAUGVCfe"><td data-page-node-id="BvONE8wwgsEyhy5fvkBv4W">3</td><td data-page-node-id="pQn6xbCLAPFxoMfEYJb7op">0.258</td><td data-page-node-id="pWguDitDmylrs8uYwvLOwm">0.0269</td><td data-page-node-id="lgeuy5Fe37mcWK0KdeVcdu">0.1496</td><td data-page-node-id="Q6eUBjFw7jmpkLWNKFRhQy">0.1496</td><td data-page-node-id="ooN5lRcJCzMjHsHwVZdz4O"><span class="pill pill-ok" data-page-node-id="Zq3MZS5RqNv404BHoMQsD9">可作效应证据</span></td></tr>
+    <tr style="background:#EAF4F8" data-page-node-id="GUiFiq8rRwQH3Df5vKh4dp"><td data-page-node-id="KJ5hVvZVhuCg4GOPT92Gub">④（本例）</td><td data-page-node-id="Lv1qRSqcO0okpOp31aJ7KI">0.329</td><td data-page-node-id="XkP5nCZYrK1oFGVghinLTf">0.0878</td><td data-page-node-id="etnP3q2YHWBE9k7aSffFQz">0.2650</td><td data-page-node-id="px39MXQGVzGH7srnoR3Duq">0.2650</td><td data-page-node-id="FoYatE6RMHYnACly0d3ALI"><span class="pill pill-mx" data-page-node-id="REw1Zld82VeObUIOak11XB">混合·假设生成</span></td></tr>
+    <tr data-page-node-id="oGQOoWDRTqpvoE2abhFftg"><td data-page-node-id="9nQcf0RWfQYjajooi1BEBX">5</td><td data-page-node-id="s7sEAToP0GjzOSgDDiCr2U">0.388</td><td data-page-node-id="yiyMuMsqnThaRQCKsQGoXA">0.2151</td><td data-page-node-id="aPJ5rP1OGrqOlGOliHvvW8">0.4160</td><td data-page-node-id="6yZVRkae7Afgac14zMBvWP">0.4160</td><td data-page-node-id="m11AABg4fH6SOcOAB8BA6y"><span class="pill pill-mx" data-page-node-id="VimolLkM95MxmVlkNQvbTK">混合·假设生成</span></td></tr>
+    <tr data-page-node-id="9ZxNcEQGuGtx557uu4mMc2"><td data-page-node-id="fy61BBvAMngVZE0ZYR535o">6</td><td data-page-node-id="OGHLRa1WAln8rAjT0VP1ZM">0.439</td><td data-page-node-id="tQEl4ROjY9a583cXSQAHS8">0.3952</td><td data-page-node-id="tHfa1EW9zyxKGFmRnZOQSt">0.5660</td><td data-page-node-id="LzB00BNIHRYOAe0uCZdzdU">0.5660</td><td data-page-node-id="JR8uYgjpnWvypkzPj1pnNW"><span class="pill pill-tie" data-page-node-id="3kYPc6O8SCnlpnMo55mpO1">势均力敌·暂不下结论</span></td></tr>
+    <tr data-page-node-id="kwPdsjDPG6MUHyWTFG3ivc"><td data-page-node-id="YXnEFEh1A0l7pzSRmXepvC">7</td><td data-page-node-id="tWM2Pji2LrYGCiBqlcjUFJ">0.488</td><td data-page-node-id="HlVJMv7t4Jm6ST7Dr355h2">0.5829</td><td data-page-node-id="D8etZfZmFXwc0Iocs6xJXD">0.7150</td><td data-page-node-id="COMwT9wnX4diyWFZ51w3V1">0.7150</td><td data-page-node-id="4XuzrtKTJC3m5LOnE4Csfm"><span class="pill pill-no" data-page-node-id="xpAj7MrTwCBndoKE21GVIG">不可作效应证据</span></td></tr>
+    <tr data-page-node-id="2spEzC1IJU93AmGcWYAWUU"><td data-page-node-id="eEN1NwCtHe8HqGssfBSxz1">8</td><td data-page-node-id="9yxmNIIiB5Wbvmn5uYLHvY">0.541</td><td data-page-node-id="B1Z1TN28jTtWFcQ9u8DBiE">0.7724</td><td data-page-node-id="VPDYBnkTZoLr8sMAt3KhmX">0.8030</td><td data-page-node-id="Shnwe7P8m9AmPQFIH0Vj2f">0.8030</td><td data-page-node-id="DOwJHD65VpsiqhG3tWvITn"><span class="pill pill-no" data-page-node-id="muZgzheINixl8841WAINHD">不可作效应证据</span></td></tr>
+    <tr data-page-node-id="7eFTVIDcnwpRD08f5K5FSL"><td data-page-node-id="onqEcSpL4TOJyoElq6GJ90">9</td><td data-page-node-id="1utS6iLzPV6mQY4OAn8mcr">0.602</td><td data-page-node-id="9GbSWsAoDCwYctzpfhTDKK">0.9055</td><td data-page-node-id="7T9VYR9CIsIraDZYqFDtp0">0.8738</td><td data-page-node-id="QonUAQLDCjmJAlfMiqSKzK">0.9055</td><td data-page-node-id="iD7JmPf8UfTUgk3pJ8EyG8"><span class="pill pill-no" data-page-node-id="pBTS0bB9l5OSD0dINVNOci">不可作效应证据</span></td></tr>
+    <tr data-page-node-id="vw9GomKZkyHH9Zr9B5AsSt"><td data-page-node-id="raLfHSbFpzRVKYC9R3cxkE">10</td><td data-page-node-id="O85mAzYCSCfA1XwnhPE8jt">0.679</td><td data-page-node-id="CJzlqBT7noSy9kTIpqCKOC">0.9675</td><td data-page-node-id="EpqXkRhXJUSTsOCS0e2ZXV">0.9106</td><td data-page-node-id="7EtVKgw1W5zDQKeRtvVa8u">0.9675</td><td data-page-node-id="Bub6ErI5t53fnA4pR7MpYh"><span class="pill pill-no" data-page-node-id="ITU8SWJ8su4wnrhGtlaej5">不可作效应证据</span></td></tr>
+    <tr data-page-node-id="mq5DwRM9D95yr5jCgYDAnU"><td data-page-node-id="vc7eZJqM5IqFmb605goGV6">11</td><td data-page-node-id="ua2obS9CKQ6LmKRvNme19Z">0.780</td><td data-page-node-id="ltKWQYkBunuZNHG5myPXFH">0.9906</td><td data-page-node-id="u3glbrsrI68jPjU5DK0s9D">0.9358</td><td data-page-node-id="zWHFjrKh7tOXdiUASOK40w">0.9906</td><td data-page-node-id="ECLosFeJ69pKXiuDFYQ1iX"><span class="pill pill-no" data-page-node-id="zKGeVWsEKR32BwZaKZ2EES">不可作效应证据</span></td></tr>
+    <tr data-page-node-id="AxATOBc0Xi8tryuGbw6i5K"><td data-page-node-id="OWlg5RflAxSYI7fhVM9ui6">12</td><td data-page-node-id="xMdBLRXrJc3ZQ4afrHSAQv">0.919</td><td data-page-node-id="cLsfNaMZAjvjeJfWPyP0ig">0.9967</td><td data-page-node-id="7tCi0uQd71jwqnXRc8sDzn">0.9389</td><td data-page-node-id="GXcIP9b6TSSSbHOXw3ZRFY">0.9967</td><td data-page-node-id="yxqSEwNbvyCM68IW5aGqeA"><span class="pill pill-no" data-page-node-id="qSkCbSV9BdjOmhUPq1QB1H">不可作效应证据</span></td></tr>
   </tbody>
 </table>
-<p class="legend" style="margin-top:8px">注：桶号按 BF̂ 升序；判语由保守值经 §3 第 5 步阈值（&lt;0.15 / 0.15–0.45 / 0.45–0.65 / ≥0.65）判定。本例 BF̂ = 0.33 落在第 4 桶（已高亮），保守值 0.265 → 混合·假设生成。</p>
+<p class="legend" style="margin-top:8px" data-page-node-id="hrtUr18VG6AueKfLDbU3GR">注：桶号按 BAF̂ 升序；判语由保守值经 §3 第 5 步阈值（&lt;0.15 / 0.15–0.45 / 0.45–0.65 / ≥0.65）判定。本例 BAF̂ = 0.33 落在第 4 桶（已高亮），保守值 0.265 → 混合·假设生成。</p>
 
-<p>假设某观察性研究报告：</p>
-<ul>
-  <li>校准 p 值 = <code>0.012</code></li>
-  <li>BF̂ = <code>0.33</code></li>
-  <li>BF 的 95% CI = <code>[0.15, 0.50]</code></li>
+<p data-page-node-id="AaVpcCv59ZxjwWMn0rj3RM">假设某观察性研究报告：</p>
+<ul data-page-node-id="tSC1BtsK1nAU8pOFUPD5JS">
+  <li data-page-node-id="KhmmuNLahFhYJrVeSyaQq0">校准 p 值 = <code data-page-node-id="Dn9HXNL5HtYpBxuxGjMN3y">0.012</code></li>
+  <li data-page-node-id="z05dgHVCbCTFGpA1ul6Quu">BAF̂ = <code data-page-node-id="lt5CWorKc3FzMajMsgftKJ">0.33</code></li>
+  <li data-page-node-id="CNqIt2ssh9To1Ubw6jiUce">BAF 的 95% CI = <code data-page-node-id="MqGR6GVfdNrNTkW0uSuK9o">[0.15, 0.50]</code></li>
 </ul>
 
-<p><b>手算演示：</b></p>
-<pre>
+<p data-page-node-id="9YzskBmdlsD4I7juqVWXpZ"><b data-page-node-id="7S8GdA27l0PHCClTZnFqkt">手算演示：</b></p>
+<pre data-page-node-id="X73ufiBYtyFHY5ZWDlorxq">
 1. p_cal = 0.012 < 0.05  → 进入第二层
 2. CI_half_width = (0.50 - 0.15) / 2 = 0.175  → 区间偏宽
-3. BIN: BF̂ = 0.33 → 落在第 4 桶（x ≈ 0.329）
+3. BIN: BAF̂ = 0.33 → 落在第 4 桶（x ≈ 0.329）
 4. 查表：第 4 桶 窄档 pBD = 0.0878，宽档 pBD = 0.265
 5. P_bias_dom = max(0.0878, 0.265) = 0.265
 6. P_bias_dom = 0.265 落在 0.15–0.45 → 混合·假设生成
 </pre>
 
-<p><b>输出给医生：</b></p>
-<div style="background: var(--bg-soft); border: 1px solid var(--line); border-radius: 6px; padding: 12px 16px; margin: 10px 0;">
-  <div><b>BF̂ = 0.33 (CI 0.15–0.50)，校准 p = 0.012</b></div>
-  <div style="margin-top:8px"><span class="pill pill-mx">混合·假设生成</span>
-    &nbsp; P(偏倚主导) ≈ <b style="font-size:18px;color:#8B6B00">26.5%</b>
+<p data-page-node-id="zeHbU6pR4h3k5uKJOXuJW7"><b data-page-node-id="ZAaLZ3NnNYhf3PaMuIVM3W">输出给医生：</b></p>
+<div style="background: var(--bg-soft); border: 1px solid var(--line); border-radius: 6px; padding: 12px 16px; margin: 10px 0;" data-page-node-id="SHtA9l40NgmuBvGa6JCoYC">
+  <div data-page-node-id="OYOH5QCWVaJNg8m26ECgp6"><b data-page-node-id="RPgWae5BppYTky9ENmcHYo">BAF̂ = 0.33 (CI 0.15–0.50)，校准 p = 0.012</b></div>
+  <div style="margin-top:8px" data-page-node-id="8pwpYbVmWhqJRPkxuYTsCM"><span class="pill pill-mx" data-page-node-id="oUrqxETiW627zGVt3lft4B">混合·假设生成</span>
+    &nbsp; P(偏倚主导) ≈ <b style="font-size:18px;color:#8B6B00" data-page-node-id="Zl0GZG7rDyl2N7fQ3eiVKC">26.5%</b>
   </div>
-  <div style="margin-top:6px; color: var(--fg-mute); font-size:13px;">
+  <div style="margin-top:6px; color: var(--fg-mute); font-size:13px;" data-page-node-id="Dxj7Jq6Q2L7N6jn3aNLbjS">
     解读：偏倚份额约 1/3、信号显著，但 CI 偏宽使真值偏倚主导概率达 26.5%，落在混合区间（15–45%）。建议作为假设生成使用，需更多独立证据支持。
   </div>
 </div>
 
-<h2>§7 何时<b>不要</b>使用本算法</h2>
+<h2 data-page-node-id="GECknsZSTQ23bPLeQpeKOd">§7 何时<b data-page-node-id="U5ezoeAVsPeNhKH5UtEroB">不要</b>使用本算法</h2>
 
-<ul>
-  <li><b>RCT 文献</b> —— 已经随机化，本工具不适用；按 RCT 标准判读即可。</li>
-  <li><b>未做经验校准的观察性研究</b> —— 必须先用 OHDSI EmpiricalCalibration 校准后再用本算法；未校准的 p 值不可输入。</li>
-  <li><b>极端稀有事件（n&lt;100 的阴性对照）</b> —— 校准 CI 极宽，结果不可靠；应优先报告方向而非具体概率。</li>
-  <li><b>治疗领域/人群与本模拟研究（β 受体阻滞剂、MIMIC-IV）差异巨大</b> —— 阈值 0.15/0.45/0.65 是经验值，跨场景迁移需要重新做一组 64 万次模拟。</li>
+<ul data-page-node-id="OsryVpbGxVNH3setj0dDCB">
+  <li data-page-node-id="ZwbBxlQk7C060fEFPzxHm4"><b data-page-node-id="5bRYnXHdPFWo1XgLCOfT2o">RCT 文献</b>：已经随机化，本工具不适用；按 RCT 标准判读即可。</li>
+  <li data-page-node-id="AaOkKOOHUvQMpYpjD5a05g"><b data-page-node-id="SQ163MV4tQxb7z7yKlfEZo">未做经验校准的观察性研究</b>：必须先用 OHDSI EmpiricalCalibration 校准后再用本算法；未校准的 p 值不可输入。</li>
+  <li data-page-node-id="ADTUbobKCguhmWlW9FbEJA"><b data-page-node-id="192OxKue4VloF4lopSvH2r">极端稀有事件（n&lt;100 的阴性对照）</b>：校准 CI 极宽，结果不可靠；应优先报告方向而非具体概率。</li>
+  <li data-page-node-id="4fdVfBByjJC1urbm1aKcBU"><b data-page-node-id="JPeAYYEtFtGZB4CKMjdrWI">治疗领域/人群与本模拟研究（β 受体阻滞剂、MIMIC-IV）差异巨大</b>：阈值 0.15/0.45/0.65 是经验值，跨场景迁移需要重新做一组 96 万次模拟。</li>
 </ul>
 
-<h2>§8 常见问题</h2>
+<h2 data-page-node-id="xQLZG7OzTndmbZOBIiETkg">§8 常见问题</h2>
 
-<ol class="qa">
-  <li><b>Q：算法需要我提供"窄"还是"宽"吗？</b><br>
-      A：<b>不需要</b>。你只填入 BF̂ 区间即可。算法内部自动识别区间宽度并取保守值。你唯一需要做的，是如实报告论文里的 CI。</li>
-  <li><b>Q：BF̂ = 0 怎么处理？</b><br>
-      A：BF̂ = 0 意味着校准后几乎看不到经验偏倚。如果同时校准 p &lt; 0.05，算法进入第二层；BF̂ = 0 通常对应"可作效应证据"（除非 CI 宽得离谱，但区间会触底于 0，半宽通常很小）。</li>
-  <li><b>Q：BF̂ = 1 怎么处理？</b><br>
-      A：BF̂ = 1 意味着整个效应都被系统偏倚解释。如果 p_cal &lt; 0.05（信号居然显著）但 BF̂ = 1，几乎肯定是"假信号"——算法的"不可作效应证据"档正是为这种情况设计的。</li>
-  <li><b>Q：为什么"势均力敌"是一个独立档？为什么不归到"不可作"？</b><br>
-      A：因为 BF 居中、CI 偏宽时，<b>我们不知道是真信号还是偏倚主导</b>。把它判为"不可作"会丢掉可能的真效应；判为"可作"又会引入假阳性。势均力敌档说"<b>待证据累积</b>"——不是放弃判断，是给一个更细的处理路径（参见 v38draft §9 混合区处理清单）。</li>
-  <li><b>Q：如果论文报告的是 BF（不报告 CI）怎么办？</b><br>
-      A：算法需要 BF 的 CI 才能定位 12 段读数桶。<b>缺 CI 不要硬猜</b>，请直接向作者索要 Bootstrap CI 后再判。</li>
-  <li><b>Q：算法输出"P(偏倚主导) ≈ 3.1%"，但这一位数是不是太粗？</b><br>
-      A：保留 1 位小数是设计选择。<b>刻意粗一些</b>是因为概率本身来自 64 万次模拟的经验分布，单数点估计的尾位数字不应过度解读。如有需要可在内部查 D.relia 数据拿更高精度，但给临床的输出就到这里为止。</li>
-  <li><b>Q：软件报给我的 95% CI，到底是「窄档」还是「宽档」？</b><br>
-      A：<b>只有一个 CI，它本质既不是窄也不是宽。</b>软件从你的 μ̂_B 经 Bootstrap 得到唯一一条 95% CI（如 [0.10, 0.45]），用单调变换 g 映射成 BF 的 CI，这就是你看到的全部。所谓「窄/宽」只是算法拿这条 CI 的<b>半宽</b>（如 (0.45−0.10)/2 = 0.175）去跟固定阈值 0.133 比一比、贴的内部标签，用来决定去查哪一张预计算表。<br>
-      两张表（<code>D.reliaSplit.narrow</code> / <code>.wide</code>）是 64 万次模拟<b>离线一次性算好的</b>条件概率（「在 CI 窄的前提下真偏倚主导的比例」与「在 CI 宽的前提下」的比例），<b>不是你这次运行时生成的，也不是两条不同的 CI</b>。算法读完两列后取 <code>max(窄, 宽)</code> 作保守判读，所以你最终看到的那个 P 值已经是两档里的「更坏情形」。正因如此你完全不需要知道本次被归到窄还是宽，这也是当初把它从临床界面隐掉的原因。</li>
+<ol class="qa" data-page-node-id="fMrdorJ8pnK1DlKZh7GlPT">
+  <li data-page-node-id="JTYK7MaBfRp4ybWlfOa2Db"><b data-page-node-id="Og8rE6puZFt9Fdf0evlpNB">Q：算法需要我提供"窄"还是"宽"吗？</b><br data-page-node-id="d8RQwzUEREbv9Tvzus5XV9">
+      A：<b data-page-node-id="4my6IuyO3mlxJYb89kV2g2">不需要</b>。你只填入 BAF̂ 区间即可。算法内部自动识别区间宽度并取保守值。你唯一需要做的，是如实报告论文里的 CI。</li>
+  <li data-page-node-id="FiU6IHFCvxCB7dPQxWBoOs"><b data-page-node-id="ECXbJuI0WEHjFJ1u7dwub3">Q：BAF̂ = 0 怎么处理？</b><br data-page-node-id="tncAm7ZPwy9YaxoVZFmchJ">
+      A：BAF̂ = 0 意味着校准后几乎看不到经验偏倚。如果同时校准 p &lt; 0.05，算法进入第二层；BAF̂ = 0 通常对应"可作效应证据"（除非 CI 宽得离谱，但区间会触底于 0，半宽通常很小）。</li>
+  <li data-page-node-id="Hh2ScH2xz0J7NhlrScayhn"><b data-page-node-id="vCZ5KhZa1NFVakw4xUkHxI">Q：BAF̂ = 1 怎么处理？</b><br data-page-node-id="sq0iNMpqwJaErF0X1OGd16">
+      A：BAF̂ = 1 意味着整个效应都被系统偏倚解释。如果 p_cal &lt; 0.05（信号居然显著）但 BAF̂ = 1，几乎肯定是"假信号"，算法的"不可作效应证据"档正是为这种情况设计的。</li>
+  <li data-page-node-id="FHfHNeCRb5uWwMVzqSH73c"><b data-page-node-id="xwgH1L0sAqjYaXnCbbCNiI">Q：为什么"势均力敌"是一个独立档？为什么不归到"不可作"？</b><br data-page-node-id="oRNbjLut8oEi0EjUjvkSek">
+      A：因为 BAF 居中、CI 偏宽时，<b data-page-node-id="ArtcBm60DmMUNNRhNaVeNC">我们不知道是真信号还是偏倚主导</b>。把它判为"不可作"会丢掉可能的真效应；判为"可作"又会引入假阳性。势均力敌档说"<b data-page-node-id="sqSaqnyPp5qVQCykYBfDdR">待证据累积</b>"，不是放弃判断，是给一个更细的处理路径（参见 v39draft §9 混合区处理清单）。</li>
+  <li data-page-node-id="UX3pj2FBWRiQxWCBe4dn7c"><b data-page-node-id="IEXt89vKF5rvcuzMfSpnSV">Q：如果论文报告的是 BAF（不报告 CI）怎么办？</b><br data-page-node-id="41H9SCEZK7dCx0Kus1YjEI">
+      A：算法需要 BAF 的 CI 才能定位 12 段读数桶。<b data-page-node-id="7wizc7N8pCVrcAPlEKneOr">缺 CI 不要硬猜</b>，请直接向作者索要 Bootstrap CI 后再判。</li>
+  <li data-page-node-id="jQBop40jiQhOIzidsuzZsP"><b data-page-node-id="ZhLbKvGiiNJ2NSnJJUfFWq">Q：算法输出"P(偏倚主导) ≈ 3.1%"，但这一位数是不是太粗？</b><br data-page-node-id="jAiiuAKm2FQsGHnU0f5j8E">
+      A：保留 1 位小数是设计选择。<b data-page-node-id="diOIaBKODAWBZStxYfvAAu">刻意粗一些</b>是因为概率本身来自 96 万次模拟的经验分布，单数点估计的尾位数字不应过度解读。如有需要可在内部查 D.relia 数据拿更高精度，但给临床的输出就到这里为止。</li>
+  <li data-page-node-id="yJIHnRx3KecO3IN65lZqbd"><b data-page-node-id="ViWGaHARqEtVnpdV0mqOQk">Q：软件报给我的 95% CI，到底是「窄档」还是「宽档」？</b><br data-page-node-id="fveXZCoFx90BL5iSCJS5wL">
+      A：<b data-page-node-id="AcTdCDSbaHwgNfHm1oKev4">只有一个 CI，它本质既不是窄也不是宽。</b>软件从你的 μ̂_B 经 Bootstrap 得到唯一一条 95% CI（如 [0.10, 0.45]），用单调变换 g 映射成 BAF 的 CI，这就是你看到的全部。所谓「窄/宽」只是算法拿这条 CI 的<b data-page-node-id="W2Ez8kCbRO9HYh40GneAPb">半宽</b>（如 (0.45−0.10)/2 = 0.175）去跟固定阈值 0.133 比一比、贴的内部标签，用来决定去查哪一张预计算表。<br data-page-node-id="9KlsCxCeblZD0BGuc1ag3m">
+      两张表（<code data-page-node-id="wYMTfyrIJNdIxcQux0yIv9">D.reliaSplit.narrow</code> / <code data-page-node-id="vBNl4xuRJVeEGELuR7ecg4">.wide</code>）是 96 万次模拟<b data-page-node-id="gBntKG57U0wneDD2rBXV8H">离线一次性算好的</b>条件概率（「在 CI 窄的前提下真偏倚主导的比例」与「在 CI 宽的前提下」的比例），<b data-page-node-id="j6TpLI2oxvHsEFXBjvVQuB">不是你这次运行时生成的，也不是两条不同的 CI</b>。算法读完两列后取 <code data-page-node-id="BUVt2C9MKDSk8LJsAnmlUF">max(窄, 宽)</code> 作保守判读，所以你最终看到的那个 P 值已经是两档里的「更坏情形」。正因如此你完全不需要知道本次被归到窄还是宽，这也是当初把它从临床界面隐掉的原因。</li>
 </ol>
 
-<h2>§9 为什么「校准 p + BF」比单独看 p 更强（写给持怀疑态度的读者）</h2>
+<h2 data-page-node-id="GQUv9zpYD54y9qEjD07uFE">§9 为什么「校准 p + BAF」比单独看 p 更强（写给持怀疑态度的读者）</h2>
 
-<p>不少临床同事的直觉是：校准 p &lt; 0.05 已经说明「治疗有效」，BF̂ 与它的 CI 只是把「约 1/3 是偏倚」换种说法重述一遍，和看 logistic 回归的 RR + 95% CI + p 没什么两样。下面说明这种直觉<b>对了一半、错在致命的一半</b>。</p>
+<p data-page-node-id="RbUBdlVxD9PXTEewNGjk1I">不少临床同事的直觉是：校准 p &lt; 0.05 已经说明「治疗有效」，BAF̂ 与它的 CI 只是把「约 1/3 是偏倚」换种说法重述一遍，和看 logistic 回归的 RR + 95% CI + p 没什么两样。下面说明这种直觉<b data-page-node-id="cE0IWvUDIXRiBpcH8EEIRT">对了一半、错在致命的一半</b>。</p>
 
-<div class="callout" style="border-left:4px solid #1F6F8B; background:#F2F8FB; padding:12px 16px; border-radius:6px; margin:14px 0;">
-<b>对的部分：</b>BF̂ = 0.33 确实就是在说「估计约 1/3 的表观效应来自系统性偏倚」，这点手算也能得到。<br>
-<b>错的部分：</b>「校准 p &lt; 0.05 = 治疗有效」在观察性研究里是根本性统计谬误。p 值只排除<b>偶然（随机噪声）</b>，<b>排除不了混杂</b>。校准 p 比朴素 p 强（它用阴性对照做了经验校准，去掉了这项研究本身的系统性 p 膨胀），但仍只回答「有没有区别于零的信号」，<b>不回答「信号是真的还是偏倚造成的」</b>。后者正是 BF 这一层在干的事。logistic 的 RR + CI + p 只回答「有无关联、关联多大」，对「关联里多少是偏倚」<b>结构性沉默</b>。
+<div class="callout" style="border-left:4px solid #1F6F8B; background:#F2F8FB; padding:12px 16px; border-radius:6px; margin:14px 0;" data-page-node-id="n0l8AVZEn18ygdA3VlFKdk">
+<b data-page-node-id="YwURd6oCQLW1URqaQC8rDj">对的部分：</b>BAF̂ = 0.33 确实就是在说「估计约 1/3 的表观效应来自系统性偏倚」，这点手算也能得到。<br data-page-node-id="1Zd3DK2jEE07Ybc3PLrOqv">
+<b data-page-node-id="9XOE5aBA0vRMzZGKBiMwBd">错的部分：</b>「校准 p &lt; 0.05 = 治疗有效」在观察性研究里是根本性统计谬误。p 值只排除<b data-page-node-id="RbTW0EG42Jasf5g0rsxDZM">偶然（随机噪声）</b>，<b data-page-node-id="zOZ3Phji3Q5k8g5QBu7VRM">排除不了混杂</b>。校准 p 比朴素 p 强（它用阴性对照做了经验校准，去掉了这项研究本身的系统性 p 膨胀），但仍只回答「有没有区别于零的信号」，<b data-page-node-id="GpETIxYLwvL0vFVFlAbqOC">不回答「信号是真的还是偏倚造成的」</b>。后者正是 BAF 这一层在干的事。logistic 的 RR + CI + p 只回答「有无关联、关联多大」，对「关联里多少是偏倚」<b data-page-node-id="QutlpF6XXWGsNoOOaXByRG">结构性沉默</b>。
 </div>
 
-<h3>9.1 最有力的对照反例：两个「校准 p 完全相同」的研究</h3>
+<h3 data-page-node-id="fHe6Mr6tQLKMd6aWHjXhdL">9.1 最有力的对照反例：两个「校准 p 完全相同」的研究</h3>
 
-<p>下面两个研究的校准 p 都是 0.012（都「显著」）。按「p &lt; 0.05 = 有效」会给出<b>完全相同</b>的结论；但框架靠 BF 第二层把研究 2 判成「不可作效应证据」。</p>
+<p data-page-node-id="IDr5RtNQgxl3E9207p2SrJ">下面两个研究的校准 p 都是 0.012（都「显著」）。按「p &lt; 0.05 = 有效」会给出<b data-page-node-id="wYxnwJOjJynCSgDLaE9uVR">完全相同</b>的结论；但框架靠 BAF 第二层把研究 2 判成「不可作效应证据」。</p>
 
-<table class="tbl">
-  <thead>
-    <tr><th>项目</th><th>研究 1（§6 示例）</th><th>研究 2（反例）</th></tr>
+<table class="tbl" data-page-node-id="7py6WT0mK2Zwm05D1pQ7ca">
+  <thead data-page-node-id="NtG31twCDFRakqHsRIL1B7">
+    <tr data-page-node-id="EBfoRDYf46CxLTgmdjdSih"><th data-page-node-id="DNLt61putfdyf5onzzHEkq">项目</th><th data-page-node-id="EjWGNBmRMY1FU2iuPRTOOE">研究 1（§6 示例）</th><th data-page-node-id="TqYmJH9S3tLkR9mWzJqlWo">研究 2（反例）</th></tr>
   </thead>
-  <tbody>
-    <tr><td>校准 p</td><td>0.012</td><td><b>0.012（完全相同）</b></td></tr>
-    <tr><td>BF̂</td><td>0.33</td><td><b>0.85</b></td></tr>
-    <tr><td>BF 95% CI</td><td>[0.15, 0.50]</td><td>[0.75, 0.97]</td></tr>
-    <tr><td>只看 p 的朴素读法</td><td>显著 → 治疗有效</td><td>显著 → 治疗有效（与研究 1 同结论）</td></tr>
-    <tr>
-      <td>框架输出</td>
-      <td><span class="pill pill-mx">混合·假设生成</span><br>P(偏倚主导) ≈ 26.5%</td>
-      <td><span class="pill pill-red">不可作效应证据</span><br>P(偏倚主导) ≈ 94%</td>
+  <tbody data-page-node-id="FDM3avFYAJqBEdggoEZpNV">
+    <tr data-page-node-id="fxJ9GYZd2RXaFV2gtA5vtd"><td data-page-node-id="VKSfCPhaDAIfUuTFviNW4V">校准 p</td><td data-page-node-id="kqiZiYq8rBtIqmsKKW6Mzz">0.012</td><td data-page-node-id="G0HqrqICuI4HTlnjqv1Sqx"><b data-page-node-id="GHDSy85UycCCUmDubvyOWI">0.012（完全相同）</b></td></tr>
+    <tr data-page-node-id="Vr1a1wrfZ4rmVOhzBwtAek"><td data-page-node-id="E91Lry5z13e8ABdf2loKD5">BAF̂</td><td data-page-node-id="nERPbMT0XyBN96iajAr7f4">0.33</td><td data-page-node-id="o4vhLqobk7gxZHTRUwKgCG"><b data-page-node-id="rT4OpKwkPxmnWRTR1B9Qkp">0.85</b></td></tr>
+    <tr data-page-node-id="b8sftaArWzRB9JQhGR27C7"><td data-page-node-id="3xggjAPVQ8iX0rpFkIy6Ru">BAF 95% CI</td><td data-page-node-id="SoqeJDKArIB4G42DmNBr39">[0.15, 0.50]</td><td data-page-node-id="Jal5CfDr0GyqupUKs0biNQ">[0.75, 0.97]</td></tr>
+    <tr data-page-node-id="QgHtYpZsFSURCBDyaWm6NN"><td data-page-node-id="JVDaLBO28rXzd8kHBKqw6V">只看 p 的朴素读法</td><td data-page-node-id="CiIBsSu8udKgngAH4ZFJaB">显著 → 治疗有效</td><td data-page-node-id="0hKfLypLLHVbbrs0ADGYhX">显著 → 治疗有效（与研究 1 同结论）</td></tr>
+    <tr data-page-node-id="thExrHkaEO21AjjkD5Ix5o">
+      <td data-page-node-id="XxUfnp3ARu5NpbNzDMSTTc">框架输出</td>
+      <td data-page-node-id="bF212s5OJR3d6WF0SFSiqr"><span class="pill pill-mx" data-page-node-id="M3fVNGwpjIORPYhXqOLF0S">混合·假设生成</span><br data-page-node-id="J3KFAjrKfk3i1hU0UyVYWp">P(偏倚主导) ≈ 26.5%</td>
+      <td data-page-node-id="Z2jqtDfh9oh04SiMUQbOrG"><span class="pill pill-red" data-page-node-id="nTLWNjRjOXIIE8S6c6ZF7S">不可作效应证据</span><br data-page-node-id="BbKpRqCvnBAdjA436tlChv">P(偏倚主导) ≈ 94%</td>
     </tr>
   </tbody>
 </table>
 
-<p>研究 2 里 BF̂ = 0.85 意味着「表观效应的 85% 是系统性偏倚」，几乎不是真效应。若临床医生按「p &lt; 0.05 = 有效」去推荐研究 2 的药物，等于把一个基本由混杂造成的<b>假性效应</b>当成真治疗效应推荐给病人。这正是 BF 层<b>独立提供、单看 p 值给不出</b>的信息，也是本框架真正的价值所在。</p>
+<p data-page-node-id="famboCXc0tGEBOfuPYSXyi">研究 2 里 BAF̂ = 0.85 意味着「表观效应的 85% 是系统性偏倚」，几乎不是真效应。若临床医生按「p &lt; 0.05 = 有效」去推荐研究 2 的药物，等于把一个基本由混杂造成的<b data-page-node-id="hm435GLBPfg70YKph2j5RF">假性效应</b>当成真治疗效应推荐给病人。这正是 BAF 层<b data-page-node-id="jw3Wu2Y39KAVmG0WLPDBaT">独立提供、单看 p 值给不出</b>的信息，也是本框架真正的价值所在。</p>
 
-<h3>9.2 关于「P(偏倚主导) ≈ 26.5% 没增加信息」</h3>
+<h3 data-page-node-id="FMsFJYnDm8KwhyM85YjuFN">9.2 关于「P(偏倚主导) ≈ 26.5% 没增加信息」</h3>
 
-<p>你手算的「1/3」是 BF̂ 的<b>点估计</b>（本研究偏倚份额的分解）；而 26.5% 是模拟校准后的「真实处于偏倚主导体制的概率」，并且因为你的 CI 偏宽被<b>上调</b>了（同一读数桶：窄档仅 8.8%、宽档 26.5%）。这是两个不同的问题：</p>
-<ul>
-  <li>BF̂ = 0.33 → 「这个研究的效应里，估计 1/3 是偏倚」（分解）</li>
-  <li>P(偏倚主导) ≈ 26.5% → 「考虑到你的 CI 很宽，模拟里同类研究真正落在偏倚主导体制的概率是 26.5%」（体制归类 + 宽度修正）</li>
+<p data-page-node-id="Ikc9FKs1EZlt3pg9wWptiO">你手算的「1/3」是 BAF̂ 的<b data-page-node-id="atYvOu18VCAJF63hwGscd3">点估计</b>（本研究偏倚份额的分解）；而 26.5% 是模拟校准后的「真实处于偏倚主导体制的概率」，并且因为你的 CI 偏宽被<b data-page-node-id="Xevaz1OEeq6ZGyA1Tt7uGa">上调</b>了（同一读数桶：窄档仅 8.8%、宽档 26.5%）。这是两个不同的问题：</p>
+<ul data-page-node-id="ZGoa3c3DJkXfzORyIygLYU">
+  <li data-page-node-id="drIPd9ldoPTSX02B2QUDEn">BAF̂ = 0.33 → 「这个研究的效应里，估计 1/3 是偏倚」（分解）</li>
+  <li data-page-node-id="LYsQGNZrTPK92exgloiSYC">P(偏倚主导) ≈ 26.5% → 「考虑到你的 CI 很宽，模拟里同类研究真正落在偏倚主导体制的概率是 26.5%」（体制归类 + 宽度修正）</li>
 </ul>
-<p>朴素 RR + CI + p 既给不出 26.5% 这个数，也给不出「混合」这个决策档。框架在中段 BF 的增量，是用 CI 宽度修正了你偏乐观的点估计，并给出体制归类。</p>
+<p data-page-node-id="e1K8RWzRDBcSIaGDwcpOA0">朴素 RR + CI + p 既给不出 26.5% 这个数，也给不出「混合」这个决策档。框架在中段 BAF 的增量，是用 CI 宽度修正了你偏乐观的点估计，并给出体制归类。</p>
 
-<h3>9.3 诚实的局限（先承认，才说得服人）</h3>
+<h3 data-page-node-id="HBQPtsUwoBGnf0FSYAOizb">9.3 诚实的局限（先承认，才说得服人）</h3>
 
-<p>本框架的威力是<b>不对称</b>的：在两端（红 / 绿）它很强，能拦住假性效应、也能背书真效应；在<b>中段 BF 它本就是「诚实的不确定」</b>。对研究 1 这种中等 BF，框架确实不「拍板」，它的价值恰恰是<b>拒绝让你仅凭 p &lt; 0.05 就宣布有效</b>，逼你走「生成假设、累积更多证据」这条路。所以临床同事觉得「好像没增加判断」，往往正是因为数据本来就不该让你下结论，框架只是诚实地说了出来。</p>
+<p data-page-node-id="jPjwErKSbFyCFksEVZU0Sb">本框架的威力是<b data-page-node-id="nYzG4gAQgx1f8Insq8ZYcC">不对称</b>的：在两端（红 / 绿）它很强，能拦住假性效应、也能背书真效应；在<b data-page-node-id="pFMxPBrGYuUwr0t3hLCe4B">中段 BAF 它本就是「诚实的不确定」</b>。对研究 1 这种中等 BAF，框架确实不「拍板」，它的价值恰恰是<b data-page-node-id="vlHVjzxqtgW1HXaiUxNQEW">拒绝让你仅凭 p &lt; 0.05 就宣布有效</b>，逼你走「生成假设、累积更多证据」这条路。所以临床同事觉得「好像没增加判断」，往往正是因为数据本来就不该让你下结论，框架只是诚实地说了出来。</p>
 
-<div class="footer">
-文档版本 v1 · 2026-08-26 · 与 v37 论文及配套互动讲解器 §8 节配套使用。修改建议请回到 §8 表格源数据（<code>D.relia</code> / <code>D.reliaSplit.narrow</code> / <code>D.reliaSplit.wide</code>）。
+<div class="footer" data-page-node-id="pVBJ3EM2SqaEzVzjtpwjRg">
+文档版本 v1 · 2026-08-26 · 与 v37 论文及配套互动讲解器 §8 节配套使用。修改建议请回到 §8 表格源数据（<code data-page-node-id="lPYWDtq7APHEvbvWM5lbSa">D.relia</code> / <code data-page-node-id="xpCAihDFfmDSzEhfEvnv7q">D.reliaSplit.narrow</code> / <code data-page-node-id="KEtb0PQPxo1HF7KC0B8ypo">D.reliaSplit.wide</code>）。
 </div>
 
 </body>

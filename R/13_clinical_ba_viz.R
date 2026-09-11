@@ -1,8 +1,8 @@
-## Clinical-style Bland-Altman plot v4: X = CONDITION-MEAN predicted BF (one X per psi x mu_B),
-## Y = per-rep (BF̂ − BF_true) -> vertical stripes at each condition (classic BA look, predicted-BF grouping)
+## Clinical-style Bland-Altman plot v4: X = CONDITION-MEAN predicted BAF (one X per psi x mu_B),
+## Y = per-rep (BAF̂ − BF_true) -> vertical stripes at each condition (classic BA look, predicted-BAF grouping)
 ## Same layout as figL/figM (jittered scatter + 2D density + agreement ribbon) but
-## x-axis swapped to BF̂ itself rather than BF_true. This is the clinician's view:
-## "given the BF your model hands back, what's the error range you'd expect?"
+## x-axis swapped to BAF̂ itself rather than BF_true. This is the clinician's view:
+## "given the BAF your model hands back, what's the error range you'd expect?"
 
 suppressMessages({
   library(dplyr); library(ggplot2); library(patchwork)
@@ -30,7 +30,7 @@ rows <- lapply(keys, function(k){
 })
 df <- do.call(rbind, rows)
 df$diff_mcmc <- df$bf_mcmc - df$bf_true
-df$cond_mean_bf <- ave(df$bf_mcmc, df$cond_key)  # 每个 psi x mu_B 条件的条件均值 BF̂（一个 X 值，Y 为该条件 1000 个重复）
+df$cond_mean_bf <- ave(df$bf_mcmc, df$cond_key)  # 每个 psi x mu_B 条件的条件均值 BAF̂（一个 X 值，Y 为该条件 1000 个重复）
 df$zone <- factor(df$zone, levels = c("effect-dominated", "mixed", "bias-dominated"))
 zc <- c("effect-dominated" = "#1B7A3A", "mixed" = "#D4A017", "bias-dominated" = "#B83227")
 
@@ -86,8 +86,8 @@ mk_panels_pred <- function(d, x_var, subtitle_extra){
     scale_color_manual(values = zc) +
     labs(title = "Top. Jittered scatter (horizontally broadened)",
          subtitle = subtitle_extra,
-         x = paste0("Condition-mean Predicted BF (BF̂)"),
-         y = "Estimated BF (BF̂) − True BF (BF_true)") +
+         x = paste0("Condition-mean Predicted BAF (BAF̂)"),
+         y = "Estimated BAF (BAF̂) − True BAF (BAF_true)") +
     annotate("label", x = Inf, y = lo_u, label = sprintf("+1.96 SD LoA = %.3f", lo_u),
              color = "#B83227", size = 3.6, fontface = "italic",
              hjust = 1.04, vjust = -0.6, fill = "white", linewidth = 0) +
@@ -136,8 +136,8 @@ mk_panels_pred <- function(d, x_var, subtitle_extra){
     labs(title = "Middle. 2D density (warm ramp on white)",
          subtitle = sprintf("mass of %s reps; warm color = higher point concentration",
                             format(nrow(d), big.mark = ",")),
-         x = "Condition-mean Predicted BF (BF̂)",
-         y = "Estimated BF (BF̂) − True BF (BF_true)") +
+         x = "Condition-mean Predicted BAF (BAF̂)",
+         y = "Estimated BAF (BAF̂) − True BAF (BAF_true)") +
     coord_cartesian(xlim = range(x) * c(0.97, 1.03),
                     ylim = range(y) * c(1.08, 1.08),
                     expand = FALSE) +
@@ -153,7 +153,7 @@ mk_panels_pred <- function(d, x_var, subtitle_extra){
   list(top = p_top, mid = p_mid)
 }
 
-# ---- agreement parameter ribbon (same as R/10 but for predicted BF x-axis) ----
+# ---- agreement parameter ribbon (same as R/10 but for predicted BAF x-axis) ----
 fmt_p <- function(p) if (is.na(p)) "NA" else if (p < 0.001) "< 0.001" else sprintf("%.3f", p)
 mk_param_ribbon <- function(st){
   rows <- data.frame(
@@ -166,16 +166,16 @@ mk_param_ribbon <- function(st){
       "Within LoA",
       "  (inside count / total)",
       "Outside LoA (reps)",
-      "Lin's CCC (true vs BF̂)",
-      "Prop. r (diff vs BF̂)",
-      "Regression slope: diff ~ cond-mean BF̂",
+      "Lin's CCC (true vs BAF̂)",
+      "Prop. r (diff vs BAF̂)",
+      "Regression slope: diff ~ cond-mean BAF̂",
       "  slope [95% CI]",
       "  slope t-stat, p-value",
       "  intercept",
       "  intercept t-stat, p-value"
     ),
     Value = c(
-      "Condition-mean Predicted BF (BF̂)",
+      "Condition-mean Predicted BAF (BAF̂)",
       format(st$n, big.mark = ","),
       sprintf("%.3f", st$bias),
       sprintf("%.3f", st$sd_diff),
@@ -195,7 +195,7 @@ mk_param_ribbon <- function(st){
     ),
     stringsAsFactors = FALSE
   )
-  ttl <- textGrob("Clinical-view BA agreement statistics  ·  x = cond-mean BF̂",
+  ttl <- textGrob("Clinical-view BA agreement statistics  ·  x = cond-mean BAF̂",
                   gp = gpar(fontface = "bold.italic", fontsize = 13,
                             col = "#1F1F1F"))
   tbl <- tableGrob(rows, rows = NULL,
@@ -217,21 +217,21 @@ mk_param_ribbon <- function(st){
 }
 
 # ---- compute stats & build two figures ----
-st_int  <- mk_stats(interior,  "cond_mean_bf", "interior, condition-mean-BF view")
-st_full <- mk_stats(full_set,  "cond_mean_bf", "full, condition-mean-BF view")
-cat("\n--- stats (interior, predicted BF) ---\n")
+st_int  <- mk_stats(interior,  "cond_mean_bf", "interior, condition-mean-BAF view")
+st_full <- mk_stats(full_set,  "cond_mean_bf", "full, condition-mean-BAF view")
+cat("\n--- stats (interior, predicted BAF) ---\n")
 print(st_int[, c("n","bias","sd_diff","in_pct","ccc","r_prop",
                  "reg_slope","reg_slope_t","reg_slope_p",
                  "reg_intercept","reg_int_t","reg_int_p")])
-cat("\n--- stats (full, predicted BF) ---\n")
+cat("\n--- stats (full, predicted BAF) ---\n")
 print(st_full[, c("n","bias","sd_diff","in_pct","ccc","r_prop",
                   "reg_slope","reg_slope_t","reg_slope_p",
                   "reg_intercept","reg_int_t","reg_int_p")])
 
 panels_int  <- mk_panels_pred(interior, "cond_mean_bf",
-                              "interior (excl near-boundary psi=-0.01); x = condition-mean Predicted BF")
+                              "interior (excl near-boundary psi=-0.01); x = condition-mean Predicted BAF")
 panels_full <- mk_panels_pred(full_set, "cond_mean_bf",
-                              "full design (640 conditions x 1000 reps); x = condition-mean Predicted BF")
+                              "full design (640 conditions x 1000 reps); x = condition-mean Predicted BAF")
 ribbon_int  <- mk_param_ribbon(st_int)
 ribbon_full <- mk_param_ribbon(st_full)
 

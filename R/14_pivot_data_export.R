@@ -52,7 +52,7 @@ factor_levels <- list(
 
 stat_cols <- c("mae", "rmse", "mean_bias", "coverage", "ci_width", "accuracy")
 stat_labels <- c(
-  mae = "MAE (mean |BF̂−BF_true|)",
+  mae = "MAE (mean |BAF̂−BAF_true|)",
   rmse = "RMSE",
   mean_bias = "Mean bias",
   coverage = "95% CI coverage (%)",

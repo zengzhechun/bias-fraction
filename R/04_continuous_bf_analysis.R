@@ -1,19 +1,19 @@
 # R/04_continuous_bf_analysis.R
-# Continuous BF analysis: treat BF as a continuous estimator and quantify its
-# error structure against the known true BF across the 640 simulated conditions
+# Continuous BAF analysis: treat BAF as a continuous estimator and quantify its
+# error structure against the known true BAF across the 640 simulated conditions
 # (each with 1000 Monte Carlo repetitions). Reads comparison_results_v37p1.rds produced
 # by R/02_comparison_study.R (now with per-rep 95% CI bounds stored).
 #
 # Outputs (under OUT_DIR/figures/continuous_bf/):
 #   per_condition_summary.csv / .rds  - 640 conditions x 2 methods summary
 #   stratified_summary.csv            - bias/rmse/coverage by method x true_zone
-#   figA_bias_vs_bftrue.png           - per-condition bias vs true BF
-#   figB_rmse_vs_bftrue.png           - per-condition RMSE vs true BF
-#   figC_coverage_vs_bftrue.png       - per-condition 95% CI coverage vs true BF
-#   figD_ciwidth_vs_bftrue.png        - per-condition CI width vs true BF
-#   figE_by_K.png                     - RMSE vs true BF, coloured by K (12 vs 25)
-#   figF_by_exV_sigmaPS.png           - RMSE vs true BF, faceted by ex_violation x sigma_ps
-#   figG_calibration_curve.png       - binned mean BF_hat vs true BF (mc & mcmc), y=x ref
+#   figA_bias_vs_bftrue.png           - per-condition bias vs true BAF
+#   figB_rmse_vs_bftrue.png           - per-condition RMSE vs true BAF
+#   figC_coverage_vs_bftrue.png       - per-condition 95% CI coverage vs true BAF
+#   figD_ciwidth_vs_bftrue.png        - per-condition CI width vs true BAF
+#   figE_by_K.png                     - RMSE vs true BAF, coloured by K (12 vs 25)
+#   figF_by_exV_sigmaPS.png           - RMSE vs true BAF, faceted by ex_violation x sigma_ps
+#   figG_calibration_curve.png       - binned mean BF_hat vs true BAF (mc & mcmc), y=x ref
 #   continuous_bf_findings.txt        - textual summary of F1-F3
 # v35 - 2026-08-20
 
@@ -110,9 +110,9 @@ mcmc_mean <- t(sapply(uk, function(k) c(bt = recs$bf_true[recs$key == k][1],
                                        m = mean(recs$bf_mcmc[recs$key == k]))))
 fit_mc   <- lm(mc_mean[, "m"]   ~ mc_mean[, "bt"])
 fit_mcmc <- lm(mcmc_mean[, "m"] ~ mcmc_mean[, "bt"])
-cat(sprintf("Calibration BF_mc  ~ BF_true: intercept=%.4f slope=%.4f\n",
+cat(sprintf("Calibration BAF_mc  ~ BAF_true: intercept=%.4f slope=%.4f\n",
             coef(fit_mc)[1], coef(fit_mc)[2]))
-cat(sprintf("Calibration BF_mcmc~ BF_true: intercept=%.4f slope=%.4f\n",
+cat(sprintf("Calibration BAF_mcmc~ BAF_true: intercept=%.4f slope=%.4f\n",
             coef(fit_mcmc)[1], coef(fit_mcmc)[2]))
 
 # ---- 4. Figures ----
@@ -125,8 +125,8 @@ pA <- ggplot(per_cond, aes(x = bf_true, y = bias, color = method)) +
   geom_point(alpha = 0.75, size = 2.2) +
   geom_hline(yintercept = 0, linetype = "dashed", color = "grey40") +
   scale_color_manual(values = c(mc = "#1F77B4", mcmc = "#D62728")) +
-  labs(title = "A. Bias of BF estimate vs true BF",
-       x = "True BF", y = "Bias  mean(BF_hat) - BF_true") +
+  labs(title = "A. Bias of BAF estimate vs true BAF",
+       x = "True BAF", y = "Bias  mean(BAF_hat) - BAF_true") +
   gg_th
 ggsave(file.path(FIG_DIR, "figA_bias_vs_bftrue.png"), pA, width = 7, height = 5, dpi = 150)
 
@@ -134,8 +134,8 @@ ggsave(file.path(FIG_DIR, "figA_bias_vs_bftrue.png"), pA, width = 7, height = 5,
 pB <- ggplot(per_cond, aes(x = bf_true, y = rmse, color = method)) +
   geom_point(alpha = 0.75, size = 2.2) +
   scale_color_manual(values = c(mc = "#1F77B4", mcmc = "#D62728")) +
-  labs(title = "B. RMSE of BF estimate vs true BF",
-       x = "True BF", y = "RMSE  sqrt(mean((BF_hat - BF_true)^2))") +
+  labs(title = "B. RMSE of BAF estimate vs true BAF",
+       x = "True BAF", y = "RMSE  sqrt(mean((BAF_hat - BAF_true)^2))") +
   gg_th
 ggsave(file.path(FIG_DIR, "figB_rmse_vs_bftrue.png"), pB, width = 7, height = 5, dpi = 150)
 
@@ -145,8 +145,8 @@ pC <- ggplot(per_cond, aes(x = bf_true, y = coverage, color = method)) +
   geom_hline(yintercept = 0.95, linetype = "dashed", color = "grey40") +
   scale_color_manual(values = c(mc = "#1F77B4", mcmc = "#D62728")) +
   coord_cartesian(y = c(0.8, 1.0)) +
-  labs(title = "C. 95% CI coverage vs true BF",
-       x = "True BF", y = "Pr(BF_true in 95% CI)") +
+  labs(title = "C. 95% CI coverage vs true BAF",
+       x = "True BAF", y = "Pr(BAF_true in 95% CI)") +
   gg_th
 ggsave(file.path(FIG_DIR, "figC_coverage_vs_bftrue.png"), pC, width = 7, height = 5, dpi = 150)
 
@@ -154,8 +154,8 @@ ggsave(file.path(FIG_DIR, "figC_coverage_vs_bftrue.png"), pC, width = 7, height 
 pD <- ggplot(per_cond, aes(x = bf_true, y = ci_width, color = method)) +
   geom_point(alpha = 0.75, size = 2.2) +
   scale_color_manual(values = c(mc = "#1F77B4", mcmc = "#D62728")) +
-  labs(title = "D. 95% CI width vs true BF",
-       x = "True BF", y = "Mean CI width (hi - lo)") +
+  labs(title = "D. 95% CI width vs true BAF",
+       x = "True BAF", y = "Mean CI width (hi - lo)") +
   gg_th
 ggsave(file.path(FIG_DIR, "figD_ciwidth_vs_bftrue.png"), pD, width = 7, height = 5, dpi = 150)
 
@@ -164,8 +164,8 @@ pE <- ggplot(per_cond, aes(x = bf_true, y = rmse, color = factor(K))) +
   geom_point(alpha = 0.75, size = 2.0) +
   scale_color_manual(values = c("12" = "#2C7FB8", "25" = "#DE2D26"),
                      name = "K (neg. controls)") +
-  labs(title = "E. RMSE vs true BF by K",
-       x = "True BF", y = "RMSE") +
+  labs(title = "E. RMSE vs true BAF by K",
+       x = "True BAF", y = "RMSE") +
   gg_th
 ggsave(file.path(FIG_DIR, "figE_by_K.png"), pE, width = 7, height = 5, dpi = 150)
 
@@ -176,13 +176,13 @@ pF <- ggplot(per_cond, aes(x = bf_true, y = rmse, color = method)) +
   facet_grid(ex_violation ~ sigma_ps,
              labeller = labeller(ex_violation = function(v) paste0("exV=", v),
                                 sigma_ps = function(v) paste0("sigma_ps=", v))) +
-  labs(title = "F. RMSE vs true BF by exchangeability violation x sigma_ps",
-       x = "True BF", y = "RMSE") +
+  labs(title = "F. RMSE vs true BAF by exchangeability violation x sigma_ps",
+       x = "True BAF", y = "RMSE") +
   theme_minimal(base_size = 11) +
   theme(legend.position = "bottom")
 ggsave(file.path(FIG_DIR, "figF_by_exV_sigmaPS.png"), pF, width = 8, height = 6, dpi = 150)
 
-# Fig G: calibration curve (binned mean BF_hat vs true BF)
+# Fig G: calibration curve (binned mean BF_hat vs true BAF)
 bins <- seq(0, 0.95, by = 0.05)
 cal <- data.frame()
 for (b in seq_len(length(bins) - 1)) {
@@ -207,24 +207,24 @@ pG <- ggplot(cal_long, aes(x = bin_center, y = bf, color = series)) +
   geom_line(aes(group = series)) +
   geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "grey40") +
   scale_color_manual(values = c(MC = "#1F77B4", MCMC = "#D62728")) +
-  labs(title = "G. Calibration curve: binned mean BF_hat vs true BF",
-       x = "True BF (bin center)", y = "Mean BF_hat in bin") +
+  labs(title = "G. Calibration curve: binned mean BAF_hat vs true BAF",
+       x = "True BAF (bin center)", y = "Mean BAF_hat in bin") +
   gg_th
 ggsave(file.path(FIG_DIR, "figG_calibration_curve.png"), pG, width = 7, height = 5, dpi = 150)
 
 # ---- 5. Findings text ----
 findings <- c(
-  "CONTINUOUS BF ANALYSIS - FINDINGS (v37.1, 640 conditions x 1000 reps)",
+  "CONTINUOUS BAF ANALYSIS - FINDINGS (v37.1, 640 conditions x 1000 reps)",
   "===============================================================",
   sprintf("Conditions: %d ; Repetitions per condition: %d ; Total classifications: %d",
           length(uk), nrow(recs) / length(uk), nrow(recs)),
   "",
-  sprintf("F1 Calibration (continuous BF as estimator):"),
+  sprintf("F1 Calibration (continuous BAF as estimator):"),
   sprintf("   MC   : intercept=%.4f, slope=%.4f (target 0 / 1)",
           coef(fit_mc)[1], coef(fit_mc)[2]),
   sprintf("   MCMC : intercept=%.4f, slope=%.4f (target 0 / 1)",
           coef(fit_mcmc)[1], coef(fit_mcmc)[2]),
-  sprintf("   => BF is %s as a continuous estimator (slope~1, intercept~0).",
+  sprintf("   => BAF is %s as a continuous estimator (slope~1, intercept~0).",
           if (abs(coef(fit_mcmc)[2] - 1) < 0.1 && abs(coef(fit_mcmc)[1]) < 0.05) "well calibrated"
           else "moderately biased"),
   "",

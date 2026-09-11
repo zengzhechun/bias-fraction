@@ -1,7 +1,7 @@
 # R/17_rebuild_pivot.R
 # Regenerate the bilingual explainer's 3D pivot data island (__PIVOT_DATA__) from the
 # 640-condition v37.1 comparison_results RDS so the interactive cube matches the manuscript.
-# Uses the MCMC BF estimator (primary, per manuscript): bf_mcmc / ci_*_mcmc / zone_mcmc.
+# Uses the MCMC BAF estimator (primary, per manuscript): bf_mcmc / ci_*_mcmc / zone_mcmc.
 # v37.1 - 2026-08-21
 
 suppressPackageStartupMessages({ library(jsonlite) })
@@ -57,7 +57,7 @@ factor_levels <- list(
   ex_violation = c(0, 0.3)
 )
 stat_cols   <- c("mae", "rmse", "mean_bias", "coverage", "ci_width", "accuracy")
-stat_labels <- c("MAE (mean |BF̂−BF_true|)", "RMSE", "Mean bias",
+stat_labels <- c("MAE (mean |BAF̂−BAF_true|)", "RMSE", "Mean bias",
                  "95% CI coverage (%)", "Mean CI width", "Classification accuracy (%)")
 
 obj <- list(factor_levels = factor_levels, stat_cols = stat_cols,

@@ -1,0 +1,340 @@
+---
+title: "Quantifying Systematic Bias in Observational Causal Estimates Using Negative Controls: The Bias Attribution Fraction"
+author:
+  - name: Zeng Zhechun
+    degrees: MD, MPH
+    affiliation: "1,2"
+    email: zengzhechun@icloud.com
+    corresponding: true
+  - name: Wang Jinwen
+    degrees: MD, PhD
+    affiliation: "1,2"
+  - name: Zuo Huijuan
+    degrees: MD, MPH
+    affiliation: "1,2"
+  - name: Shu Lixia
+    degrees: PhD
+    affiliation: "1,2"
+date: "2026-08-27"
+bibliography: references.bib
+csl: american-medical-association.csl
+format:
+  docx:
+    toc: false
+    number-sections: false
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+^1^ Beijing Anzhen Hospital, Capital Medical University, Beijing, China
+
+^2^ Beijing Institute of Heart, Lung and Blood Vessel Diseases, Beijing, China
+
+**Corresponding author:** Zeng Zhechun, MD, MPH
+Beijing Anzhen Hospital, Capital Medical University; Beijing Institute of Heart, Lung and Blood Vessel Diseases, Tongzhou Campus, No. 225 Songzhuang South 1st Street, Tongzhou District, Beijing 101149, China
+Email: zengzhechun@icloud.com
+
+**Preprint notice.** This full manuscript is released as a preprint on medRxiv under a CC-BY 4.0 license while under consideration at JAMA Network Open. The content is identical to the journal submission; no changes were made for the preprint other than this notice.
+
+**Keywords:** Bias Attribution Fraction; negative controls; empirical calibration; observational causal inference; target trial emulation; targeted maximum likelihood estimation.
+
+```{r setup, include=FALSE}
+suppressPackageStartupMessages({
+  library(jsonlite)
+  library(ggplot2)
+})
+source("../R/00_config.R")
+source("../R/01_bsr_core.R")
+library(EmpiricalCalibration)
+
+# Single source of truth for every number quoted in the manuscript
+NUM <- jsonlite::fromJSON(file.path(TAB_DIR, "v39_all_numbers.json"),
+                          simplifyVector = FALSE)
+
+# Dual-view operating characteristics: the same rules R0-R4, C1-C2 scored twice,
+# once taking "declared usable" as the positive call (effect-dominated view, ED)
+# and once taking "withheld" as the positive call (bias-dominated view, BD), each
+# with sensitivity, specificity, PPV and NPV. Written by R/23_dual_view_metrics.R.
+dual <- jsonlite::fromJSON(file.path(TAB_DIR, "v39_dual_view.json"),
+                           simplifyVector = TRUE)
+
+# 入组流程：评估合格数、宽限期排除数、分析队列数三者必须自洽。前两个取自
+# LTMLE 输入文件，第三个由前两者相减得出，避免任一个数字单独漂移而不被发现。
+.flow_rds <- file.path(DATA_DIR, "ltmle_wide_K2_guideline.rds")
+pct_main_exposed <- NA_real_
+if (file.exists(.flow_rds)) {
+  .flow         <- as.data.frame(readRDS(.flow_rds))
+  n_flow_screen <- nrow(.flow)
+  n_flow_excl   <- sum(.flow$Y_W0 == 1L, na.rm = TRUE)
+  # 主分析的暴露率：指南限制文件里 A_W0 >= 2 的比例
+  pct_main_exposed <- 100 * mean(.flow$A_W0 >= 2, na.rm = TRUE)
+} else {
+  # 有据可查的回退值（宽限期内死亡，见 R/25_adjusted_smd_iptw.R 的注释）
+  n_flow_screen <- 15053L
+  n_flow_excl   <- 376L
+  pct_main_exposed <- 11.82
+}
+n_flow_analytic <- as.integer(n_flow_screen - n_flow_excl)
+
+# 负对照面板所用的暴露定义与主分析不同：负对照在未做指南限制的文件上拟合
+# （A_W0 把全部 β 受体阻滞剂计入目标剂量百分比），主分析在指南限制文件上拟合
+# （A_W0 只计入 carvedilol / metoprolol succinate / bisoprolol）。此处从原始
+# 文件算出负对照一侧的暴露率，写成行内数字，避免手写百分比与数据脱节。
+# 完整诊断见 R/90_diag_nc_exposure_consistency.R 与 R/91_diag_matched_null_impact.R。
+.nc_rds <- file.path(DATA_DIR, "ltmle_wide_K2.rds")
+if (file.exists(.nc_rds)) {
+  .nc_all        <- as.data.frame(readRDS(.nc_rds))
+  pct_nc_exposed <- 100 * mean(.nc_all$A_W0 >= 2, na.rm = TRUE)
+} else {
+  pct_nc_exposed <- 43.01
+}
+
+# 配平面板的影响（R/91_diag_matched_null_impact.R，只读诊断）：把同一套负对照
+# 结局挂到指南限制队列上重新拟合后得到的经验原假设，以及由此得到的两个案例的
+# 校准 P 值。用于 Limitations 的披露，不改变 Results 的任何数字。
+.nc_diag_path <- file.path(TAB_DIR, "diag_matched_null_impact.json")
+if (file.exists(.nc_diag_path)) {
+  .nc_diag  <- jsonlite::fromJSON(.nc_diag_path, simplifyVector = FALSE)
+  .nc_rows  <- .nc_diag$rows
+  .pick <- function(cs) {
+    Filter(function(r) r$case == cs && r$panel == "matched_to_main", .nc_rows)[[1]]
+  }
+  nc_matched_sigma   <- .pick("bb")$sigma_bias
+  nc_matched_calp_bb <- .pick("bb")$cal_p
+  nc_matched_calp_q2 <- .pick("gdmt")$cal_p
+  nc_matched_baf_q2  <- .pick("gdmt")$baf
+} else {
+  nc_matched_sigma   <- 0.112886
+  nc_matched_calp_bb <- 0.893963
+  nc_matched_calp_q2 <- 0.102641
+  nc_matched_baf_q2  <- 0.459640
+}
+
+# Convenience accessors
+des       <- NUM$design
+p1_int    <- NUM$part1$interior
+p1_full   <- NUM$part1$full
+l1        <- NUM$part2$layer1
+ciw       <- NUM$part2$ci_width
+disc      <- NUM$part2$discrimination
+strat     <- NUM$part2$strategies
+lookup    <- NUM$part2$lookup
+flow      <- NUM$part2$flow
+subg      <- NUM$part2$subgroups
+cirole    <- NUM$part2$ci_width_role
+cases     <- NUM$part3$cases
+sens      <- NUM$part3$sensitivity
+
+fmt_pct <- function(x, d = 1) sprintf(paste0("%.", d, "f"), as.numeric(x))
+fmt_num <- function(x, d = 2) sprintf(paste0("%.", d, "f"), as.numeric(x))
+# fmt_pct formats as-is; kpct is for fields stored as proportions (eg
+# des$truth_share = 0.525) that must be shown as 52.5%.
+kpct <- function(x, d = 1) paste0(fmt_pct(100 * as.numeric(x), d), "%")
+# pct() adds the percent sign to fmt_pct, for numbers quoted in running text.
+# Table builders keep fmt_pct because their column headers already carry the unit.
+pct <- function(x, d = 1) paste0(fmt_pct(x, d), "%")
+
+BB  <- cases[[1]]
+GDM <- cases[[2]]
+```
+
+## Abstract
+
+**Importance.** Observational studies dominate evidence in cardiovascular outcomes research, yet no widely adopted reporting standard requires authors to disclose *how much* of an observed association is attributable to systematic error. The negative-control calibration framework of the Observational Health Data Sciences and Informatics consortium returns a binary answer: a calibrated P-value either crosses 0.05 or it does not. That answer conflates "is there a signal" with "is the signal credible."
+
+**Objective.** To define the Bias Attribution Fraction (BAF), a continuous estimator in [0, 1] that quantifies the fraction of an observed log relative risk that is attributable to systematic bias, together with its 95% credible interval, and to evaluate whether reporting calibrated P-value plus BAF plus interval width produces more defensible decisions than reporting the calibrated P-value alone.
+
+**Design.** Three-part study: (i) metric definition and interval construction; (ii) Monte Carlo simulation across `r fmt_num(des$n_conditions,0)` conditions × `r fmt_num(des$n_reps_per_cond,0)` repetitions = `r format(des$n_total, big.mark = ",")` simulated target estimates, with truth known by construction; (iii) two-arm beta-blocker target trial emulation in MIMIC IV, adhering to the TARGET guideline, with targeted maximum likelihood estimation (TMLE) and `r fmt_num(NUM$part3$nc$K,0)` negative-control outcomes.
+
+**Setting.** MIMIC IV (critical care) and MIMIC IV ECG, 2008 to 2019.
+
+**Participants.** Adults with a first intensive care unit stay and a recorded 12-lead ECG.
+
+**Exposures.** Two clinical questions are evaluated: (1) reaching at least 50% of guideline-recommended target dose of an index beta-blocker within 7 days of admission, sustained to 12 months, versus lower or no exposure; (2) receiving guideline-directed medical therapy (GDMT) with at least two of three foundational drug classes at adequate dose for 12 months versus fewer.
+
+**Main Outcomes and Measures.** One-year all-cause mortality. Primary analytic outputs: (i) the calibrated P-value from a negative-control empirical null distribution with `r fmt_num(NUM$part3$nc$K,0)` outcomes; (ii) BAF̂ with a Markov chain Monte Carlo 95% credible interval; (iii) a verdict drawn from a truth-calibrated lookup table mapping the BAF̂ × interval-width cell to a probability of being bias-dominated.
+
+**Results.** Across `r format(des$n_total, big.mark = ",")` simulated repetitions, the calibrated P-value alone yielded a misuse rate (declared usable while truth was bias-dominated) of `r pct(strat[[2]]$bd_among_declared_pct,2)`. Adding the BAF point estimate reduced misuse to `r pct(strat[[3]]$bd_among_declared_pct,2)`, and requiring the whole credible interval of BAF to lie below 0.5, clear of the bias-dominated zone, reduced misuse to `r pct(strat[[4]]$bd_among_declared_pct,2)`. Requiring in addition a calibrated probability of bias dominance below 15% reduced misuse to `r pct(strat[[5]]$bd_among_declared_pct,2)` at the cost of declaring `r pct(strat[[5]]$declare_usable_pct,1)` of estimates usable (versus `r pct(strat[[2]]$declare_usable_pct,1)` for the calibrated P-value alone). Read from the bias-dominated view, meaning that withholding a repetition is a positive call and being truly bias-dominated is a positive truth, the BAF estimator achieved an area under the receiver operating characteristic curve of `r fmt_num(disc[[2]]$auc, 3)`, compared with `r fmt_num(disc[[1]]$auc, 3)` for the calibrated P-value. In MIMIC IV, question 1 produced a calibrated P-value of `r fmt_num(BB$cal_p, 3)` and BAF̂ = `r fmt_num(BB$bf, 3)` (95% credible interval `r fmt_num(BB$bf_lo, 3)` to `r fmt_num(BB$bf_hi, 3)`); the apparent one-year mortality reduction of `r pct(100 * (1 - BB$rr_uncal), 1)` was entirely attributable to systematic bias and the association was not usable as effect evidence. Question 2 produced a calibrated P-value of `r fmt_num(GDM$cal_p, 4)`, passing layer 1, but BAF̂ = `r fmt_num(GDM$bf, 3)` placed it in the "competitive, no verdict" zone.
+
+**Conclusions and Relevance.** Pairing the calibrated P-value with BAF and its 95% credible interval turns a binary credibility judgement into a three-channel report (signal existence, effect size, and bias fraction). Despite TARGET-adherent design, doubly robust TMLE, and 12 negative controls, both clinical questions in this study still failed to qualify as effect evidence, with question 1 demonstrating complete bias domination and BAF quantifying the systematic error that remained. The reporting standard proposed here can be applied to any observational study that includes negative controls, without requiring additional data.
+
+---
+
+## Introduction
+
+Observational studies are the dominant source of evidence for cardiovascular effectiveness and safety questions that cannot be answered by randomized trials. They are also vulnerable to systematic error that survives the most rigorous design choices available to observational research: explicit eligibility criteria, time-zero alignment, intention-to-treat and per-protocol analyses, and modern estimators such as longitudinal targeted maximum likelihood estimation (LTMLE) that handle time-varying confounding and informative censoring [@lendle2017ltmle; @vanderlaan2011targeted]. A common reaction to residual error is to require authors to perform a sensitivity analysis [@vanderweele2017evalue]. Sensitivity analyses ask the analyst to stipulate how much unmeasured confounding would have to exist to overturn the result, then return a qualitative judgement. They do not quantify how much of the observed association is plausibly attributable to bias.
+
+The Observational Health Data Sciences and Informatics (OHDSI) consortium has proposed a complementary practice: estimate an empirical null distribution from a panel of negative-control outcomes, jointly estimate its center and scale, and use that distribution to produce a calibrated P-value and a calibrated effect estimate [@schuemie2018empirical]. The calibrated P-value separates the question "does a signal exist after removing systematic error" from the question "how large is the effect." That is a useful step, but it returns a binary answer for the first question and a point estimate for the second, leaving the analyst to decide, without guidance, whether the residual estimate is dominated by bias or by effect.
+
+This manuscript develops a third quantity, the Bias Attribution Fraction (BAF), defined on the log relative risk scale as the fraction of the absolute observed association attributable to the absolute estimated systematic bias:
+
+$$
+BAF = \frac{|\hat{\mu}_B|}{|\hat{\mu}_B| + |\tilde{\psi}|},
+$$
+
+where $\hat{\mu}_B$ is the estimated center of the empirical null and $\tilde{\psi}$ is the calibrated log relative risk. BAF lies in [0, 1], equals 0 when the calibrated effect absorbs the entire magnitude, and equals 1 when systematic bias absorbs the entire magnitude. We use BAF as the primary metric and BAF̂ and its 95% credible interval as the principal object of inference. BAF is related to the bias-to-effect ratio by $BAF = BER / (1 + BER)$; BER is reported as an auxiliary summary to maintain consistency with prior reports from this program of work.
+
+The manuscript is organised in three sequential parts. Part I defines BAF and the credible-interval construction. Part II evaluates the metric in a `r format(des$n_total, big.mark = ",")`-repetition Monte Carlo simulation. Step 1 of Part II asks whether BAF̂ is an accurate estimator of BAF$_{true}$ in a Bland-Altman sense. Step 2 of Part II asks whether a two-layer decision rule, calibrated P-value plus BAF̂ plus credible interval, reduces decision error relative to the calibrated P-value alone. Part III applies the calibrated rule to two clinical questions about beta-blocker therapy drawn from a target trial emulation in MIMIC IV [@hernan2016bigdata; @cashin2025target; @ren2026tte]. The two questions are selected as a contrasting pair: question 1 (achieving ≥50% of guideline-recommended target dose) is a hypothesis that has repeatedly been reported as protective in observational studies and is a strong candidate for healthy-user bias; question 2 (GDMT with at least two of three foundational drug classes at adequate dose) is closer to a positive control with randomized-trial support. The two-arm contrast allows us to test whether the rule is informative on a case where a true effect is expected to exist.
+
+Across all three parts the same estimator pipeline is used, and the decision thresholds used in Part III are calibrated from the Part II simulation, not from the empirical data. This separation of training and application is the central methodological discipline of the study. The case study is deliberately a maximal test: the emulation is built to the TARGET guideline, estimated with doubly robust TMLE and calibrated with 12 negative controls, asking whether systematic error survives even the strictest observational design.
+
+Several existing approaches also probe unmeasured confounding, and BAF is designed to complement rather than replace them. Quantitative bias analysis asks the analyst to specify a bias model from external evidence, propagate it, and report a bias-adjusted estimate and interval [@lash2009qba; @greenland1996basic]; it is most informative when such external evidence exists, and least informative precisely when the bias is unknown, which is the situation BAF addresses. External-adjustment and bounding approaches follow the same logic, requiring an assumed magnitude for the unmeasured confounder and returning an adjusted estimate rather than a share of the observed association [@schneeweiss2006; @maclehose2005]. Negative-control methods, including the empirical calibration we build on, ask whether an estimate is distinguishable from a distribution of bias estimated from the data themselves, but stop at a calibrated P-value [@schuemie2014interpreting; @shi2020negative]. BAF uses that same empirical null and reports the share of the calibrated signal attributable to bias on a scale bounded between 0 and 1.
+
+---
+
+## Methods
+
+### Part I. The metric
+
+Let $Y_k$, $k = 1, \ldots, K$, denote the estimated log relative risk for the $k$-th negative-control outcome in a study that estimates an analogous quantity for the target outcome $Y$. We assume
+
+$$
+Y_k \sim \mathcal{N}(\mu_B, \sigma_B^2 + s_k^2),
+$$
+
+where $\mu_B$ is the systematic bias center, $\sigma_B^2$ is the between-negative-control variance of the systematic bias, and $s_k^2$ is the sampling variance of the $k$-th negative-control estimate. The pair $(\mu_B, \sigma_B)$ is jointly estimated by maximum likelihood, with $\sigma_B$ capped at the empirical standard deviation of the $K$ estimates to preserve positive-definiteness. The calibrated P-value is then the upper tail probability of $Y$ under the fitted empirical null, computed as $\Phi((Y - \hat{\mu}_B) / \sqrt{\hat{\sigma}_B^2 + s^2})$ where $s^2$ is the sampling variance of the target estimate. The calibrated log relative risk is $\tilde{\psi} = Y - \hat{\mu}_B$.
+
+BAF is defined as above. Because BAF is a ratio function of two jointly estimated quantities, the delta method produces unstable inferences when $\tilde{\psi}$ is near zero. We therefore propagate uncertainty rather than approximate it: a set of draws of $\mu_B$ is generated from the fitted systematic error model, and each draw is passed through the same function $BAF = |\mu_B| / (|\mu_B| + |Y - \mu_B|)$, with the observed target estimate $Y$ held at its observed value. The 2.5th and 97.5th empirical quantiles of the resulting BAF distribution form the interval, and the point estimate is the median of that same distribution, The interval is therefore a credible interval, not a confidence interval: no sampling distribution is inverted, so it carries no frequentist coverage guarantee, and its realised coverage in the simulation is reported in the Limitations. In the simulation the draws are posterior draws from the systematic error model $Y_k \sim \mathcal{N}(\mu_B, \sigma_B^2 + s_k^2)$, fitted by a Gibbs sampler run for 400 iterations with the first 100 discarded as warm-up, leaving M = 300 retained posterior draws, with priors $\mu_B \sim \mathcal{N}(0, 1)$ and $\sigma_B^2 \sim \mathrm{InverseGamma}(0.5, 0.05)$; in the case study they are nonparametric bootstrap resamples of the negative-control panel, with the empirical null refitted within each resample. Both constructions yield a distribution for BAF itself, and a bootstrap percentile distribution can be read as an approximation to a posterior under an uninformative prior, so we use the single term credible interval for both. The empirical null is estimated with the EmpiricalCalibration package [@schuemie2018empirical]; the BAF extension is provided by the accompanying R code archived with this manuscript.
+
+### Part II. Simulation study
+
+The simulation was designed to stress-test the rule across the regions of the parameter space most relevant to observational cardiovascular research. Five factors were crossed in a full factorial design, yielding `r fmt_num(des$n_conditions,0)` conditions. The factors and levels are listed in Table 1. Each condition was replicated `r fmt_num(des$n_reps_per_cond,0)` times, for a total of `r format(des$n_total, big.mark = ",")` repetitions. The data-generating process used a logistic regression with `r min(unlist(des$K_levels))` to `r max(unlist(des$K_levels))` negative-control outcomes, `r fmt_num(des$psi_levels[1], 2)` ≤ ψ ≤ `r fmt_num(des$psi_levels[length(des$psi_levels)], 2)` on the log relative risk scale, $\mu_B$ from `r fmt_num(des$mu_b_levels[1], 2)` to `r fmt_num(des$mu_b_levels[length(des$mu_b_levels)], 2)`, and bias exchangeability held or violated at 30%. Each repetition yielded a triple consisting of a truth BAF$_{true}$ ∈ [0, 1], an estimated BAF̂, and a calibrated P-value. The simulation covered `r kpct(des$truth_share$bias_dominated, 1)` bias-dominated, `r kpct(des$truth_share$mixed, 1)` mixed, and `r kpct(des$truth_share$effect_dominated, 1)` effect-dominated repetitions. Factor ranges were chosen to span the magnitudes typical of cardiovascular observational research: true protective effects from marginal to large, and systematic-bias centers matching the healthy-adherer effects repeatedly reported for adherence-related exposures [@simpson2006healthy; @shrank2011healthy]. Percentages describing truth composition refer to all `r format(des$n_total, big.mark = ",")` repetitions; every decision-rule percentage states its denominator explicitly (all repetitions, layer-1 passable repetitions, or repetitions declared usable). With this many repetitions, the Monte Carlo standard error of any reported proportion is below 0.07 percentage points. The design follows recommended practice for simulation studies [@morris2019simulation]. All simulations and analyses were implemented in R (version 4.4.1) using the biasratio (version 0.3.1), EmpiricalCalibration (version 3.1.4), and ltmle (version 1.3.0) packages, and the Monte Carlo grid was generated with a fixed random seed (43) for reproducibility.
+
+**Step 1. Bland-Altman agreement.** The accuracy of BAF̂ as an estimator of BAF$_{true}$ was evaluated in the classic true-value formulation: the per-repetition signed difference $\widehat{BAF} - BAF_{true}$ is plotted against the known truth $BAF_{true}$ [@blandaltman1986]. We report the mean signed difference, the standard deviation of the difference, the 95% limits of agreement, Lin's concordance correlation coefficient (CCC) [@lin1989ccc], and the proportional-bias slope (the regression of the difference on $BAF_{true}$), which detects directional underestimation that grows with $BAF_{true}$. The interior analysis excludes the $\psi = -0.01$ level to avoid the near-boundary pathologies that arise when the calibrated effect approaches zero; a full analysis including the boundary level is also reported. A clinical-view variant, plotting the difference against the condition-mean predicted BAF̂ that a clinician actually observes, is provided in the companion interactive explainer.
+
+**Step 2. Two-layer decision rule.** The decision rule has two layers. Layer 1 is the calibrated P-value, declaring the repetition "passable" if $p_{\text{cal}} < 0.05$. Layer 2 then operates on the subset that passed layer 1, indexing BAF̂ into a `r length(lookup)`-bucket equal-frequency lookup table and using the bucket center together with the credible-interval half-width, classified as "narrow" or "wide" relative to the median `r fmt_num(ciw$median_half_width, 3)`, to read a probability of being bias-dominated. The conservative value $\max(p_{\text{BD,narrow}}, p_{\text{BD,wide}})$ is used for the verdict. The four verdict zones are defined by prespecified probability thresholds of `r paste(NUM$part2$verdict_breaks, collapse = ", ")`, corresponding to "usable as effect evidence," "mixed, hypothesis-generating," "competitive, no verdict," and "not usable as effect evidence." A second, independent rule works directly on the BAF scale, which is divided at 1/3 and 0.5 into an effect-dominated zone below 1/3, a mixed zone, and a bias-dominated zone above 0.5: it requires the whole credible interval of BAF̂ to lie below 0.5, clear of the bias-dominated zone, rather than only its point estimate, and is also evaluated as a stand-alone alternative. Nested comparisons R0 through R4 add one component at a time: R0 is uncalibrated P-value, R1 is calibrated P-value alone, R2 adds BAF̂ < 0.5, R3 adds the credible-interval requirement just described, and R4 adds the requirement that the calibrated probability of bias dominance fall below 15%.
+
+### Part III. Beta-blocker target trial emulation
+
+**Data source.** MIMIC IV (critical care) and MIMIC IV ECG [@johnson2023mimic; @johnson2023mimic2], covering intensive care unit stays at Beth Israel Deaconess Medical Center between 2008 and 2019. The two databases were linked at the stay level. Adults aged 18 years or older with a first ICU stay, at least 24 hours of continuous monitoring, and a recorded 12-lead ECG during the index stay were eligible. Patients with a previous admission for the index condition, those discharged within 24 hours, and those with missing key variables were excluded. Of `r format(n_flow_screen, big.mark = ",")` heart-failure hospitalizations assessed for eligibility, `r format(n_flow_excl, big.mark = ",")` did not survive the 7-day grace period to time zero and were excluded, leaving `r format(n_flow_analytic, big.mark = ",")` in the analytic cohort. The deidentified data were approved by the Massachusetts Institute of Technology and Beth Israel Deaconess Medical Center institutional review boards with a waiver of informed consent. The study is reported in accordance with the RECORD-PE statement, the reporting guideline for studies conducted using observational routinely collected health data for pharmacoepidemiology [@langan2018recordpe].
+
+**Target trial protocol.** Two target trials were emulated in parallel, with every design decision checked item by item against the TARGET guideline [@cashin2025target]. *Question 1.* Eligible patients were classified into the treatment strategy if they reached at least 50% of the guideline-recommended target dose of an index beta-blocker within 7 days of admission and sustained this exposure through 12 months, and into the control strategy otherwise. *Question 2.* Eligible patients were classified into the treatment strategy if they received GDMT, defined as at least two of the three foundational drug classes (beta-blocker, renin-angiotensin system inhibitor, mineralocorticoid receptor antagonist) at adequate dose for 12 months. Both trials defined time zero as the 24-hour landmark after admission, used intention-to-treat as the primary analysis, and required sustained exposure through 12 months. Per-protocol and as-treated analyses were conducted as sensitivity checks.
+
+**Estimation.** One-year all-cause mortality was the primary outcome. It was estimated by targeted maximum likelihood estimation (TMLE) [@vanderlaan2011targeted], a doubly robust, semiparametric efficient estimator. For question 1 (beta-blocker target dose), the treatment mechanism was modeled with a Super Learner [@vanderlaan2007superlearner] of two candidate learners (main-term logistic regression and Lasso logistic regression), selected by cross-validated out-of-sample risk, and the outcome model with a main-term logistic regression, both fit on the baseline covariates listed in Table 3; for question 2 (guideline-directed medical therapy), the same doubly robust TMLE was used with a main-term logistic regression treatment model (a single Super Learner library, SL.glm), the specification also used for the negative controls. The negative controls were carried on the same hospitalizations over the same one-year window, with the same 7-day grace-period exclusion (Y_W0 = 0), the same 10 baseline covariates, and the same single-point treatment node and estimator as the target estimates; they differ in the beta-blocker contrast that defines exposure, because the panel was fitted with the exposure defined by the agent received, counting all beta-blocker agents (`r sprintf("%.1f", pct_nc_exposed)`% of hospitalizations at or above 50% of the target dose), whereas the target estimates use the guideline-restricted definition (`r sprintf("%.1f", pct_main_exposed)`% at or above the target dose). The `r fmt_num(NUM$part3$nc$K,0)` negative-control outcomes were selected from the OHDSI standard negative-control panel for cardiovascular studies, restricted to outcomes with sufficient event counts and predicted insensitivity to the exposures of interest. The empirical null distribution was jointly estimated as described above. Point estimates were obtained from the bootstrap median of 200 resamples, with credible intervals from the joint Gibbs posterior. Three sensitivity analyses were performed for question 1: leave-one-out across the `r fmt_num(NUM$part3$nc$K,0)` negative controls; replacement of the Super Learner library; and a Gaussian-process propensity score model with sensitivity parameters drawn from a uniform prior. The emulation is therefore a deliberate best-case stress test: if systematic error survives this combination, it will survive most observational designs.
+
+**Reporting.** For each question we report the uncalibrated relative risk, the calibrated relative risk, the calibrated P-value, BAF̂ with its 95% credible interval, and the verdict from the lookup table. All numbers are reproduced from a single JSON file generated by the analysis pipeline and shared with the companion interactive explainer (manuscript repository, `output/tables/v39_all_numbers.json`).
+
+---
+
+## Results
+
+### Part I. Estimator accuracy
+
+Across `r format(p1_int$n, big.mark = ",")` interior repetitions, BAF̂ had a mean signed difference (BAF̂ − BAF$_{true}$) of `r fmt_num(p1_int$bias, 3)` and a standard deviation of `r fmt_num(p1_int$sd_diff, 3)`, yielding 95% limits of agreement of `r fmt_num(p1_int$loa_lo, 3)` to `r fmt_num(p1_int$loa_hi, 3)` (Figure 3). Lin's concordance correlation coefficient was `r fmt_num(p1_int$ccc, 3)`. The slope of the regression of the difference on BAF$_{true}$ was `r fmt_num(p1_int$slope, 4)` (95% CI `r fmt_num(p1_int$slope_lo, 4)` to `r fmt_num(p1_int$slope_hi, 4)`), rejecting the null of no proportional bias. The estimator therefore systematically underestimates BAF$_{true}$ and the underestimation grows with the magnitude of BAF$_{true}$. Including the $\psi = -0.01$ boundary level widens the limits of agreement to `r fmt_num(p1_full$loa_lo, 3)` to `r fmt_num(p1_full$loa_hi, 3)` and reduces CCC to `r fmt_num(p1_full$ccc, 3)`. These numbers support an honest reading of the estimator: agreement with truth is moderate, directional underestimation is present, and proportional bias is statistically significant. The estimator is not "in good agreement" with truth in the sense required for direct interpretation. This negative result is the premise for Step 2: a decision rule that uses BAF̂ must be calibrated against truth, and the lookup table in Step 2 does exactly that.
+
+### Part II. Decision rule performance
+
+**Layer 1. Calibrated P-value.** The calibrated P-value at the conventional 0.05 threshold declared `r pct(100 * l1$pass_rate_overall, 1)` of repetitions passable, compared with `r pct(100 * l1$naive_pass_rate, 1)` for the uncalibrated P-value. Among those declared passable by layer 1, `r pct(100 * l1$bd_share_among_pass, 2)` were truly bias-dominated (Table 4). Layer 1 removed one third of the false positives produced by the uncalibrated P-value but still permitted more than one third of the bias-dominated repetitions to pass.
+
+**Layer 2. Calibrated lookup.** The lookup table uses BAF̂ and the credible-interval half-width to map each repetition to a probability of being bias-dominated. The continuous relationship between BAF̂ and that probability is monotone, supporting the use of BAF as a credibility scale (Figure 6). Within each of the `r length(lookup)` buckets, the wide intervals and narrow intervals differ in the probability they read by up to `r fmt_num(cirole$max_abs_prob_gap_within_bin, 3)`, indicating that interval width carries information. The conservative rule $\max(p_{\text{BD,narrow}}, p_{\text{BD,wide}})$ absorbs this information into the verdict but does not change the verdict relative to the pooled lookup reading; the discriminating action is the rule that the entire 95% credible interval must lie below 0.5, clear of the bias-dominated range.
+
+**Discrimination.** Read from the bias-dominated view, meaning that a positive call is to withhold a repetition and a positive truth is to be truly bias-dominated, the area under the ROC curve was `r fmt_num(disc[[1]]$auc, 3)` for the calibrated P-value, `r fmt_num(disc[[2]]$auc, 3)` for BAF̂ alone, and `r fmt_num(disc[[3]]$auc, 3)` for BAF̂ plus interval half-width. Adding the credible interval half-width to BAF̂ yielded a likelihood ratio $\chi^2$ of `r sub(".*chi2 = ([0-9.]+).*", "\\1", disc[[3]]$note)` on 1 degree of freedom (P < .001). The interval half-width was associated with an odds ratio of `r fmt_num(NUM$part2$or_half_width, 2)` per unit increase. The interval half-width is therefore an informative but minor continuous covariate whose principal role is to enable a defensible interval-level rule, not to improve ranking. The same distinction accounts for the pattern in Table 4: each successive rule improves by imposing a stricter condition, not by ranking repetitions better, which is why the curve in Figure 8 barely moves when the half-width is added. Read from the effect-dominated view, meaning that a positive call is to declare a repetition usable and a positive truth is to be truly effect-dominated, the same three scores reached AUC `r fmt_num(dual$auc$auc_ed[1], 3)` for the calibrated P-value, `r fmt_num(dual$auc$auc_ed[2], 3)` for BAF̂, and `r fmt_num(dual$auc$auc_ed[3], 3)` for BAF̂ plus the half-width, and the half-width score differed from BAF̂ alone by `r paste0(ifelse(dual$auc$auc_ed[3] >= dual$auc$auc_ed[2], "+", "−"), fmt_num(abs(dual$auc$auc_ed[3] - dual$auc$auc_ed[2]), 4))`, so the sign of the half-width contribution is not consistent across the two views; in neither view does interval width add ranking information beyond BAF̂, and it is retained because rule R3 requires the whole credible interval to fall below 0.5, clear of the bias-dominated zone. BAF̂ therefore ranks the effect-dominated view better (`r fmt_num(dual$auc$auc_ed[2], 2)`) than the bias-dominated view (`r fmt_num(dual$auc$auc_bd[2], 2)`), whereas the calibrated P-value does the reverse (`r fmt_num(dual$auc$auc_ed[1], 2)` against `r fmt_num(disc[[1]]$auc, 2)`). The two scores fail in opposite directions, and only reporting both viewpoints makes that visible. Figure 8 overlays each reporting rule of Table 4 as an operating point, once in each panel, with sensitivity on the vertical axis and one minus specificity on the horizontal axis, so the nested rules can be read directly as the trade-off between catching bias-dominated repetitions and sparing effect-dominated ones.
+
+**Nested strategies.** Table 4 reports the misuse rate, the share of repetitions declared usable by the rule that were truly bias-dominated, across nested rules R0 through R4 and stand-alone comparators C1 and C2. The calibrated P-value alone (R1) had a misuse rate of `r pct(strat[[2]]$bd_among_declared_pct, 2)`. Adding the BAF point estimate below 0.5 (R2) reduced misuse to `r pct(strat[[3]]$bd_among_declared_pct, 2)`. Adding the credible-interval requirement (R3) reduced misuse to `r pct(strat[[4]]$bd_among_declared_pct, 2)`. The full rule (R4), meaning a calibrated probability of bias dominance below 15%, reduced misuse to `r pct(strat[[5]]$bd_among_declared_pct, 2)`, at the cost of declaring `r pct(strat[[5]]$declare_usable_pct, 1)` of repetitions usable (versus `r pct(strat[[2]]$declare_usable_pct, 1)` for R1). Read from the bias-dominated view, meaning that withholding is a positive call and being truly bias-dominated is a positive truth, sensitivity rose from `r pct(dual$strategies$sens_bd[2], 1)` for R1 to `r pct(dual$strategies$sens_bd[5], 1)` for R4, so the full rule caught a far larger share of the repetitions that truly were bias-dominated, while specificity fell from `r pct(dual$strategies$spec_bd[2], 1)` to `r pct(dual$strategies$spec_bd[5], 1)`. Read from the effect-dominated view, meaning that declaring usable is a positive call and being truly effect-dominated is a positive truth, sensitivity fell from `r pct(dual$strategies$sens_ed[2], 1)` to `r pct(dual$strategies$sens_ed[5], 1)` and specificity rose from `r pct(dual$strategies$spec_ed[2], 1)` to `r pct(dual$strategies$spec_ed[5], 1)`. Truth has three levels and the mixed zone (`r kpct(dual$truth_share$mixed, 1)`) is negative under both views, so the views are not mirror images and no pair of these percentages sums to 100. The stand-alone credible-interval rule C2 achieved a misuse rate of `r pct(strat[[7]]$bd_among_declared_pct, 2)` without using the calibrated P-value. The BAF estimator alone (C1) achieved a misuse rate of `r pct(strat[[6]]$bd_among_declared_pct, 2)`.
+
+**Decision cascade.** Figure 10 summarises the rule as applied to `r format(flow[[1]]$n, big.mark = ",")` repetitions. Layer 1 passed `r format(flow[[2]]$n, big.mark = ",")` (`r pct(flow[[2]]$bd_share_pct, 1)` truly bias-dominated). Within that subset, `r format(flow[[3]]$n, big.mark = ",")` were declared usable as effect evidence (`r pct(flow[[3]]$bd_share_pct, 2)` truly bias-dominated), `r format(flow[[4]]$n, big.mark = ",")` mixed (`r pct(flow[[4]]$bd_share_pct, 2)` truly bias-dominated), `r format(flow[[5]]$n, big.mark = ",")` competitive (`r pct(flow[[5]]$bd_share_pct, 2)` truly bias-dominated), and `r format(flow[[6]]$n, big.mark = ",")` not usable (`r pct(flow[[6]]$bd_share_pct, 2)` truly bias-dominated). The four-zone verdict is monotone in the truth share of bias-dominated repetitions, supporting the use of the lookup as a continuous credibility gauge.
+
+**Robustness.** The full rule (R4) was applied to `r length(subg)` pre-specified subgroups (Table 6). Misuse rates ranged from `r pct(min(sapply(subg, function(x) x$bd_among_declared_pct)), 2)` (when bias exchangeability held) to `r pct(max(sapply(subg, function(x) x$bd_among_declared_pct)), 2)` (when exchangeability was violated at 30%). The direction of bias in the rule is consistent: exchangeability violation increases misuse. The other `r length(subg) - 2` subgroups (varying K, σ$_{PS}$) gave misuse rates within ±50% of the overall misuse rate, indicating that the rule is not driven by any single design factor.
+
+### Part III. Beta-blocker target trial emulation
+
+**Empirical null.** Across the `r fmt_num(NUM$part3$nc$K,0)` negative-control outcomes, the empirical null was estimated as $\hat{\mu}_B$ = `r fmt_num(BB$mu_b, 3)`, $\hat{\sigma}_B$ = `r fmt_num(BB$sigma_b, 3)`. All `r fmt_num(NUM$part3$nc$K,0)` negative-control estimates fell on the protective side (log relative risks from `r fmt_num(NUM$part3$nc$logrr_min, 3)` to `r fmt_num(NUM$part3$nc$logrr_max, 3)`), confirming that the systematic bias has a definite direction rather than being random noise. The Shapiro-Wilk P-value of `r fmt_num(NUM$part3$nc$shapiro_p, 3)` does not reject normality.
+
+**Question 1. Reaching ≥50% of guideline-recommended target dose.** The uncalibrated analysis produced a one-year relative risk of `r fmt_num(BB$rr_uncal, 3)` for the treatment strategy, suggesting a `r pct(100 * (1 - BB$rr_uncal), 1)` reduction in mortality. The calibrated log relative risk was `r fmt_num(BB$log_rr_cal, 3)` and the calibrated relative risk was `r fmt_num(BB$rr_cal, 3)`. The calibrated P-value was `r fmt_num(BB$cal_p, 3)`, well above 0.05, so the layer 1 test did not pass. The signal did not survive the removal of systematic bias. BAF̂ was `r fmt_num(BB$bf, 3)` with a 95% credible interval of `r fmt_num(BB$bf_lo, 3)` to `r fmt_num(BB$bf_hi, 3)` (interval half-width `r fmt_num(BB$half_width, 3)`, classified narrow). The lookup table verdict for this cell was "not usable as effect evidence" with a probability of being bias-dominated of `r fmt_num(BB$p_bias_dominated, 3)`. Sensitivity analyses left this verdict intact (Table 7). The leave-one-out range of BAF̂ was `r fmt_num(min(sens$loo_bf_min, sens$loo_fall_bf), 3)` to `r fmt_num(sens$loo_bf_max, 3)`; removing the most influential negative-control produced BAF̂ = `r fmt_num(sens$loo_fall_bf, 3)`. All three Super Learner libraries returned BAF̂ > 0.90. Two Gaussian-process propensity-score perturbations returned BAF̂ > 0.80.
+
+**Question 2. GDMT with at least two of three classes.** The uncalibrated analysis produced a relative risk of `r fmt_num(GDM$rr_uncal, 3)`, suggesting a `r pct(100 * (1 - GDM$rr_uncal), 1)` reduction in mortality. The calibrated relative risk was `r fmt_num(GDM$rr_cal, 3)` and the calibrated P-value was `r fmt_num(GDM$cal_p, 4)`, passing layer 1. BAF̂ was `r fmt_num(GDM$bf, 3)` with a 95% credible interval of `r fmt_num(GDM$bf_lo, 3)` to `r fmt_num(GDM$bf_hi, 3)` (interval half-width `r fmt_num(GDM$half_width, 3)`, classified narrow). The lookup verdict was "competitive, no verdict" with a probability of being bias-dominated of `r fmt_num(GDM$p_bias_dominated, 3)`. The signal therefore survived calibration but the BAF̂ interval straddled the 0.5 threshold, indicating that the credible evidence cannot distinguish whether the residual association is dominated by bias or by effect.
+
+**Synthesis of the two questions.** Question 1 is the headline finding: under the most rigorous design attainable in observational research, an apparent `r pct(100 * (1 - BB$rr_uncal), 1)` mortality reduction attributable to achieving target beta-blocker dose disappears after removing systematic bias. The reported protective association was bias-dominated. None of the safeguards changed this central result: under TARGET-adherent design, doubly robust estimation, and a full negative-control panel, BAF quantified the systematic error that remained. Question 2 confirms that the rule does not over-reject: GDMT has randomized-trial support, and the rule classifies it as a credible signal that nonetheless cannot be reported as effect evidence at the present level of bias control. The two results together demonstrate the three-channel report (signal existence, effect size, and bias fraction) and show that the bias fraction is not negligible even under the strictest design.
+
+---
+
+## Discussion
+
+This study proposes and evaluates a third reporting channel for observational causal estimates: the fraction of the observed association that is attributable to systematic bias, expressed as a continuous estimator in [0, 1] with a 95% credible interval. The motivation for a third channel is the failure of the binary reporting standards that observational research currently uses. A reported relative risk with a 95% confidence interval answers "how large is the observed effect" but not "how much of the effect is bias." A reported calibrated P-value answers "is there a signal after removing systematic bias" but not "how much of the remaining signal is still bias." A bias fraction answers the third question directly.
+
+The principal limitation of the proposal is that BAF inherits the assumption of bias exchangeability from the OHDSI calibration framework. The simulation study showed that a 30% violation of exchangeability raised the misuse rate from `r pct(min(sapply(subg, function(x) x$bd_among_declared_pct)), 2)` to `r pct(max(sapply(subg, function(x) x$bd_among_declared_pct)), 2)`. This assumption is not testable in any single study and must be justified by domain knowledge about whether the negative controls cover the same bias mechanisms as the target outcome. The interval half-width is informative but is below its nominal 95% coverage in our simulation (`r fmt_num(ciw$coverage_overall, 3)` overall, `r fmt_num(ciw$coverage_narrow, 3)` narrow, `r fmt_num(ciw$coverage_wide, 3)` wide). The decision rule compensates for this by using a conservative lookup and a separate credible-interval rule, but the rule itself is not a substitute for a calibrated interval.
+
+The estimator has moderate agreement with truth (CCC `r fmt_num(p1_int$ccc, 3)`) and significant proportional bias, so direct interpretation of BAF̂ is not advised. The lookup table, which is calibrated against truth in a `r format(des$n_total, big.mark = ",")`-repetition simulation, absorbs the estimator error. This is a deliberate design choice: the lookup reads as a calibrated probability rather than as a Bayes posterior probability, and the lookup entries are reproducible by any analyst who runs the simulation pipeline.
+
+The contrast between question 1 and question 2 illustrates the operational meaning of the three-channel report. Question 1 fails layer 1: the uncalibrated association did not survive the removal of systematic bias. Reporting this finding as "no association" is consistent with the data and the design. Question 2 passes layer 1 but fails layer 2 in the sense that the BAF̂ interval straddles the 0.5 threshold; the credible evidence cannot distinguish whether the residual association is dominated by bias or by effect. Reporting this finding as "GDMT appears protective but bias dominates the residual" is more honest than reporting it as a positive finding or as a negative finding.
+
+The reporting protocol proposed here can be applied to any observational study that includes a panel of negative controls, without additional data collection. The empirical null parameters and the calibrated P-value are produced by existing OHDSI tools; the BAF extension and the lookup table are implemented in the companion R package `biasratio`, which retains `bsr_*` names as backward-compatible aliases. The protocol does not require a validation study of its own; the validation is the simulation study reported here, and the rule parameters are tied to specific simulation conditions that future analysts can replicate or extend.
+
+## Limitations
+
+The empirical null distribution assumes normality; a Shapiro-Wilk test on the present panel did not reject normality, but the rule has not been evaluated on heavy-tailed nulls. The data-generating process in Part II is a simplification: real observational data exhibit time-varying confounding patterns, informative censoring, and outcome-dependent selection that the simulation does not exhaustively represent. The interval half-width information was modelled as a binary split (narrow/wide) rather than a continuous adjustment; a continuous model with a learning-curve adjustment was not significantly better than the binary split in our data. The two clinical questions are illustrative of the method's behaviour; they are not powered to answer the underlying clinical questions about beta-blocker therapy, which require replication in independent data. Finally, the bias fraction inherits the assumption of bias exchangeability from the calibration framework, which is not testable. Because the primary outcome is all-cause mortality, competing risks do not arise in the primary analysis; they would matter only for cause-specific or nonfatal endpoints, which are used here solely as negative controls. Of the 14,677 patients in the question-2 cohort, 3,494 (23.8%) had a missing guideline-directed medical therapy score and were classified as not optimized; if this missingness is related to the true exposure it is a nonrandom treatment misclassification that biases the question-2 estimate. We therefore re-estimated question 2 under four handling conventions (Table S12): indeterminate treated as suboptimal, as published; complete-case; indeterminate treated as optimized; and multiple imputation from a logistic model of exposure on the baseline covariates. The uncalibrated relative risk moved from 0.68 to 0.91 across conventions, but no convention produced a calibratable signal, and none yielded a usable determination: the bias fraction rose from 0.51 under the published convention to between 0.51 and 0.66 under the others, and three of the four conventions placed question 2 in the least favourable determination of not usable as effect evidence. The published convention is thus the most favourable of the four, so the qualitative conclusion does not depend on it. The negative-control panel was fitted with the exposure contrast that counts all beta-blocker agents, whereas the target estimates use the guideline-restricted contrast. Refitting the panel to match the target contrast widens the empirical null (SD `r fmt_num(nc_matched_sigma,3)` versus `r fmt_num(BB$sigma_b,3)`) and raises the question-2 calibrated P value above .05 (`r fmt_num(nc_matched_calp_q2,3)` versus `r fmt_num(GDM$cal_p,3)`), so the question-2 layer-1 pass is not robust to this choice, although its label as a competitive determination with no usable finding is; question 1 remains not usable as effect evidence under either panel (calibrated P `r fmt_num(nc_matched_calp_bb,3)`).
+
+As defined in the Methods, the interval is a credible interval, not a confidence interval: it propagates draws of $\hat{\mu}_B$ while holding the observed effect estimate fixed, so it carries no frequentist coverage guarantee. In the simulation it contained $\mathrm{BAF}_{true}$ in `r pct(100 * ciw$coverage_overall, 1)` of repetitions, below the nominal 95%. Two features of the construction contribute to this gap. First, the interval omits the sampling variability of the effect estimate. Second, the number of draws is modest (M = 300 in the simulation; a bootstrap of comparable size in the case study), so the 2.5th and 97.5th percentiles carry Monte Carlo uncertainty. Propagating the omitted term jointly restores coverage: adding the sampling variability of the calibrated estimate raised coverage from 78.8% to 97.7% across the conditions examined, at the cost of widening the median half-width from 0.132 to 0.222 and lowering the yield of the strictest interval rule from 24.3% to 13.2% of repetitions (Table S11). Because the interval is systematically narrower than its nominal coverage, the rules that consume its endpoints or half-width (R3, C2, and the narrow or wide split of the lookup table) are conservative in yield: widening the interval to nominal coverage would raise both their yield and the misuse rates they report, so the R3 and R4 misuse rates reported here are lower bounds.
+
+The lookup table that maps $\widehat{BAF}$ and interval half-width to a determination was built from the same `r format(des$n_total, big.mark = ",")` repetitions used to evaluate the rules, so its reported performance reflects in-sample agreement and is optimistically biased. Two held-out validations bound that optimism (Table S10). Holding out 20% of repetitions within every condition left every rule's misuse rate unchanged to two decimal places. Holding out 20% of the `r fmt_num(des$n_conditions, 0)` conditions instead, which also tests grid cells that never contributed to the lookup, left the share declared usable essentially unchanged and raised the misuse rate of the strictest rule from 2.2% to 2.4%, the largest excursion across the five folds being 4.1%. Because the data-generating truth is fixed by the investigator, absolute misuse rates are illustrative and depend on the chosen ranges of the simulation factors; what is robust is the relative ordering of strategies, which held across the prespecified subgroups, including the exchangeability-violation level.
+
+## Conclusions
+
+Reporting the calibrated P-value alongside BAF̂ and its 95% credible interval provides a three-channel report of signal, effect size, and bias fraction. In a `r format(des$n_total, big.mark = ",")`-repetition simulation, the three-channel report reduced the rate at which bias-dominated repetitions were declared usable as effect evidence from `r pct(strat[[1]]$bd_among_declared_pct, 2)` to `r pct(strat[[5]]$bd_among_declared_pct, 2)`. In a target trial emulation of two beta-blocker questions in MIMIC IV, the three-channel report classified question 1 as not usable as effect evidence and question 2 as competitive, no verdict. The protocol can be applied to any observational study that uses negative controls.
+
+## Figures and tables
+
+Figure 1. Architecture of the three-part study and the connecting propositions between parts.
+
+Figure 2. Empirical null distribution from the `r fmt_num(NUM$part3$nc$K,0)` negative-control outcomes in Part III. The fitted center is marked by the red line; the 12 negative-control observations are shown as filled circles on a separate track to avoid overplotting. $\hat{\mu}_B$ = `r fmt_num(BB$mu_b, 3)`, $\hat{\sigma}_B$ = `r fmt_num(BB$sigma_b, 3)`, Shapiro-Wilk P = `r fmt_num(NUM$part3$nc$shapiro_p, 3)`.
+
+Figure 3. True-BAF-view Bland-Altman agreement of BAF̂, full-grid Monte Carlo simulation (n = `r fmt_num(p1_full$n,0)` repetitions across `r fmt_num(p1_full$n / 1000,0)` conditions); the per-repetition empirical null was estimated by Markov chain Monte Carlo. The x-axis is the **true BAF** of the simulated condition; the y-axis is the per-rep signed difference $\widehat{BAF} - BAF_{true}$. The 2D density (warm ramp on white) summarises all `r format(p1_full$n, big.mark = ",")` simulated repetitions at once. The solid horizontal line is the overall mean bias, the two dashed red lines are the 95% limits of agreement ($\text{bias} \pm 1.96\,\text{SD}$), and the inset table reports bias, SD, LoA, Lin's concordance correlation coefficient, the proportional-bias slope (regression of the difference on $BAF_{true}$), and the regression intercept. The estimator systematically underestimates $BAF_{true}$ (mean bias = `r fmt_num(p1_full$bias,3)`) and the underestimation grows with $BAF_{true}$ (slope = `r fmt_num(p1_full$slope,4)`; 95% CI `r fmt_num(p1_full$slope_lo,4)` to `r fmt_num(p1_full$slope_hi,4)`; t = `r fmt_num(p1_full$slope_t,1)`, P < .001). Lin's CCC = `r fmt_num(p1_full$ccc,3)` indicates moderate agreement. The interior analysis excluding the $\psi = -0.01$ boundary level (`r format(p1_int$n, big.mark = ",")` reps) is shown in Supplementary Figure S2.
+
+Figure 4. Distribution of BAF̂ against BAF$_{true}$. The dark band is the interquartile range, the light band is the 5%-95% range, and the dark blue line is the median. The dashed line is the identity. The estimator systematically underestimates BAF at high BAF$_{true}$.
+
+Figure 6. Reliability calibration: BAF̂ bucket center against the truth-bias-dominated probability within the bucket. Red points use narrow credible intervals (half-width ≤ `r fmt_num(ciw$median_half_width, 3)`); blue points use wide intervals. The black line is the pooled estimate. The four-zone colour bands correspond to the verdict zones. The relationship is monotone, supporting BAF as a continuous credibility scale.
+
+Figure 7. Nested strategy cascade. The bar length is the share of repetitions declared usable by the rule; the dark segment is the share of those repetitions that were truly bias-dominated. Misuse rates decrease from `r pct(strat[[1]]$bd_among_declared_pct, 2)` (R0) to `r pct(strat[[5]]$bd_among_declared_pct, 2)` (R4).
+
+Figure 8. Receiver operating characteristic analysis for the reporting rules of Table 4, read from two viewpoints. Curves: the calibrated P-value alone, BAF̂ alone, and BAF̂ plus its credible-interval half-width; the in-panel tables report the area under each curve in that panel. Triangles: the operating points of R0 through R4 and of C1, C2 of Table 4. Panel A. Effect-dominated view: reference standard truly effect-dominated, positive call declared usable as effect evidence. Panel B. Bias-dominated view: reference standard truly bias-dominated, positive call withheld. Truth has three levels (effect-dominated `r kpct(dual$truth_share$effect_dominated, 1)`, mixed `r kpct(dual$truth_share$mixed, 1)`, bias-dominated `r kpct(dual$truth_share$bias_dominated, 1)`), and the mixed zone falls outside the positive group of both views, which is why the views are not mirror images and why the same curve has a different area in each panel: the calibrated P-value `r fmt_num(dual$auc$auc_ed[1], 3)` in panel A against `r fmt_num(dual$auc$auc_bd[1], 3)` in panel B, BAF̂ `r fmt_num(dual$auc$auc_ed[2], 3)` against `r fmt_num(dual$auc$auc_bd[2], 3)`, and BAF̂ plus interval half-width `r fmt_num(dual$auc$auc_ed[3], 3)` against `r fmt_num(dual$auc$auc_bd[3], 3)`. All `r format(des$n_total, big.mark = ",")` simulated repetitions (the full `r fmt_num(des$n_conditions, 0)`-condition x `r fmt_num(des$n_reps_per_cond, 0)`-repetition design) were used for the parametric curve; the simulation itself was not subsampled.
+
+Figure 9. Three-by-three confusion between truth zone and rule verdict. Row percentages are shown. Effect-dominated repetitions are well identified; bias-dominated repetitions are predominantly classified as mixed, consistent with the proportional bias observed in Step 1.
+
+Figure 10. Decision cascade. Each row is one stage of the rule, with the bar length proportional to the number of repetitions reaching that stage and the dark segment proportional to the truth-bias-dominated share within that stage. The four-zone verdict is monotone in the truth share of bias-dominated repetitions.
+
+Figure 11. The two clinical questions in Part III plotted on the BAF scale with their 95% credible intervals and verdict zones. Question 1 falls in the "not usable as effect evidence" zone; question 2 falls in the "competitive, no verdict" zone.
+
+Table 1. Five-factor simulation design. The five factors (true effect ψ, bias center μ$_B$, standard error of the target estimate σ$_ψ$, number of negative controls K, exchangeability violation) were crossed in a full factorial design, yielding `r fmt_num(des$n_conditions,0)` conditions.
+
+Table 2. Twelve-bucket lookup table. Each bucket reports the count of repetitions with narrow and wide credible intervals and the conservative probability of being bias-dominated. Verdict zones are colour-coded.
+
+Table 3. Comparison of three readings of the lookup (pooled, width-specific, conservative). The conservative reading is the one used in the manuscript.
+
+Table 4. Nested strategy comparison, read from two viewpoints. Every rule withholds a repetition unless all the conditions listed for it are met; only then is the repetition declared usable as effect evidence. Misuse rate is the share of repetitions declared usable by the rule that were truly bias-dominated, which is 100 minus NPV in the bias-dominated view. A single rule has two readings at once. The effect-dominated view (ED) takes a positive call to be "declared usable" and a positive truth to be truly effect-dominated; the bias-dominated view (BD) takes a positive call to be "withheld" and a positive truth to be truly bias-dominated. In each view, Sens is the share of truly positive repetitions the rule called positive, Spec the share of truly negative repetitions the rule called negative, PPV the share of repetitions the rule called positive that were truly positive, and NPV the share it called negative that were truly negative. Truth has three levels (effect-dominated `r kpct(dual$truth_share$effect_dominated, 1)`, mixed `r kpct(dual$truth_share$mixed, 1)`, bias-dominated `r kpct(dual$truth_share$bias_dominated, 1)`), and the mixed zone is negative in both views, so the views are not mirror images and no pair of columns in this table sums to 100. C1 and C2 are stand-alone comparators that do not use the calibrated P-value. The operating point of each rule is plotted in Figure 8, once in each panel.
+
+Table 5. Discrimination, read from two viewpoints. In the bias-dominated view a positive call is to withhold a repetition and a positive truth is to be truly bias-dominated; in the effect-dominated view a positive call is to declare a repetition usable and a positive truth is to be truly effect-dominated. The calibrated P-value reached an area under the ROC curve of `r fmt_num(dual$auc$auc_bd[1], 3)` (bias-dominated view) and `r fmt_num(dual$auc$auc_ed[1], 3)` (effect-dominated view); BAF̂ reached `r fmt_num(dual$auc$auc_bd[2], 3)` and `r fmt_num(dual$auc$auc_ed[2], 3)`; and BAF̂ plus credible-interval half-width reached `r fmt_num(dual$auc$auc_bd[3], 3)` and `r fmt_num(dual$auc$auc_ed[3], 3)`. The likelihood-ratio χ² test for adding credible-interval half-width to BAF̂ is `r sub(".*chi2 = ([0-9.]+).*", "\\1", disc[[3]]$note)` on 1 degree of freedom (P < .001).
+
+Table 6. Robustness. Misuse rate across `r length(subg)` pre-specified subgroups. Exchangeability violation at 30% is the most important subgroup and produces the largest increase in misuse.
+
+Table 7. Question 1 sensitivity analyses. Leave-one-out across the `r fmt_num(NUM$part3$nc$K,0)` negative controls; replacement of the Super Learner library; Gaussian-process propensity-score perturbations.
+
+## Declarations
+
+**Ethics approval and consent to participate.** The deidentified data were approved by the Massachusetts Institute of Technology and Beth Israel Deaconess Medical Center institutional review boards with a waiver of informed consent, as stated in the Methods.
+
+**Author Contributions.** Dr Zeng had full access to all of the data in the study and takes responsibility for the integrity of the data and the accuracy of the data analysis. Dr Zeng conceived the study, designed the credibility metric, implemented the analysis code and the biasratio R package, conducted the simulation study, and drafted the manuscript. Dr Wang contributed to the methodological design and reviewed the statistical approach. Dr Zuo contributed to the clinical interpretation of the negative control selection and reviewed the manuscript. Dr Shu contributed to the study design and critically revised the manuscript for important intellectual content. All authors read and approved the final manuscript. Dr Zeng is the author and maintainer of the biasratio R package cited in this work.
+
+**Conflict of Interest Disclosures.** All authors reported no conflict of interest disclosures.
+
+**Funding.** This research received no specific grant from any funding agency in the public, commercial, or not-for-profit sectors.
+
+**Data Sharing Statement.** The MIMIC IV database (version 2.2) is available through PhysioNet (https://physionet.org/content/mimiciv/) and the MIMIC IV ECG extension (version 1.0.1) at https://physionet.org/content/mimic-iv-ecg/1.0.1/ to credentialed users. All analysis code, including the simulation pipeline, the case-study TMLE estimation pipeline, and the BAF computation proposed in this work, is available at https://github.com/zengzhechun/bias-fraction, together with an interactive graphical explainer of the metric, the simulation, and the two clinical questions. The methods proposed here are implemented in the companion biasratio R package (version 0.3.1; https://github.com/zengzhechun/biasratio) [@zeng2026biasratio], released under the MIT license, which provides the BAF estimator with bootstrap and Fieller intervals, the two-layer screening rule, the full set of reporting rules evaluated in Table 2, leave-one-out sensitivity analysis, and negative control diagnostics, together with a unit-test suite covering the estimator, the interval procedures, and the classification thresholds. The EmpiricalCalibration R package (Schuemie et al.), which supplies the empirical null machinery used here but does not include BAF, is available from CRAN.
+
+**Additional Contributions.** The authors thank the MIMIC IV team for making the database publicly available and the OHDSI/EmpiricalCalibration R package developers for the empirical calibration tools upon which this work builds.
+
+**Artificial Intelligence Use Disclosure.** The authors used artificial intelligence tools (DeepSeek V4 Pro, Kimi K3, GLM 5.3, ChatGPT 5.5, and Tencent WorkBuddy) for code development, manuscript editing, and language polishing. All AI-assisted content was critically reviewed and revised by the authors, who take full responsibility for the content of this manuscript.
+
+## References
+
+::: {#refs}
+:::
+
+## Supplementary appendix
+
+The supplementary appendix (separate document) reports additional simulation details, the per-lookup-bucket sensitivity analysis, and the full case-study estimation output.
+
+```{r session, include=FALSE}
+sessionInfo()
+```

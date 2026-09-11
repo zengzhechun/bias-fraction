@@ -1,10 +1,10 @@
 # R/06_bland_altman.R
-# v36 - 2026-08-21: PRIMARY analysis of the BF simulation is the Bland-Altman
-#   agreement study of the continuous BF estimator (this script + R/10_ba_full_viz.R).
+# v36 - 2026-08-21: PRIMARY analysis of the BAF simulation is the Bland-Altman
+#   agreement study of the continuous BAF estimator (this script + R/10_ba_full_viz.R).
 #   The primary agreement statistics are reported on the interior sample that
-#   excludes BF = 1 (ceiling effect); the full sample including BF = 1 is a
+#   excludes BAF = 1 (ceiling effect); the full sample including BAF = 1 is a
 #   transparency analysis. The three-zone classification is SECONDARY.
-# Bland-Altman agreement plot: estimated BF (MC, MCMC) vs true BF.
+# Bland-Altman agreement plot: estimated BAF (MC, MCMC) vs true BAF.
 # Enriched: 72,000-rep density cloud, 72 condition-mean anchors (colored by
 # true zone), bias line + 1.96 SD limits of agreement (LoA), loess trend for
 # proportional bias, marginal histograms (x & y), and annotated agreement stats
@@ -32,7 +32,7 @@ for (nm in names(res)) {
 }
 ba <- bind_rows(ba_mc, ba_mcmc) %>%
   mutate(diff = est - true)
-cat(sprintf("Built BA data: %d rows per method (X = per-condition TRUE BF)\n", nrow(ba) / 2))
+cat(sprintf("Built BA data: %d rows per method (X = per-condition TRUE BAF)\n", nrow(ba) / 2))
 
 # downsample for plotting only (stats above use the full 72,000)
 set.seed(123)
@@ -66,7 +66,7 @@ outside <- ba %>% group_by(method, zone) %>%
   summarise(outside = sum(abs(diff - mean(diff)) > 1.96 * sd(diff)), .groups = "drop")
 stats <- left_join(stats,
   outside %>% group_by(method) %>% summarise(outside_total = sum(outside)), by = "method")
-# r_prop EXCLUDING the near-boundary psi=-0.01 condition (smallest |psi|; highest true BF,
+# r_prop EXCLUDING the near-boundary psi=-0.01 condition (smallest |psi|; highest true BAF,
 # the ceiling-effect driver) to separate boundary effect from scale drift
 rpe <- ba %>% filter(psi != -0.01) %>% group_by(method) %>% summarise(
   r_prop_excl_psi0 = cor(true, diff, use = "complete.obs"), .groups = "drop")
@@ -107,13 +107,13 @@ make_ba <- function(sub, cond_sub, st, title) {
     # per-condition mean anchors
     geom_point(data = cond_sub, aes(x = true, y = diff, color = zone, fill = zone),
                shape = 21, size = 2.6, stroke = 0.6) +
-    # reference vertical gridlines (BF thresholds on the mean axis)
+    # reference vertical gridlines (BAF thresholds on the mean axis)
     geom_vline(xintercept = c(1/3, 0.5), color = "grey60", linetype = "dotted") +
     scale_color_manual(values = zone_col, breaks = zone_ord, labels = zone_lab) +
     scale_fill_manual(values = zone_col, breaks = zone_ord, labels = zone_lab) +
     coord_cartesian(xlim = c(0, 1), ylim = yl) +
-    labs(x = "True BF",
-         y = "Difference: Estimated - True BF",
+    labs(x = "True BAF",
+         y = "Difference: Estimated - True BAF",
          title = title) +
     theme_bw(base_size = 11) +
     theme(legend.position = "bottom", panel.grid.minor = element_blank(),
@@ -132,7 +132,7 @@ p_mcmc  <- make_ba(filter(ba_samp, method == "MCMC"), filter(cond, method == "MC
 
 combined <- p_mc + p_mcmc + plot_layout(widths = c(1, 1)) +
   plot_annotation(tag_levels = "A",
-                  title = "Bland-Altman agreement: estimated BF vs true BF (per 1000 replicates)")
+                  title = "Bland-Altman agreement: estimated BAF vs true BAF (per 1000 replicates)")
 
 ggsave(file.path(OUT_FIG, "figI_bland_altman.png"), combined,
        width = 11, height = 5.6, dpi = 320)
@@ -143,7 +143,7 @@ write.csv(stats, file.path(OUT_FIG, "bland_altman_stats.csv"), row.names = FALSE
 write.csv(cond,  file.path(OUT_FIG, "bland_altman_cond_means.csv"), row.names = FALSE)
 out_txt <- file.path(OUT_FIG, "bland_altman_findings.txt")
 writeLines(c(
-  "Bland-Altman agreement: estimated BF vs true BF (1000 replicates per condition)",
+  "Bland-Altman agreement: estimated BAF vs true BAF (1000 replicates per condition)",
   sprintf("  Monte Carlo : bias=%.4f  SD=%.4f  LoA=[%.4f, %.4f]  %%inLoA=%.1f%%  CCC=%.4f  propBias r=%.4f  outside=%d/%d",
           stats$bias[stats$method=="MC"], stats$sd[stats$method=="MC"],
           stats$loa_lo[stats$method=="MC"], stats$loa_hi[stats$method=="MC"],
@@ -155,22 +155,22 @@ writeLines(c(
           100*stats$pct_in[stats$method=="MCMC"], stats$ccc[stats$method=="MCMC"],
           stats$r_prop[stats$method=="MCMC"], stats$outside_total[stats$method=="MCMC"], stats$n[stats$method=="MCMC"]),
   "Interpretation:",
-  "- bias is NEGATIVE (est < true): systematic UNDER-estimation of BF on average. This is larger in magnitude than the",
-  "  72-condition estimate because the full grid includes the near-boundary psi=-0.01 conditions where true BF is highest",
+  "- bias is NEGATIVE (est < true): systematic UNDER-estimation of BAF on average. This is larger in magnitude than the",
+  "  72-condition estimate because the full grid includes the near-boundary psi=-0.01 conditions where true BAF is highest",
   "  (approx 0.83-0.98, bounded below 1) and the estimator is pulled below the true value (ceiling effect).",
   sprintf("- CCC = %.2f (MC) / %.2f (MCMC): MODERATE agreement (CCC>0.90 would be 'strong').", stats$ccc[stats$method=='MC'], stats$ccc[stats$method=='MCMC']),
   sprintf("- propBias r = %.2f (MC) / %.2f (MCMC) over ALL 640 conditions: a STRONG negative proportional bias,", stats$r_prop[stats$method=='MC'], stats$r_prop[stats$method=='MCMC']),
-  "  i.e. the (est-true) difference grows MORE negative as true BF increases toward 1.",
-  sprintf("- EXCLUDING the near-boundary psi=-0.01 level (highest true BF): propBias r = %.2f (MC) / %.2f (MCMC) -- only MILD residual scale drift.", stats$r_prop_excl_psi0[stats$method=='MC'], stats$r_prop_excl_psi0[stats$method=='MCMC']),
+  "  i.e. the (est-true) difference grows MORE negative as true BAF increases toward 1.",
+  sprintf("- EXCLUDING the near-boundary psi=-0.01 level (highest true BAF): propBias r = %.2f (MC) / %.2f (MCMC) -- only MILD residual scale drift.", stats$r_prop_excl_psi0[stats$method=='MC'], stats$r_prop_excl_psi0[stats$method=='MCMC']),
   "  => The strong overall proportional bias is driven almost entirely by the near-boundary psi=-0.01 level (64 conditions,",
-  "  64000 reps, true BF up to approx 0.98): BF = |mu_B|/(|mu_B|+|psi|) is bounded above at 1, so at the smallest |psi| the estimator mean is pulled below the true value.",
-  "  NOTE: this REVERSES the earlier 72-condition claim of 'no proportional bias' (r~0): that grid excluded psi=0 / BF=1,",
-  "  masking the boundary effect. Using X = true (per-condition fixed BF) -- not Tukey mean (est+true)/2 -- is the honest test",
+  "  64000 reps, true BAF up to approx 0.98): BAF = |mu_B|/(|mu_B|+|psi|) is bounded above at 1, so at the smallest |psi| the estimator mean is pulled below the true value.",
+  "  NOTE: this REVERSES the earlier 72-condition claim of 'no proportional bias' (r~0): that grid excluded psi=0 / BAF=1,",
+  "  masking the boundary effect. Using X = true (per-condition fixed BAF) -- not Tukey mean (est+true)/2 -- is the honest test",
   "  (Tukey mean spuriously inflated r to ~0.31 via algebraic coupling of X and Y).",
   "- ~94% of replicates fall within the EMPIRICAL LoA (bias +/- 1.96*SD of differences): the point estimator's REALIZED error spread is well described by its empirical SD.",
   "- KEY distinction: the BA LoA uses the EMPIRICAL SD of (est - true). This is NOT the method's claimed 95% CI.",
   "  The separate coverage analysis (figC / figH) shows MC's OWN bootstrap CI contains the truth only ~42% of the time",
   "  (it under-reports psi uncertainty), whereas the MCMC posterior CI captures ~82%. Conclusion: away from the near-boundary",
-  "  (psi=-0.01) cells, BF POINT estimates agree reasonably with truth (BA); MC UNDERSTATES its uncertainty -- report MCMC CIs."
+  "  (psi=-0.01) cells, BAF POINT estimates agree reasonably with truth (BA); MC UNDERSTATES its uncertainty -- report MCMC CIs."
 ), out_txt)
 cat("Saved bland_altman_findings.txt\n")

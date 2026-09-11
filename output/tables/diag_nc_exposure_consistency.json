@@ -1,0 +1,266 @@
+{
+  "generated": "2026-09-11 12:14:26",
+  "question": "12 negative controls were fitted on ltmle_wide_K2.rds while the main analysis used ltmle_wide_K2_guideline.rds; the A_W0 encoding differs between the two files.",
+  "reference_null_fit": {
+    "mean": -0.19049929467,
+    "sd": 0.067970467403
+  },
+  "arm_k2": {
+    "n_total": 15053,
+    "n_valid": 14677,
+    "pct_exposed": 43.4625604688,
+    "estimates": [
+      {
+        "outcome": "nc_infection_W1",
+        "label": "Infection (combined)",
+        "n": 14677,
+        "n_events": 4705,
+        "rr": 0.80528926885,
+        "logRr": -0.21655372592,
+        "seLogRr": 0.025395337045,
+        "_row": "infection"
+      },
+      {
+        "outcome": "nc_gi_bleed_W1",
+        "label": "GI Bleed",
+        "n": 14677,
+        "n_events": 1535,
+        "rr": 0.81968914785,
+        "logRr": -0.19883009858,
+        "seLogRr": 0.051226793981,
+        "_row": "gi_bleed"
+      },
+      {
+        "outcome": "nc_fall_W1",
+        "label": "Fall (without fracture)",
+        "n": 14677,
+        "n_events": 83,
+        "rr": 0.66473511071,
+        "logRr": -0.40836664744,
+        "seLogRr": 0.24633205083,
+        "_row": "fall"
+      },
+      {
+        "outcome": "nc_uti_only_W1",
+        "label": "UTI",
+        "n": 14677,
+        "n_events": 3620,
+        "rr": 0.81867099599,
+        "logRr": -0.20007299014,
+        "seLogRr": 0.030170504879,
+        "_row": "uti_only"
+      },
+      {
+        "outcome": "nc_cellulitis_W1",
+        "label": "Cellulitis",
+        "n": 14677,
+        "n_events": 1339,
+        "rr": 0.7925435797,
+        "logRr": -0.23250778458,
+        "seLogRr": 0.055215256245,
+        "_row": "cellulitis"
+      },
+      {
+        "outcome": "nc_cataract_W1",
+        "label": "Cataract",
+        "n": 14677,
+        "n_events": 317,
+        "rr": 0.75783261211,
+        "logRr": -0.27729274608,
+        "seLogRr": 0.1196026284,
+        "_row": "cataract"
+      },
+      {
+        "outcome": "nc_osteoarthritis_W1",
+        "label": "Osteoarthritis",
+        "n": 14677,
+        "n_events": 1502,
+        "rr": 0.82685407071,
+        "logRr": -0.19012705575,
+        "seLogRr": 0.051645465628,
+        "_row": "osteoarthritis"
+      },
+      {
+        "outcome": "nc_traffic_accident_W1",
+        "label": "Traffic Accident",
+        "n": 14677,
+        "n_events": 77,
+        "rr": 0.85761237459,
+        "logRr": -0.15360305944,
+        "seLogRr": 0.24585370611,
+        "_row": "traffic_accident"
+      },
+      {
+        "outcome": "nc_hemorrhoids_W1",
+        "label": "Hemorrhoids",
+        "n": 14677,
+        "n_events": 674,
+        "rr": 0.70263780741,
+        "logRr": -0.35291372988,
+        "seLogRr": 0.082064013583,
+        "_row": "hemorrhoids"
+      },
+      {
+        "outcome": "nc_bph_W1",
+        "label": "BPH",
+        "n": 14677,
+        "n_events": 938,
+        "rr": 0.9020477321,
+        "logRr": -0.10308784225,
+        "seLogRr": 0.064998648171,
+        "_row": "bph"
+      },
+      {
+        "outcome": "nc_gout_W1",
+        "label": "Gout",
+        "n": 14677,
+        "n_events": 1847,
+        "rr": 0.99766959219,
+        "logRr": -0.0023331274316,
+        "seLogRr": 0.044306403905,
+        "_row": "gout"
+      },
+      {
+        "outcome": "nc_tendinitis_W1",
+        "label": "Tendinitis",
+        "n": 14677,
+        "n_events": 58,
+        "rr": 0.58788187506,
+        "logRr": -0.53122924401,
+        "seLogRr": 0.30218563758,
+        "_row": "tendinitis"
+      }
+    ],
+    "null_mean": -0.19049929467,
+    "null_sd": 0.067970467403
+  },
+  "arm_guide": {
+    "n_total": 15053,
+    "n_valid": 14677,
+    "pct_exposed": 12.0733119847,
+    "estimates": [
+      {
+        "outcome": "nc_infection_W1",
+        "label": "Infection (combined)",
+        "n": 14677,
+        "n_events": 4705,
+        "rr": 0.83221024121,
+        "logRr": -0.18367017632,
+        "seLogRr": 0.042712028341,
+        "_row": "infection"
+      },
+      {
+        "outcome": "nc_gi_bleed_W1",
+        "label": "GI Bleed",
+        "n": 14677,
+        "n_events": 1535,
+        "rr": 0.79295511096,
+        "logRr": -0.23198866556,
+        "seLogRr": 0.085023132917,
+        "_row": "gi_bleed"
+      },
+      {
+        "outcome": "nc_fall_W1",
+        "label": "Fall (without fracture)",
+        "n": 14677,
+        "n_events": 83,
+        "rr": 1.1946804941,
+        "logRr": 0.17787878069,
+        "seLogRr": 0.35364281326,
+        "_row": "fall"
+      },
+      {
+        "outcome": "nc_uti_only_W1",
+        "label": "UTI",
+        "n": 14677,
+        "n_events": 3620,
+        "rr": 0.81993953192,
+        "logRr": -0.198524683,
+        "seLogRr": 0.052101219745,
+        "_row": "uti_only"
+      },
+      {
+        "outcome": "nc_cellulitis_W1",
+        "label": "Cellulitis",
+        "n": 14677,
+        "n_events": 1339,
+        "rr": 0.76649630423,
+        "logRr": -0.2659254023,
+        "seLogRr": 0.091862399814,
+        "_row": "cellulitis"
+      },
+      {
+        "outcome": "nc_cataract_W1",
+        "label": "Cataract",
+        "n": 14677,
+        "n_events": 317,
+        "rr": 0.95427004786,
+        "logRr": -0.04680857855,
+        "seLogRr": 0.19005562823,
+        "_row": "cataract"
+      },
+      {
+        "outcome": "nc_osteoarthritis_W1",
+        "label": "Osteoarthritis",
+        "n": 14677,
+        "n_events": 1502,
+        "rr": 0.73113085022,
+        "logRr": -0.31316283358,
+        "seLogRr": 0.092729507322,
+        "_row": "osteoarthritis"
+      },
+      {
+        "outcome": "nc_traffic_accident_W1",
+        "label": "Traffic Accident",
+        "n": 14677,
+        "n_events": 77,
+        "rr": 0.46349350011,
+        "logRr": -0.76896291757,
+        "seLogRr": 0.47700994332,
+        "_row": "traffic_accident"
+      },
+      {
+        "outcome": "nc_hemorrhoids_W1",
+        "label": "Hemorrhoids",
+        "n": 14677,
+        "n_events": 674,
+        "rr": 0.72808644114,
+        "logRr": -0.3173355,
+        "seLogRr": 0.14020202237,
+        "_row": "hemorrhoids"
+      },
+      {
+        "outcome": "nc_bph_W1",
+        "label": "BPH",
+        "n": 14677,
+        "n_events": 938,
+        "rr": 0.91355112434,
+        "logRr": -0.090415939386,
+        "seLogRr": 0.11049375887,
+        "_row": "bph"
+      },
+      {
+        "outcome": "nc_gout_W1",
+        "label": "Gout",
+        "n": 14677,
+        "n_events": 1847,
+        "rr": 1.1357903658,
+        "logRr": 0.1273287661,
+        "seLogRr": 0.063386016007,
+        "_row": "gout"
+      },
+      {
+        "outcome": "nc_tendinitis_W1",
+        "label": "Tendinitis",
+        "n": 14677,
+        "n_events": 58,
+        "rr": 0.67223220477,
+        "logRr": -0.39715145533,
+        "seLogRr": 0.51073154341,
+        "_row": "tendinitis"
+      }
+    ],
+    "null_mean": -0.1677916949,
+    "null_sd": 0.11288607658
+  }
+}

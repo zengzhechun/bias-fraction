@@ -1,10 +1,10 @@
 # R/15_bf_algorithm_improvement.R
-# Demonstrate ALGORITHMIC improvements to the BF estimator (NOT post-processing).
-# The original v37 estimator uses bf_mcmc = median( posterior BF draws ).
-# We compare against two in-algorithm alternatives that change how BF is computed
+# Demonstrate ALGORITHMIC improvements to the BAF estimator (NOT post-processing).
+# The original v37 estimator uses bf_mcmc = median( posterior BAF draws ).
+# We compare against two in-algorithm alternatives that change how BAF is computed
 # from the SAME posterior draws:
-#   - bf_mean   : posterior MEAN of the ratio  |mu|/(|mu|+|psi|)  (the standard Bayesian BF)
-#   - bf_logodds: plogis( mean( logit(posterior BF draws) ) )  (mean in unbounded log-odds space)
+#   - bf_mean   : posterior MEAN of the ratio  |mu|/(|mu|+|psi|)  (the standard Bayesian BAF)
+#   - bf_logodds: plogis( mean( logit(posterior BAF draws) ) )  (mean in unbounded log-odds space)
 # Plus a delta-method bias-corrected plug-in (bf_bc) for reference.
 # Run on a representative subset (all 336 conditions x n_rep reps) to access draws cheaply.
 
@@ -33,7 +33,7 @@ run_one_rep_est <- function(true_log_rr, bias_mu, bias_sigma, n_nc, ex_violation
   mu_b <- nf[1]; lt <- obs_log_rr - mu_b
   bf_mc <- bsr_to_bf(abs(mu_b) / max(abs(lt), 1e-8))
   se_mu <- nf[2]
-  # MCMC posterior draws of BF
+  # MCMC posterior draws of BAF
   post <- mcmc_fit_null(nc_log_rr, nc_se, n_iter = mcmc_iter, n_warmup = mcmc_warmup, seed = seed + r)
   mu_draws <- post$mu_draws
   lt_draws <- obs_log_rr - mu_draws
@@ -44,7 +44,7 @@ run_one_rep_est <- function(true_log_rr, bias_mu, bias_sigma, n_nc, ex_violation
   bf_draws_c <- pmin(pmax(bf_draws, 1e-6), 1 - 1e-6)
   bf_logodds <- plogis(mean(qlogis(bf_draws_c)))              # algorithm fix 2: mean in log-odds space
   # --- flat-prior variant: the bias source is mu_B shrinkage (prior N(0,1) pulls
-  #     mu_B toward 0, inflating psi_hat = obs - mu_B and deflating BF).
+  #     mu_B toward 0, inflating psi_hat = obs - mu_B and deflating BAF).
   #     Use a near-flat prior on mu_B to remove the shrinkage. ---
   post_flat <- mcmc_fit_null(nc_log_rr, nc_se, n_iter = mcmc_iter, n_warmup = mcmc_warmup,
                              seed = seed + r + 1, mu_prior_var = 100)
@@ -129,18 +129,18 @@ make_panel <- function(est, title, dat) {
     geom_point(size = 1.4, alpha = 0.5, color = "#3a6ea5") +
     geom_smooth(method = "lm", se = FALSE, color = "#B83227", linewidth = 0.9) +
     coord_fixed(ratio = 1, xlim = c(0, 1), ylim = c(0, 1)) +
-    labs(title = title, x = paste0(est, "  (estimated BF)"), y = "True BF") +
+    labs(title = title, x = paste0(est, "  (estimated BAF)"), y = "True BAF") +
     annotate("label", x = 0.04, y = 0.96, hjust = 0, vjust = 1, size = 3.6,
              label = sprintf("intercept a = %.3f\nslope b = %.3f", a, b),
              fill = "white", color = "#B83227") +
     theme_minimal(base_size = 11) + theme(panel.grid.minor = element_blank())
 }
-p1 <- make_panel("bf_mc",     "A. MC plug-in BF  (current baseline)", tab)
-p2 <- make_panel("bf_med",    "B. MCMC median BF  (current v37)", tab)
-p3 <- make_panel("bf_mean",   "C. MCMC MEAN BF  [fix 1]", tab)
-p4 <- make_panel("bf_logodds","D. MCMC mean-in-log-odds BF  [fix 2]", tab)
-p5 <- make_panel("bf_med_flat",  "E. MCMC median BF, FLAT mu_B prior  [fix 3: removes shrinkage]", tab)
-p6 <- make_panel("bf_mean_flat", "F. MCMC MEAN BF, FLAT mu_B prior  [fix 3: removes shrinkage]", tab)
+p1 <- make_panel("bf_mc",     "A. MC plug-in BAF  (current baseline)", tab)
+p2 <- make_panel("bf_med",    "B. MCMC median BAF  (current v37)", tab)
+p3 <- make_panel("bf_mean",   "C. MCMC MEAN BAF  [fix 1]", tab)
+p4 <- make_panel("bf_logodds","D. MCMC mean-in-log-odds BAF  [fix 2]", tab)
+p5 <- make_panel("bf_med_flat",  "E. MCMC median BAF, FLAT mu_B prior  [fix 3: removes shrinkage]", tab)
+p6 <- make_panel("bf_mean_flat", "F. MCMC MEAN BAF, FLAT mu_B prior  [fix 3: removes shrinkage]", tab)
 figI <- (p1 + p2) / (p3 + p4) / (p5 + p6) + plot_layout(heights = c(1, 1, 1))
 ggsave(file.path(OUT_DIR, "figI_bf_algorithm_improvement.png"),
        figI, width = 10, height = 12, dpi = 150, bg = "white")

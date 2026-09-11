@@ -21,19 +21,19 @@
 # mixed zone falls outside the positive group of BOTH views, so it drags on both
 # panels at once. That is the reason each view needs its own four numbers.
 #
-# The curves come from the continuous predictors (calibrated P alone, BF-hat
-# alone, BF-hat with its interval half-width); the rules are discrete and appear
+# The curves come from the continuous predictors (calibrated P alone, BAF-hat
+# alone, BAF-hat with its interval half-width); the rules are discrete and appear
 # as operating points on those curves' axes. All coordinates are precomputed by
 # R/23_dual_view_metrics.R so that the figure and Table 2 cannot disagree.
 #
 # Journal style: no in-image title (the caption lives in the figure legend),
 # panel letters and a one-line reading note inside each panel, shared legend.
 #
-# Input : output/tables/v38_dual_view_roc.csv
-#         output/tables/v38_dual_view_auc.csv
-#         output/tables/v38_dual_view_strategy.csv
-# Output: output/figures/v38/figP2C_roc_paper.png   (landscape, 9.0 x 4.0 in)
-#         output/tables/v38_roc_paper_auc.txt       (AUCs, both views)
+# Input : output/tables/v39_dual_view_roc.csv
+#         output/tables/v39_dual_view_auc.csv
+#         output/tables/v39_dual_view_strategy.csv
+# Output: output/figures/v39/figP2C_roc_paper.png   (landscape, 9.0 x 4.0 in)
+#         output/tables/v39_roc_paper_auc.txt       (AUCs, both views)
 
 suppressPackageStartupMessages({
   library(ggplot2)
@@ -41,17 +41,17 @@ suppressPackageStartupMessages({
 })
 source("R/00_config.R")
 
-V38_FIG <- file.path(FIG_DIR, "v38")
+V38_FIG <- file.path(FIG_DIR, "v39")
 dir.create(V38_FIG, showWarnings = FALSE, recursive = TRUE)
 
 cat("[1] loading precomputed dual-view curves and metrics ...\n")
-ROC <- read.csv(file.path(TAB_DIR, "v38_dual_view_roc.csv"),  stringsAsFactors = FALSE)
-AUC <- read.csv(file.path(TAB_DIR, "v38_dual_view_auc.csv"),  stringsAsFactors = FALSE)
-ST  <- read.csv(file.path(TAB_DIR, "v38_dual_view_strategy.csv"), stringsAsFactors = FALSE)
+ROC <- read.csv(file.path(TAB_DIR, "v39_dual_view_roc.csv"),  stringsAsFactors = FALSE)
+AUC <- read.csv(file.path(TAB_DIR, "v39_dual_view_auc.csv"),  stringsAsFactors = FALSE)
+ST  <- read.csv(file.path(TAB_DIR, "v39_dual_view_strategy.csv"), stringsAsFactors = FALSE)
 
 # Fixed curve order and colours; the factor levels, not the row order, decide
 # the legend, so a change in R/23's output order cannot reshuffle the colours.
-SCORE_LAB <- c("Calibrated P alone", "BF-hat alone", "BF-hat + CI half-width")
+SCORE_LAB <- c("Calibrated P alone", "BAF-hat alone", "BAF-hat + CI half-width")
 CURVE_COL <- c(COLOR_OHDSI, COLOR_COMPETITIVE, "#4B5BD6")
 names(CURVE_COL) <- SCORE_LAB
 ROC$score <- factor(ROC$score, levels = SCORE_LAB)
@@ -64,7 +64,7 @@ writeLines(
   paste(sprintf("%-24s ED view %.4f | BD view %.4f",
                 as.character(AUC$score), AUC$auc_ed, AUC$auc_bd),
         collapse = "\n"),
-  file.path(TAB_DIR, "v38_roc_paper_auc.txt"))
+  file.path(TAB_DIR, "v39_roc_paper_auc.txt"))
 print(AUC, digits = 4)
 
 ## -- operating points: one row per rule, coordinates in both views -----------
@@ -127,8 +127,8 @@ panel_roc <- function(view, col, nx, ny, hj) {
               inherit.aes = FALSE, size = 2.7, hjust = 1, colour = COLOR_NEUTRAL) +
     scale_colour_manual(values = CURVE_COL) +
     scale_linetype_manual(values = c("Calibrated P alone" = "solid",
-                                     "BF-hat alone" = "solid",
-                                     "BF-hat + CI half-width" = "dashed")) +
+                                     "BAF-hat alone" = "solid",
+                                     "BAF-hat + CI half-width" = "dashed")) +
     scale_shape_manual(values = c("Reporting rules" = 17)) +
     scale_x_continuous(limits = c(0, 1), expand = c(0, 0)) +
     scale_y_continuous(limits = c(0, 1), expand = c(0, 0)) +

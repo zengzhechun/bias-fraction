@@ -1,0 +1,19 @@
+CONTINUOUS BAF ANALYSIS - FINDINGS (v37.1, 640 conditions x 1000 reps)
+===============================================================
+Conditions: 640 ; Repetitions per condition: 1000 ; Total classifications: 640000
+
+F1 Calibration (continuous BAF as estimator):
+   MC   : intercept=0.0156, slope=0.8411 (target 0 / 1)
+   MCMC : intercept=0.0330, slope=0.8086 (target 0 / 1)
+   => BAF is moderately biased as a continuous estimator (slope~1, intercept~0).
+
+F2 MC vs MCMC trade-off (per-condition mean RMSE):
+   MC   overall RMSE = 0.1410
+   MCMC overall RMSE = 0.1330
+   MC   overall coverage = 0.4172
+   MCMC overall coverage = 0.8011
+
+F3 sigma_ps (obs SE) and ex_violation effects:
+   RMSE at sigma_ps=0.06: 0.1259 ; at sigma_ps=0.10: 0.1561
+   RMSE at exV=0.0: 0.1172 ; at exV=0.3: 0.1647
+   Coverage at exV=0.0: 0.4545 ; at exV=0.3: 0.3798

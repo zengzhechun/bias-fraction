@@ -2,7 +2,7 @@
 # Comparison Study: MCMC vs Monte Carlo + Per-Region Diagnostics + Configurable Design Matrix
 # v35 - 2026-08-20
 # v36 - 2026-08-21: PRIMARY analysis of the simulation is the Bland-Altman agreement study of the
-#   continuous BF estimator (R/06_bland_altman.R, R/10_ba_full_viz.R). The three-zone classification
+#   continuous BAF estimator (R/06_bland_altman.R, R/10_ba_full_viz.R). The three-zone classification
 #   computed here is a SECONDARY analysis that supplies the clinical decision interface.
 #
 # This module implements three analytical extensions to the v35 simulation study:
@@ -62,7 +62,7 @@ mcmc_fit_null <- function(nc_log_rr, nc_se_log_rr,
   )
 }
 
-# Run one condition under both MC and MCMC, comparing BF estimates and classifications.
+# Run one condition under both MC and MCMC, comparing BAF estimates and classifications.
 run_method_compare <- function(true_log_rr, bias_mu, bias_sigma,
                                n_nc, ex_violation,
                                n_rep = 200, seed = 42,
@@ -104,7 +104,7 @@ run_method_compare <- function(true_log_rr, bias_mu, bias_sigma,
     out$ci_hi_mc[r] <- boot$bf_ci_hi
     out$zone_mc[r] <- zone_from_bf(bf_mc, boot$bf_ci_lo, boot$bf_ci_hi)
 
-    # --- MCMC: posterior median of BF over posterior of mu_B ---
+    # --- MCMC: posterior median of BAF over posterior of mu_B ---
     post <- mcmc_fit_null(nc_log_rr, nc_se, n_iter = mcmc_iter,
                           n_warmup = mcmc_warmup, seed = seed + r)
     mu_draws <- post$mu_draws

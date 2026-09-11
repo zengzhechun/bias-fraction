@@ -1,11 +1,11 @@
 # R/08_trim_sensitivity.R
-# Methodological probe: does trimming extreme BF (near 0 / near 1) stabilize the
+# Methodological probe: does trimming extreme BAF (near 0 / near 1) stabilize the
 # Bland-Altman agreement, and is it an honest operation?
 # Compares:
-#   A. full 640 conditions (incl near-boundary psi=-0.01, highest true BF)
-#   B. interior: exclude psi=-0.01 (highest true BF)
-#   C. both-ends trim: BF >= 0.9 OR BF <= 0.12
-#   D. logit(BF) scale (unbounded reparametrization; psi=-0.01 excluded)
+#   A. full 640 conditions (incl near-boundary psi=-0.01, highest true BAF)
+#   B. interior: exclude psi=-0.01 (highest true BAF)
+#   C. both-ends trim: BAF >= 0.9 OR BAF <= 0.12
+#   D. logit(BAF) scale (unbounded reparametrization; psi=-0.01 excluded)
 suppressMessages({
   library(dplyr); library(ggplot2); library(patchwork)
 })
@@ -48,16 +48,16 @@ scen <- function(name, sub){
               sc$bias, sc$sd, sc$ccc, sc$r_prop, sc$loa_l, sc$loa_u))
   invisible(list(mc = sm, mcmc = sc))
 }
-A <- scen("A full (incl BF=1)", df)
+A <- scen("A full (incl BAF=1)", df)
 B <- scen("B interior (exclude psi=-0.01)", df[df$psi != -0.01, ])
-C <- scen("C both-ends trim (BF>=0.9 | BF<=0.12)", df[!(df$bf_true >= 0.9 | df$bf_true <= 0.12), ])
+C <- scen("C both-ends trim (BAF>=0.9 | BAF<=0.12)", df[!(df$bf_true >= 0.9 | df$bf_true <= 0.12), ])
 # D logit scale (near-boundary psi=-0.01 excluded; clip for numerics)
 eps <- 1e-3
 dl <- df[df$psi != -0.01, ]
 lt <- qlogis(pmin(pmax(dl$bf_true, eps), 1 - eps))
 le_mc  <- qlogis(pmin(pmax(dl$est_mc,  eps), 1 - eps))
 le_mcmc<- qlogis(pmin(pmax(dl$est_mcmc, eps), 1 - eps))
-cat(sprintf("\n[D logit(BF) scale, n=%d]\n", nrow(dl)))
+cat(sprintf("\n[D logit(BAF) scale, n=%d]\n", nrow(dl)))
 cat(sprintf("  MC   : r_prop(logit)=%.3f  (diff vs logit-true)\n", cor(lt, le_mc  - lt)))
 cat(sprintf("  MCMC : r_prop(logit)=%.3f\n", cor(lt, le_mcmc - lt)))
 
@@ -72,7 +72,7 @@ mk_ba <- function(sub, title, nlab, est_col){
     geom_hline(yintercept = mean(ss$est - ss$bf_true) + 1.96*sd(ss$est - ss$bf_true), color = "red", linetype = 2) +
     geom_hline(yintercept = mean(ss$est - ss$bf_true) - 1.96*sd(ss$est - ss$bf_true), color = "red", linetype = 2) +
     scale_color_manual(values = c("effect-dominated" = "#1B7A3A", "mixed" = "#D4A017", "bias-dominated" = "#B83227")) +
-    labs(title = title, subtitle = nlab, x = "True BF", y = "Est - True BF") +
+    labs(title = title, subtitle = nlab, x = "True BAF", y = "Est - True BAF") +
     theme_minimal(base_size = 11) + theme(legend.position = "none")
 }
 r_int_mc <- cor(dl$bf_true, dl$est_mc - dl$bf_true)
@@ -88,25 +88,25 @@ cat("\nSaved figK_trim_sensitivity.png\n")
 # ---- findings ----
 out_txt <- file("output/figures/continuous_bf/trim_sensitivity_findings.txt", "w")
 writeLines(c(
-  "TRIM / BOUNDEDNESS SENSITIVITY - BF Bland-Altman (v37.1, 640 cond x 1000 rep)",
+  "TRIM / BOUNDEDNESS SENSITIVITY - BAF Bland-Altman (v37.1, 640 cond x 1000 rep)",
   "==============================================",
   "",
-  "Q: The BF metric is bounded in [0,1]; the highest-BF near-boundary level (psi=-0.01) has true BF approx 0.83-0.98.",
-  "   Can we trim extreme BF (near 0 / near 1) like IPTW weight trimming to get a 'more stable' agreement estimate?",
+  "Q: The BAF metric is bounded in [0,1]; the highest-BAF near-boundary level (psi=-0.01) has true BAF approx 0.83-0.98.",
+  "   Can we trim extreme BAF (near 0 / near 1) like IPTW weight trimming to get a 'more stable' agreement estimate?",
   "",
   "ANSWER (short):",
-  "- The highest-BF near-boundary (psi=-0.01) is NOT an outlier like an extreme IPTW weight. It is a DELIBERATE DESIGN CONDITION",
-  "  (near-boundary psi=-0.01, the highest true BF), 64,000 of 640,000 reps = 10.0%. The strong negative r_prop is a",
-  "  CEILING/FLOOR ARTIFACT of the BF metric being bounded in [0,1]: at the highest true BF (approx 0.98) the estimator",
-  "  (bounded <=1) can only err DOWNWARD, so diff<0; at BF_true near 0 it can only err UPWARD.",
+  "- The highest-BAF near-boundary (psi=-0.01) is NOT an outlier like an extreme IPTW weight. It is a DELIBERATE DESIGN CONDITION",
+  "  (near-boundary psi=-0.01, the highest true BAF), 64,000 of 640,000 reps = 10.0%. The strong negative r_prop is a",
+  "  CEILING/FLOOR ARTIFACT of the BAF metric being bounded in [0,1]: at the highest true BAF (approx 0.98) the estimator",
+  "  (bounded <=1) can only err DOWNWARD, so diff<0; at BAF_true near 0 it can only err UPWARD.",
   "  This mechanically induces negative cor(diff, true). It is NOT a substantive estimator bias.",
-  "- CAPPING TRUE VALUES (BF=1 -> 0.99) is FABRICATION of ground truth. In a simulation the truth",
+  "- CAPPING TRUE VALUES (BAF=1 -> 0.99) is FABRICATION of ground truth. In a simulation the truth",
   "  is known exactly; altering it to improve apparent agreement is dishonest and would fail review.",
   "  DO NOT cap true values.",
   "- EXCLUDING the boundary design point(s) from the agreement summary (scope restriction /",
   "  sensitivity analysis) IS legitimate, provided it is disclosed. Below: trimming removes the",
   "  boundary ceiling effect and reveals near-flat interior behavior.",
-  "- CLEANEST fix: reparametrize to an UNBOUNDED scale (logit BF or log BSR = log(bias/effect)).",
+  "- CLEANEST fix: reparametrize to an UNBOUNDED scale (logit BAF or log BSR = log(bias/effect)).",
   "  On logit scale r_prop ~ 0 (panel D), confirming boundedness was the sole driver.",
   "",
   "BA stats by scenario:",
@@ -119,10 +119,10 @@ writeLines(c(
   "  D logit scale (psi=-0.01 excl): r_prop ~ 0 (ceiling artifact disappears)",
   "",
   "RECOMMENDATION:",
-  "1. Do NOT cap/fabricate true BF. Report the boundary effect honestly in text.",
+  "1. Do NOT cap/fabricate true BAF. Report the boundary effect honestly in text.",
   "2. For the manuscript BA, present FULL (with the ceiling-effect note) AND an INTERIOR",
   "   sensitivity panel (exclude psi=-0.01) so readers see agreement is near-flat off the boundary.",
-  "3. Better: move the primary agreement metric to log(BSR) or logit(BF), where boundedness",
+  "3. Better: move the primary agreement metric to log(BSR) or logit(BAF), where boundedness",
   "   vanishes and no trimming is needed."
 ), out_txt)
 close(out_txt)

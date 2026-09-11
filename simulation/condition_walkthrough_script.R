@@ -7,7 +7,7 @@
 ## 第 0 段: 加载依赖与工具函数 ----------------------------------------------
 library(EmpiricalCalibration)          # 提供 fitNull() 拟合经验零分布、calibrateP()
 
-# ber_to_bf: 论文记号, BER = |mu_B|/|logRR_cal|, BF = BER/(1+BER)
+# ber_to_bf: 论文记号, BER = |mu_B|/|logRR_cal|, BAF = BER/(1+BER)
 # 与 biasratio/R/ber-estimate.R:110 的 bf <- ber/(1+ber) 完全一致
 ber_to_bf <- function(ber) ber / (1 + ber)
 
@@ -90,7 +90,7 @@ for (r in seq_len(n_rep)) {
   mu_b    <- nf[1]                     # 经验零均值估计 (对 muB 的抽样估计, 带误差)
   sigma_b <- nf[2]                     # 经验零离散度估计
 
-  # --- 计算 BF / BER 点估计 ---
+  # --- 计算 BAF / BER 点估计 ---
   lt <- obs_log_rr - mu_b              # 去偏后的 logRR = 观测 - 经验零均值
   if (abs(lt) < 1e-8) lt <- if (lt >= 0) 1e-8 else -1e-8   # 防除零
   bsr_est_r <- abs(mu_b) / abs(lt)     # 估计 BER = |mu_b| / |obs - mu_b|

@@ -1,15 +1,15 @@
 # R/05_bf_calibration_scatter.R
-# Calibration scatter: x = predicted BF (per-condition mean of 1,000 reps),
-# y = true BF. Two stacked panels (MCMC / Monte Carlo) -- vertical layout for
+# Calibration scatter: x = predicted BAF (per-condition mean of 1,000 reps),
+# y = true BAF. Two stacked panels (MCMC / Monte Carlo) -- vertical layout for
 # larger cells. Dashed y=x diagonal as the calibration reference.
-# Horizontal error bar = the method-claimed 95% CI (on the BF̂ axis).
+# Horizontal error bar = the method-claimed 95% CI (on the BAF̂ axis).
 # Points colored by true zone (green/yellow/red).
 #
 # PLUS a second figure figH2: logit-space empirical calibration.  Fits
-#   logit(BF_true) = a + b * logit(BF̂)
+#   logit(BF_true) = a + b * logit(BAF̂)
 # on the condition-level aggregated data (n=336 conditions per method);
-# applies the fitted (a,b) to logit(BF̂), then back-transforms to the
-# probability scale.  The rescaled BF̂_cal removes the systematic
+# applies the fitted (a,b) to logit(BAF̂), then back-transforms to the
+# probability scale.  The rescaled BAF̂_cal removes the systematic
 # under-estimation (slope b<1) seen in figH.  Two side-by-side panels:
 # before (left) vs after (right), per method.
 suppressPackageStartupMessages({
@@ -118,9 +118,9 @@ p_H <- ggplot(agg_long, aes(x = BF_hat, y = bf_true)) +
                      breaks = c(0, 1/3, 0.5, 1),
                      labels = c("0", "1/3", "0.5", "1")) +
   facet_wrap(~ method, nrow = 2) +
-  labs(x = "Predicted BF (point estimate per condition, mean of 1,000 reps)",
-       y = "True BF",
-       title = "BF calibration: estimated vs true, with 95% CIs (640 conditions, 1,000 reps each)") +
+  labs(x = "Predicted BAF (point estimate per condition, mean of 1,000 reps)",
+       y = "True BAF",
+       title = "BAF calibration: estimated vs true, with 95% CIs (640 conditions, 1,000 reps each)") +
   theme_bw(base_size = 12) +
   theme(legend.position = "bottom",
         strip.background = element_rect(fill = "grey92"),
@@ -132,7 +132,7 @@ ggsave(file.path(OUT_FIG, "figH_calibration_scatter.png"), p_H,
 cat("Saved figH_calibration_scatter.png (vertical)\n")
 
 # ---- figH2: logit-space empirical calibration BEFORE vs AFTER ----
-# Why logit?  BF in [0, 1] hits the structural ceiling at 1; in logit space
+# Why logit?  BAF in [0, 1] hits the structural ceiling at 1; in logit space
 # (-inf, +inf) the same relationship becomes additive and the
 # proportional-bias collapse (b < 1 in the original scale) shows up as a
 # non-zero slope and intercept that's directly readable on any number line.
@@ -140,7 +140,7 @@ cat("Saved figH_calibration_scatter.png (vertical)\n")
 # Fit on the condition-level aggregated data (n = 336):
 #   logit(bf_true) = a + b * logit(BF_hat)        <- ordinary least squares
 # Then for every rep / every condition:
-#   BF_hat_cal = plogis( a + b * logit(BF_hat) )  <- calibrated BF̂
+#   BF_hat_cal = plogis( a + b * logit(BF_hat) )  <- calibrated BAF̂
 agg_long <- agg_long %>%
   mutate(
     logit_BFhat = log(BF_hat / (1 - BF_hat)),
@@ -153,7 +153,7 @@ fits <- agg_long %>%
     tibble(a = coef(fit)[1], b = coef(fit)[2])
   }) %>%
   ungroup()
-print("Logit-space EmpiricalCalibration coefficients (logit BF_true ~ a + b * logit BF̂):")
+print("Logit-space EmpiricalCalibration coefficients (logit BAF_true ~ a + b * logit BAF̂):")
 print(fits)
 
 agg_long <- agg_long %>%
@@ -214,9 +214,9 @@ p_before <- ggplot(agg_long, aes(x = BF_hat, y = bf_true)) +
                      breaks = c(0, 1/3, 0.5, 1),
                      labels = c("0", "1/3", "0.5", "1")) +
   facet_wrap(~ method) +
-  labs(x = "Predicted BF (BF̂, before calibration)",
-       y = "True BF",
-       title = "Before calibration (raw BF̂)") +
+  labs(x = "Predicted BAF (BAF̂, before calibration)",
+       y = "True BAF",
+       title = "Before calibration (raw BAF̂)") +
   theme_bw(base_size = 11) +
   theme(legend.position = "bottom",
         strip.background = element_rect(fill = "grey92"),
@@ -243,8 +243,8 @@ p_after <- ggplot(agg_long, aes(x = BF_hat_cal, y = bf_true)) +
                      breaks = c(0, 1/3, 0.5, 1),
                      labels = c("0", "1/3", "0.5", "1")) +
   facet_wrap(~ method) +
-  labs(x = "Predicted BF (BF̂, after logit-space EmpiricalCalibration)",
-       y = "True BF",
+  labs(x = "Predicted BAF (BAF̂, after logit-space EmpiricalCalibration)",
+       y = "True BAF",
        title = "After calibration (logit-space EC)") +
   theme_bw(base_size = 11) +
   theme(legend.position = "bottom",
@@ -255,7 +255,7 @@ p_after <- ggplot(agg_long, aes(x = BF_hat_cal, y = bf_true)) +
 p_combined <- p_before + p_after +
   plot_layout(ncol = 1, nrow = 2) +
   plot_annotation(
-    title = "Logit-space EmpiricalCalibration:  logit(BF_true) = a + b · logit(BF̂)",
+    title = "Logit-space EmpiricalCalibration:  logit(BAF_true) = a + b · logit(BAF̂)",
     subtitle = sprintf(
       "MCMC:  a = %.3f,  b = %.3f       Monte Carlo:  a = %.3f,  b = %.3f",
       fits$a[fits$method == "MCMC"], fits$b[fits$method == "MCMC"],
@@ -315,7 +315,7 @@ write.csv(imp, file.path(OUT_FIG, "logit_calibration_summary.csv"),
 # ---- write out some text ----
 out_txt <- file.path(OUT_FIG, "calibration_scatter_coverage.txt")
 writeLines(c(
-  "BF calibration scatter: condition-level coverage of truth inside averaged claimed 95% CI",
+  "BAF calibration scatter: condition-level coverage of truth inside averaged claimed 95% CI",
   sprintf("  Monte Carlo : cover=%.3f, mean CI width=%.3f (n=%d conditions)",
           cov_cond$cover_cond[cov_cond$method=="Monte Carlo"],
           cov_cond$mean_ci_width[cov_cond$method=="Monte Carlo"],
@@ -325,20 +325,20 @@ writeLines(c(
           cov_cond$mean_ci_width[cov_cond$method=="MCMC"],
           cov_cond$n[cov_cond$method=="MCMC"]),
   "",
-  "Logit-space EmpiricalCalibration: logit(BF_true) = a + b * logit(BF̂)",
+  "Logit-space EmpiricalCalibration: logit(BAF_true) = a + b * logit(BAF̂)",
   sprintf("  MCMC        : a = %.4f (SE %.4f, t = %.1f, p %s),  b = %.4f (SE %.4f, t = %.1f, p %s)",
           imp$a_logit[imp$method=="MCMC"], imp$a_logit_t[imp$method=="MCMC"], NA, "", NA, NA, NA, ""),
   sprintf("  Monte Carlo : a = %.4f (SE %.4f, t = %.1f, p %s),  b = %.4f (SE %.4f, t = %.1f, p %s)",
           imp$a_logit[imp$method=="Monte Carlo"], NA, NA, "", NA, NA, NA, ""),
-  sprintf("  After EC,  slope(bf_true ~ BF̂_cal) moves from %.3f to %.3f (MCMC)",
+  sprintf("  After EC,  slope(bf_true ~ BAF̂_cal) moves from %.3f to %.3f (MCMC)",
           imp$raw_slope[imp$method=="MCMC"], imp$cal_slope[imp$method=="MCMC"]),
   "",
   "Mathematical interpretation:",
-  "  Before  : BF̂ is compressed near 1 (saturation).",
-  "  Why     : BF = |μ_B|/(|μ_B| + |ψ|), bounded above by 1.",
-  "  Fix     : EC in logit space (a + b * logit(BF̂)) then back-transform.",
+  "  Before  : BAF̂ is compressed near 1 (saturation).",
+  "  Why     : BAF = |μ_B|/(|μ_B| + |ψ|), bounded above by 1.",
+  "  Fix     : EC in logit space (a + b * logit(BAF̂)) then back-transform.",
   "  Result  : b < 1 actively re-stretches predictions.  After calibration,",
   "            the regression line falls on the identity, and the systematic",
-  "            under-estimation at high BF disappears."
+  "            under-estimation at high BAF disappears."
 ), out_txt)
 cat("Saved calibration_scatter_coverage.txt (extended)\n")

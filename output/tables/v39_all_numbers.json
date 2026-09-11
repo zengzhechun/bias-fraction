@@ -1,0 +1,706 @@
+{
+  "design": {
+    "n_conditions": 960,
+    "n_reps_per_cond": 1000,
+    "n_total": 960000,
+    "psi_levels": [
+      -0.4,
+      -0.36,
+      -0.31,
+      -0.27,
+      -0.23,
+      -0.18,
+      -0.14,
+      -0.1,
+      -0.05,
+      -0.01
+    ],
+    "mu_b_levels": [
+      -0.4,
+      -0.35,
+      -0.3,
+      -0.25,
+      -0.2,
+      -0.15,
+      -0.1,
+      -0.05
+    ],
+    "sigma_ps_levels": [
+      0.06,
+      0.1
+    ],
+    "K_levels": [
+      12,
+      25,
+      50
+    ],
+    "exV_levels": [
+      0,
+      0.3
+    ],
+    "bf_true_values": [
+      0.111,
+      0.122,
+      0.139,
+      0.156,
+      0.179,
+      0.2,
+      0.217,
+      0.244,
+      0.263,
+      0.27,
+      0.273,
+      0.294,
+      0.303,
+      0.326,
+      0.333,
+      0.357,
+      0.385,
+      0.392,
+      0.395,
+      0.41,
+      0.417,
+      0.426,
+      0.429,
+      0.446,
+      0.455,
+      0.465,
+      0.467,
+      0.481,
+      0.492,
+      0.493,
+      0.5,
+      0.517,
+      0.521,
+      0.526,
+      0.53,
+      0.563,
+      0.565,
+      0.566,
+      0.581,
+      0.588,
+      0.597,
+      0.6,
+      0.603,
+      0.625,
+      0.635,
+      0.641,
+      0.66,
+      0.667,
+      0.682,
+      0.69,
+      0.714,
+      0.741,
+      0.75,
+      0.778,
+      0.8,
+      0.833,
+      0.857,
+      0.875,
+      0.889,
+      0.909,
+      0.938,
+      0.952,
+      0.962,
+      0.968,
+      0.972,
+      0.976
+    ],
+    "n_interior": 864000,
+    "n_boundary": 96000,
+    "truth_share": {
+      "bias_dominated": 0.525,
+      "mixed": 0.2875,
+      "effect_dominated": 0.1875
+    }
+  },
+  "part1": {
+    "interior": {
+      "n": 864000,
+      "bias": -0.04918519,
+      "sd_diff": 0.11769901,
+      "loa_lo": -0.27987526,
+      "loa_hi": 0.18150487,
+      "pct_in_loa": 93.78576389,
+      "ccc": 0.81532827,
+      "r_prop": -0.09764852,
+      "slope": -0.05882985,
+      "slope_lo": -0.06009414,
+      "slope_hi": -0.05756557,
+      "slope_t": -91.20160947,
+      "slope_p": 0,
+      "intercept": -0.0199853,
+      "int_lo": -0.02065967,
+      "int_hi": -0.01931092,
+      "int_t": -58.08385201,
+      "int_p": 0,
+      "mae": 0.0978086,
+      "rmse": 0.12756263
+    },
+    "full": {
+      "n": 960000,
+      "bias": -0.06902941,
+      "sd_diff": 0.13866525,
+      "loa_lo": -0.3408133,
+      "loa_hi": 0.20275448,
+      "pct_in_loa": 93.77833333,
+      "ccc": 0.78066122,
+      "r_prop": -0.298766,
+      "slope": -0.1813983,
+      "slope_lo": -0.18255738,
+      "slope_hi": -0.18023922,
+      "slope_t": -306.7392864,
+      "slope_p": 0,
+      "intercept": 0.02903054,
+      "int_lo": 0.02835034,
+      "int_hi": 0.02971073,
+      "int_t": 83.6507531,
+      "int_p": 0,
+      "mae": 0.11279085,
+      "rmse": 0.15489703
+    },
+    "interior_worst_cond_bias": 0.32135726,
+    "n_conditions_interior": 864
+  },
+  "part2": {
+    "layer1": {
+      "alpha": 0.05,
+      "pass_rate_overall": 0.61871146,
+      "pass_rate_by_truth": {
+        "bias_dominated": 0.42464881,
+        "mixed": 0.80187681,
+        "effect_dominated": 0.88123333
+      },
+      "bd_share_among_pass": 0.36033053,
+      "naive_pass_rate": 0.91693021
+    },
+    "ci_width": {
+      "median_half_width": 0.12988986,
+      "quartiles_half": [
+        0.08760181,
+        0.12988986,
+        0.19128899
+      ],
+      "mean_half_by_K": [
+        0.2184061,
+        0.14357928,
+        0.09924828
+      ],
+      "coverage_overall": 0.71143333,
+      "coverage_narrow": 0.58458958,
+      "coverage_wide": 0.83827708
+    },
+    "lookup": [
+      {
+        "bin": 1,
+        "bf_lo": null,
+        "bf_hi": 0.13746342,
+        "bf_centre": 0.09272137,
+        "n_narrow": 51357,
+        "n_wide": 28643,
+        "p_bd_narrow": 0.00623089,
+        "p_bd_wide": 0.03568062,
+        "p_bd_all": 0.016775,
+        "p_bd_conservative": 0.03568062,
+        "verdict": "usable as effect evidence",
+        "ci_width_gain": 0.02944973
+      },
+      {
+        "bin": 2,
+        "bf_lo": 0.13746342,
+        "bf_hi": 0.22585405,
+        "bf_centre": 0.18334475,
+        "n_narrow": 28134,
+        "n_wide": 51866,
+        "p_bd_narrow": 0.01098315,
+        "p_bd_wide": 0.07264875,
+        "p_bd_all": 0.0509625,
+        "p_bd_conservative": 0.07264875,
+        "verdict": "usable as effect evidence",
+        "ci_width_gain": 0.0616656
+      },
+      {
+        "bin": 3,
+        "bf_lo": 0.22585405,
+        "bf_hi": 0.3012072,
+        "bf_centre": 0.26542033,
+        "n_narrow": 33897,
+        "n_wide": 46103,
+        "p_bd_narrow": 0.04286515,
+        "p_bd_wide": 0.13864608,
+        "p_bd_all": 0.0980625,
+        "p_bd_conservative": 0.13864608,
+        "verdict": "usable as effect evidence",
+        "ci_width_gain": 0.09578092
+      },
+      {
+        "bin": 4,
+        "bf_lo": 0.3012072,
+        "bf_hi": 0.36308049,
+        "bf_centre": 0.33366478,
+        "n_narrow": 39551,
+        "n_wide": 40449,
+        "p_bd_narrow": 0.11140047,
+        "p_bd_wide": 0.23901703,
+        "p_bd_all": 0.175925,
+        "p_bd_conservative": 0.23901703,
+        "verdict": "mixed, hypothesis-generating",
+        "ci_width_gain": 0.12761656
+      },
+      {
+        "bin": 5,
+        "bf_lo": 0.36308049,
+        "bf_hi": 0.41594759,
+        "bf_centre": 0.39061291,
+        "n_narrow": 43137,
+        "n_wide": 36863,
+        "p_bd_narrow": 0.24494054,
+        "p_bd_wide": 0.36133793,
+        "p_bd_all": 0.298575,
+        "p_bd_conservative": 0.36133793,
+        "verdict": "mixed, hypothesis-generating",
+        "ci_width_gain": 0.11639739
+      },
+      {
+        "bin": 6,
+        "bf_lo": 0.41594759,
+        "bf_hi": 0.46413296,
+        "bf_centre": 0.44035264,
+        "n_narrow": 46294,
+        "n_wide": 33706,
+        "p_bd_narrow": 0.43776731,
+        "p_bd_wide": 0.50192844,
+        "p_bd_all": 0.4648,
+        "p_bd_conservative": 0.50192844,
+        "verdict": "competitive, no verdict",
+        "ci_width_gain": 0.06416113
+      },
+      {
+        "bin": 7,
+        "bf_lo": 0.46413296,
+        "bf_hi": 0.5128672,
+        "bf_centre": 0.48812388,
+        "n_narrow": 46124,
+        "n_wide": 33876,
+        "p_bd_narrow": 0.62973723,
+        "p_bd_wide": 0.64824655,
+        "p_bd_all": 0.637575,
+        "p_bd_conservative": 0.64824655,
+        "verdict": "competitive, no verdict",
+        "ci_width_gain": 0.01850932
+      },
+      {
+        "bin": 8,
+        "bf_lo": 0.5128672,
+        "bf_hi": 0.5679233,
+        "bf_centre": 0.53935257,
+        "n_narrow": 43674,
+        "n_wide": 36326,
+        "p_bd_narrow": 0.81213079,
+        "p_bd_wide": 0.76798987,
+        "p_bd_all": 0.7920875,
+        "p_bd_conservative": 0.81213079,
+        "verdict": "not usable as effect evidence",
+        "ci_width_gain": -0.04414092
+      },
+      {
+        "bin": 9,
+        "bf_lo": 0.5679233,
+        "bf_hi": 0.63404168,
+        "bf_centre": 0.59928854,
+        "n_narrow": 39441,
+        "n_wide": 40559,
+        "p_bd_narrow": 0.92832332,
+        "p_bd_wide": 0.85601223,
+        "p_bd_all": 0.8916625,
+        "p_bd_conservative": 0.92832332,
+        "verdict": "not usable as effect evidence",
+        "ci_width_gain": -0.07231109
+      },
+      {
+        "bin": 10,
+        "bf_lo": 0.63404168,
+        "bf_hi": 0.71747659,
+        "bf_centre": 0.67301837,
+        "n_narrow": 35022,
+        "n_wide": 44978,
+        "p_bd_narrow": 0.97610074,
+        "p_bd_wide": 0.90221886,
+        "p_bd_all": 0.9345625,
+        "p_bd_conservative": 0.97610074,
+        "verdict": "not usable as effect evidence",
+        "ci_width_gain": -0.07388187
+      },
+      {
+        "bin": 11,
+        "bf_lo": 0.71747659,
+        "bf_hi": 0.8244879,
+        "bf_centre": 0.76740442,
+        "n_narrow": 29231,
+        "n_wide": 50769,
+        "p_bd_narrow": 0.99356847,
+        "p_bd_wide": 0.93023302,
+        "p_bd_all": 0.953375,
+        "p_bd_conservative": 0.99356847,
+        "verdict": "not usable as effect evidence",
+        "ci_width_gain": -0.06333546
+      },
+      {
+        "bin": 12,
+        "bf_lo": 0.8244879,
+        "bf_hi": null,
+        "bf_centre": 0.88620498,
+        "n_narrow": 44138,
+        "n_wide": 35862,
+        "p_bd_narrow": 0.99687344,
+        "p_bd_wide": 0.9718086,
+        "p_bd_all": 0.9856375,
+        "p_bd_conservative": 0.99687344,
+        "verdict": "not usable as effect evidence",
+        "ci_width_gain": -0.02506484
+      }
+    ],
+    "verdict_breaks": [
+      0.15,
+      0.45,
+      0.65
+    ],
+    "ci_width_gain_max": 0.12761656,
+    "ci_width_gain_med": 0.02397952,
+    "discrimination": [
+      {
+        "predictor": "calibrated p-value alone",
+        "auc": 0.78693063,
+        "note": ""
+      },
+      {
+        "predictor": "BAF_hat alone",
+        "auc": 0.91816141,
+        "note": ""
+      },
+      {
+        "predictor": "BAF_hat + CI half-width",
+        "auc": 0.91822726,
+        "note": "LR chi2 = 70.3, df = 1, p < .001"
+      },
+      {
+        "predictor": "BAF_hat + CI half-width + calibrated p",
+        "auc": 0.9186271,
+        "note": ""
+      }
+    ],
+    "or_half_width": 1.29907419,
+    "glm_n": 960000,
+    "ci_width_role": {
+      "rules": [
+        {
+          "reading": "pooled probability (CI width ignored)",
+          "declare_usable_pct": 21.4553125,
+          "bd_among_declared_pct": 2.90235033,
+          "sens_ed_pct": 81.17944444,
+          "spec_bd_pct": 98.81388889
+        },
+        {
+          "reading": "width-specific probability",
+          "declare_usable_pct": 25.47697917,
+          "bd_among_declared_pct": 4.08865847,
+          "sens_ed_pct": 83.68722222,
+          "spec_bd_pct": 98.01587302
+        },
+        {
+          "reading": "conservative max(narrow, wide)",
+          "declare_usable_pct": 21.4553125,
+          "bd_among_declared_pct": 2.90235033,
+          "sens_ed_pct": 81.17944444,
+          "spec_bd_pct": 98.81388889
+        }
+      ],
+      "pct_verdict_changed_spec_vs_pool": 8.9421875,
+      "pct_verdict_changed_cons_vs_pool": 0,
+      "bins_changed_cons_vs_pool": [],
+      "max_abs_prob_gap_within_bin": 0.12761656,
+      "delta_auc_from_ci_width": 6.584e-05
+    },
+    "strategies": [
+      {
+        "strategy": "R0 uncalibrated p < .05 (no bias correction)",
+        "declare_usable_pct": 91.69302083,
+        "bd_among_declared_pct": 51.82816758,
+        "ppv_not_bd_pct": 48.17183242,
+        "sens_ed_pct": 94.64666667,
+        "spec_bd_pct": 9.48035714,
+        "_row": "R0 uncalibrated p < .05 (no bias correction)"
+      },
+      {
+        "strategy": "R1 calibrated p < .05 (layer 1 only)",
+        "declare_usable_pct": 61.87114583,
+        "bd_among_declared_pct": 36.03305256,
+        "ppv_not_bd_pct": 63.96694744,
+        "sens_ed_pct": 88.12333333,
+        "spec_bd_pct": 57.53511905,
+        "_row": "R1 calibrated p < .05 (layer 1 only)"
+      },
+      {
+        "strategy": "R2 R1 + BAF point estimate < 0.5",
+        "declare_usable_pct": 47.22010417,
+        "bd_among_declared_pct": 20.20767108,
+        "ppv_not_bd_pct": 79.79232892,
+        "sens_ed_pct": 88.10888889,
+        "spec_bd_pct": 81.82460317,
+        "_row": "R2 R1 + BAF point estimate < 0.5"
+      },
+      {
+        "strategy": "R3 R1 + BAF 95% CI contained in one zone",
+        "declare_usable_pct": 29.85302083,
+        "bd_among_declared_pct": 7.44480772,
+        "ppv_not_bd_pct": 92.55519228,
+        "sens_ed_pct": 81.19555556,
+        "spec_bd_pct": 95.76666667,
+        "_row": "R3 R1 + BAF 95% CI contained in one zone"
+      },
+      {
+        "strategy": "R4 R1 + calibrated-probability verdict (full two-layer)",
+        "declare_usable_pct": 21.4553125,
+        "bd_among_declared_pct": 2.90235033,
+        "ppv_not_bd_pct": 97.09764967,
+        "sens_ed_pct": 81.17944444,
+        "spec_bd_pct": 98.81388889,
+        "_row": "R4 R1 + calibrated-probability verdict (full two-layer)"
+      },
+      {
+        "strategy": "C1 BAF point estimate alone",
+        "declare_usable_pct": 56.1959375,
+        "bd_among_declared_pct": 23.16485659,
+        "ppv_not_bd_pct": 76.83514341,
+        "sens_ed_pct": 98.73611111,
+        "spec_bd_pct": 75.20436508,
+        "_row": "C1 BAF point estimate alone"
+      },
+      {
+        "strategy": "C2 BAF 95% CI contained in one zone, alone",
+        "declare_usable_pct": 31.92052083,
+        "bd_among_declared_pct": 8.59654676,
+        "ppv_not_bd_pct": 91.40345324,
+        "sens_ed_pct": 85.31,
+        "spec_bd_pct": 94.77321429,
+        "_row": "C2 BAF 95% CI contained in one zone, alone"
+      }
+    ],
+    "flow": [
+      {
+        "stage": "all repetitions",
+        "n": 960000,
+        "bd_true_n": 504000,
+        "bd_share_pct": 52.5
+      },
+      {
+        "stage": "layer 1 pass (calibrated p < .05)",
+        "n": 593963,
+        "bd_true_n": 214023,
+        "bd_share_pct": 36.03305256
+      },
+      {
+        "stage": "layer 1 pass and usable verdict",
+        "n": 205971,
+        "bd_true_n": 5978,
+        "bd_share_pct": 2.90235033
+      },
+      {
+        "stage": "layer 1 pass and mixed verdict",
+        "n": 133931,
+        "bd_true_n": 27164,
+        "bd_share_pct": 20.28208555
+      },
+      {
+        "stage": "layer 1 pass and competitive verdict",
+        "n": 129128,
+        "bd_true_n": 69650,
+        "bd_share_pct": 53.93872746
+      },
+      {
+        "stage": "layer 1 pass and not-usable verdict",
+        "n": 124933,
+        "bd_true_n": 111231,
+        "bd_share_pct": 89.03252143
+      }
+    ],
+    "confusion3x3": [
+      {
+        "truth": "bias-dominated",
+        "bias-dominated": 211831,
+        "effect-dominated": 26343,
+        "mixed": 265826,
+        "row_total": 504000,
+        "_row": "bias-dominated"
+      },
+      {
+        "truth": "effect-dominated",
+        "bias-dominated": 149,
+        "effect-dominated": 153558,
+        "mixed": 26293,
+        "row_total": 180000,
+        "_row": "effect-dominated"
+      },
+      {
+        "truth": "mixed",
+        "bias-dominated": 5273,
+        "effect-dominated": 126536,
+        "mixed": 144191,
+        "row_total": 276000,
+        "_row": "mixed"
+      }
+    ],
+    "zone_accuracy": {
+      "overall": 53.08125,
+      "bias_dominated": 42.02996032,
+      "mixed": 52.24311594,
+      "effect_dominated": 85.31
+    },
+    "subgroups": [
+      {
+        "subgroup": "K = 12 negative controls",
+        "n": 320000,
+        "layer1_pass_pct": 62.4003125,
+        "declare_usable_pct": 21.9396875,
+        "bd_among_declared_pct": 3.53810874,
+        "bd_among_layer1_pct": 36.39454931,
+        "median_half_width": 0.19346854
+      },
+      {
+        "subgroup": "K = 25 negative controls",
+        "n": 320000,
+        "layer1_pass_pct": 61.8403125,
+        "declare_usable_pct": 21.5265625,
+        "bd_among_declared_pct": 2.82935327,
+        "bd_among_layer1_pct": 35.9075037,
+        "median_half_width": 0.12091375
+      },
+      {
+        "subgroup": "K = 50 negative controls",
+        "n": 320000,
+        "layer1_pass_pct": 61.3728125,
+        "declare_usable_pct": 20.8996875,
+        "bd_among_declared_pct": 2.3101422,
+        "bd_among_layer1_pct": 35.79200888,
+        "median_half_width": 0.08126378
+      },
+      {
+        "subgroup": "bias exchangeability held",
+        "n": 480000,
+        "layer1_pass_pct": 60.49395833,
+        "declare_usable_pct": 15.934375,
+        "bd_among_declared_pct": 0.91259724,
+        "bd_among_layer1_pct": 35.46600728,
+        "median_half_width": 0.12325337
+      },
+      {
+        "subgroup": "30% exchangeability violation",
+        "n": 480000,
+        "layer1_pass_pct": 63.24833333,
+        "declare_usable_pct": 26.97625,
+        "bd_among_declared_pct": 4.07766091,
+        "bd_among_layer1_pct": 36.57540383,
+        "median_half_width": 0.13669576
+      },
+      {
+        "subgroup": "sigma_ps = 0.06",
+        "n": 480000,
+        "layer1_pass_pct": 69.946875,
+        "declare_usable_pct": 22.551875,
+        "bd_among_declared_pct": 2.07484596,
+        "bd_among_layer1_pct": 38.42320809,
+        "median_half_width": 0.1321098
+      },
+      {
+        "subgroup": "sigma_ps = 0.10",
+        "n": 480000,
+        "layer1_pass_pct": 53.79541667,
+        "declare_usable_pct": 20.35875,
+        "bd_among_declared_pct": 3.81899675,
+        "bd_among_layer1_pct": 32.92528019,
+        "median_half_width": 0.12769557
+      }
+    ]
+  },
+  "part3": {
+    "cases": [
+      {
+        "exposure": "Beta-blocker >=50% target dose",
+        "rr_uncal": 0.83145269,
+        "log_rr_uncal": -0.18458088,
+        "mu_b": -0.19049929,
+        "sigma_b": 0.06797047,
+        "rr_cal": 1.00593597,
+        "log_rr_cal": 0.00591842,
+        "cal_p": 0.94637294,
+        "layer1_pass": false,
+        "bf": 0.90674645,
+        "bf_lo": 0.73885619,
+        "bf_hi": 0.99279979,
+        "half_width": 0.1269718,
+        "ci_class": "narrow",
+        "lookup_bin": 12,
+        "p_bias_dominated": 0.99687344,
+        "verdict": "not usable as effect evidence",
+        "zone": null,
+        "_row": "mean"
+      },
+      {
+        "exposure": "GDMT >=2 of 3 classes",
+        "rr_uncal": 0.68206909,
+        "log_rr_uncal": -0.38262432,
+        "mu_b": -0.19049929,
+        "sigma_b": 0.06797047,
+        "rr_cal": 0.82520369,
+        "log_rr_cal": -0.19212502,
+        "cal_p": 0.04518816,
+        "layer1_pass": true,
+        "bf": 0.5100565,
+        "bf_lo": 0.35642984,
+        "bf_hi": 0.60325931,
+        "half_width": 0.12341474,
+        "ci_class": "narrow",
+        "lookup_bin": 7,
+        "p_bias_dominated": 0.64824655,
+        "verdict": "competitive, no verdict",
+        "zone": null,
+        "_row": "mean1"
+      }
+    ],
+    "nc": {
+      "K": 12,
+      "all_protective": true,
+      "logrr_min": -0.53122924,
+      "logrr_max": -0.00233313,
+      "shapiro_p": 0.16782203
+    },
+    "sensitivity": {
+      "loo_bf_min": 0.89093381,
+      "loo_bf_max": 0.99035792,
+      "loo_fall_bf": 0.98363923,
+      "sl_bf": [
+        0.90068073,
+        0.89621785,
+        0.91781671
+      ],
+      "sl_bf_lo": [
+        0.74828881,
+        0.75299959,
+        0.71763844
+      ],
+      "sl_bf_hi": [
+        0.99503494,
+        0.99530144,
+        0.99514188
+      ],
+      "gp_cal_rr": [
+        0.9948,
+        1.0485
+      ],
+      "gp_bf": [
+        0.8009,
+        0.9755
+      ]
+    }
+  }
+}

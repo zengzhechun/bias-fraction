@@ -1,0 +1,21 @@
+Bland-Altman agreement: estimated BAF vs true BAF (1000 replicates per condition)
+  Monte Carlo : bias=-0.0703  SD=0.1495  LoA=[-0.3634, 0.2228]  %inLoA=94.0%  CCC=0.7627  propBias r=-0.2428  outside=36345/640000
+  MCMC        : bias=-0.0705  SD=0.1385  LoA=[-0.3419, 0.2009]  %inLoA=93.8%  CCC=0.7774  propBias r=-0.3157  outside=36896/640000
+Interpretation:
+- bias is NEGATIVE (est < true): systematic UNDER-estimation of BAF on average. This is larger in magnitude than the
+  72-condition estimate because the full grid includes the near-boundary psi=-0.01 conditions where true BAF is highest
+  (approx 0.83-0.98, bounded below 1) and the estimator is pulled below the true value (ceiling effect).
+- CCC = 0.76 (MC) / 0.78 (MCMC): MODERATE agreement (CCC>0.90 would be 'strong').
+- propBias r = -0.24 (MC) / -0.32 (MCMC) over ALL 640 conditions: a STRONG negative proportional bias,
+  i.e. the (est-true) difference grows MORE negative as true BAF increases toward 1.
+- EXCLUDING the near-boundary psi=-0.01 level (highest true BAF): propBias r = -0.05 (MC) / -0.11 (MCMC) -- only MILD residual scale drift.
+  => The strong overall proportional bias is driven almost entirely by the near-boundary psi=-0.01 level (64 conditions,
+  64000 reps, true BAF up to approx 0.98): BAF = |mu_B|/(|mu_B|+|psi|) is bounded above at 1, so at the smallest |psi| the estimator mean is pulled below the true value.
+  NOTE: this REVERSES the earlier 72-condition claim of 'no proportional bias' (r~0): that grid excluded psi=0 / BAF=1,
+  masking the boundary effect. Using X = true (per-condition fixed BAF) -- not Tukey mean (est+true)/2 -- is the honest test
+  (Tukey mean spuriously inflated r to ~0.31 via algebraic coupling of X and Y).
+- ~94% of replicates fall within the EMPIRICAL LoA (bias +/- 1.96*SD of differences): the point estimator's REALIZED error spread is well described by its empirical SD.
+- KEY distinction: the BA LoA uses the EMPIRICAL SD of (est - true). This is NOT the method's claimed 95% CI.
+  The separate coverage analysis (figC / figH) shows MC's OWN bootstrap CI contains the truth only ~42% of the time
+  (it under-reports psi uncertainty), whereas the MCMC posterior CI captures ~82%. Conclusion: away from the near-boundary
+  (psi=-0.01) cells, BAF POINT estimates agree reasonably with truth (BA); MC UNDERSTATES its uncertainty -- report MCMC CIs.

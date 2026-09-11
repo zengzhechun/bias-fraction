@@ -1,6 +1,6 @@
 # R/16_sim_v37p1_80grid.R
 # 80-cell simulation rerun (psi 10 levels x mu_B 8 levels)
-# v38b - 2026-09-01: added a third negative-control panel size, K = 50, giving
+# v39b - 2026-09-01: added a third negative-control panel size, K = 50, giving
 #   three levels (12, 25, 50). 12 and 25 are unchanged; 50 probes whether the
 #   estimator keeps improving once the panel is far larger than the 12-control
 #   cardiovascular panel actually available in MIMIC-IV. Per-condition cost is
@@ -39,7 +39,7 @@ prog_txt <- file.path(OUT_SIM, "run_progress_v37p1.txt")
 psi_vals  <- round(seq(-0.40, -0.01, length.out = 10), 2)
 mu_b_vals <- round(seq(-0.40, -0.05, length.out = 8),  2)
 sigma_ps_vals     <- c(0.06, 0.10)
-K_vals            <- c(12, 25, 50)   # v38b: 50 added 2026-09-01; appended LAST on purpose (see configs note below)
+K_vals            <- c(12, 25, 50)   # v39b: 50 added 2026-09-01; appended LAST on purpose (see configs note below)
 ex_violation_vals <- c(0.0, 0.3)
 mcmc_iter <- 400; mcmc_warmup <- 100
 n_rep <- 1000; seed <- 43    # v37 used seed=42; v37p1 uses seed=43 (independent RNG stream)
@@ -54,7 +54,7 @@ cat(sprintf(" total: %d conditions x %d reps = %d analyses\n",
             n_rep,
             length(psi_vals) * length(mu_b_vals) *
               length(sigma_ps_vals) * length(K_vals) * length(ex_violation_vals) * n_rep))
-# Measured, not extrapolated from v37. The v38b K = 50 top-up ran 320 fresh
+# Measured, not extrapolated from v37. The v39b K = 50 top-up ran 320 fresh
 # conditions in 6,720 s = 21.0 s/condition (1000 reps, MCMC 400 iter / 100 warmup).
 # The old "n_conditions / 336 * 6 h" line treated 336 (a v33 *condition* count) as
 # if it were a repetition count, and predicted 17.1 h for work that actually took
@@ -63,7 +63,7 @@ cat(sprintf(" total: %d conditions x %d reps = %d analyses\n",
 SEC_PER_COND_EST <- 21
 n_cond_total <- length(psi_vals) * length(mu_b_vals) *
   length(sigma_ps_vals) * length(K_vals) * length(ex_violation_vals)
-cat(sprintf(" estimated wall-clock: ~%.1f hours (at %.0f s/condition, measured on the v38b K=50 top-up)\n",
+cat(sprintf(" estimated wall-clock: ~%.1f hours (at %.0f s/condition, measured on the v39b K=50 top-up)\n",
             n_cond_total * SEC_PER_COND_EST / 3600, SEC_PER_COND_EST))
 cat("=========================================================\n")
 

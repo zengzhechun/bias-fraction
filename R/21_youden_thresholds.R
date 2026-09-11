@@ -1,8 +1,8 @@
 # R/21_youden_thresholds.R
 # Youden-index-optimal operating points for the two ROC curves:
-#   (a) BF_hat alone          -> threshold is a BF value
+#   (a) BF_hat alone          -> threshold is a BAF value
 #   (b) BF_hat + CI half-width -> threshold is a logistic score; report the
-#       decision boundary in (BF, half) space
+#       decision boundary in (BAF, half) space
 suppressPackageStartupMessages({ library(jsonlite) })
 source("R/00_config.R")
 source("R/01_bsr_core.R")
@@ -46,30 +46,30 @@ youden <- function(score, pos) {
   list(th = s[k], sens = sens[k], spec = 1 - fpr[k], J = J[k])
 }
 
-# (a) BF alone
+# (a) BAF alone
 ya <- youden(S$bf, S$bd_tru)
-cat(sprintf("\n[BF alone]  AUC %.4f\n  Youden-max: BF threshold = %.4f  ->  sens %.3f, spec %.3f, J = %.3f\n",
+cat(sprintf("\n[BAF alone]  AUC %.4f\n  Youden-max: BAF threshold = %.4f  ->  sens %.3f, spec %.3f, J = %.3f\n",
             auc_of(S$bf, S$bd_tru),
             ya$th, ya$sens, ya$spec, ya$J))
 
-# (b) BF + CI half-width (logistic combination, same as paper's m_bfci)
+# (b) BAF + CI half-width (logistic combination, same as paper's m_bfci)
 m_bfci <- glm(bd_tru ~ bf + half, data = S, family = binomial())
 lp  <- predict(m_bfci, type = "link")
 yb  <- youden(lp, S$bd_tru)
 auc2 <- auc_of(lp, S$bd_tru)
 cf <- coef(m_bfci)
-cat(sprintf("\n[BF + CI half-width]  AUC %.4f  (coef: b0=%.3f, b_bf=%.3f, b_half=%.3f)\n",
+cat(sprintf("\n[BAF + CI half-width]  AUC %.4f  (coef: b0=%.3f, b_bf=%.3f, b_half=%.3f)\n",
             auc2, cf[1], cf[2], cf[3]))
 cat(sprintf("  Youden-max: score threshold = %.4f  ->  sens %.3f, spec %.3f, J = %.3f\n",
             yb$th, yb$sens, yb$spec, yb$J))
-# decision boundary: b0 + b_bf*BF + b_half*half = th  ->  BF as fn of half
-cat("  Decision boundary (BF at Youden point as a function of CI half-width):\n")
+# decision boundary: b0 + b_bf*BAF + b_half*half = th  ->  BAF as fn of half
+cat("  Decision boundary (BAF at Youden point as a function of CI half-width):\n")
 for (h in c(min(S$half), quantile(S$half, .25), median(S$half), quantile(S$half, .75), max(S$half))) {
   bf_at <- (yb$th - cf[1] - cf[3]*h) / cf[2]
-  cat(sprintf("    half-width = %6.4f  ->  BF cutoff = %6.4f\n", h, bf_at))
+  cat(sprintf("    half-width = %6.4f  ->  BAF cutoff = %6.4f\n", h, bf_at))
 }
-# BF cutoff at the median half-width is the interpretable summary
+# BAF cutoff at the median half-width is the interpretable summary
 med_half <- median(S$half)
 bf_cut <- (yb$th - cf[1] - cf[3]*med_half) / cf[2]
-cat(sprintf("\nSummary: BF-alone cutoff = %.3f; BF+CI model cutoff at median half-width (%.4f) = BF %.3f\n",
+cat(sprintf("\nSummary: BAF-alone cutoff = %.3f; BAF+CI model cutoff at median half-width (%.4f) = BAF %.3f\n",
             ya$th, med_half, bf_cut))

@@ -1,5 +1,5 @@
 # Credibility Metric Core Estimation Functions
-# v34: Bias Fraction (BF) is the primary metric. BF = BER / (1 + BER) in [0,1].
+# v34: Bias Attribution Fraction (BAF) is the primary metric. BAF = BER / (1 + BER) in [0,1].
 #   BER = |mu_B| / |psi_tilde| is retained as the auxiliary ratio (same object as v33).
 #   Code keeps bsr_* function/object names for backward compatibility.
 # v34 fixes (per peer-review round 2):
@@ -7,17 +7,17 @@
 #      transformed), so the point estimate and CI come from the same distribution.
 #   2. bsr_fieller() adds a Fieller-theorem interval for the ratio mu_B / psi_tilde,
 #      which degenerates honestly when the denominator is too noisy.
-#   3. Zone classification uses BF thresholds: >0.5 bias-dominated, <1/3 effect-
+#   3. Zone classification uses BAF thresholds: >0.5 bias-dominated, <1/3 effect-
 #      dominated, otherwise mixed (identical partition to BER >1 / <0.5).
 
 library(data.table)
 library(EmpiricalCalibration)
 
-# ---- BER <-> BF transforms ----
+# ---- BER <-> BAF transforms ----
 ber_to_bf <- function(ber) ber / (1 + ber)
 bf_to_ber <- function(bf) bf / (1 - bf)
 
-# ---- Core Estimator (BER + BF) ----
+# ---- Core Estimator (BER + BAF) ----
 bsr_estimate <- function(log_rr_uncal, se_log_rr, nc_log_rr, nc_se_log_rr) {
   null_fit <- fitNull(nc_log_rr, nc_se_log_rr)
   mu_bias <- null_fit[1]
@@ -36,7 +36,7 @@ bsr_estimate <- function(log_rr_uncal, se_log_rr, nc_log_rr, nc_se_log_rr) {
   )
 }
 
-# ---- Bootstrap CI (log scale; applies to BER and, via logit, to BF) ----
+# ---- Bootstrap CI (log scale; applies to BER and, via logit, to BAF) ----
 bsr_bootstrap <- function(log_rr_uncal, se_log_rr, nc_log_rr, nc_se_log_rr,
                           n_boot = 2000, seed = 42) {
   set.seed(seed)
@@ -110,7 +110,7 @@ bsr_fieller <- function(mu_b, v11, log_rr_uncal, se_log_rr, alpha = 0.05) {
   list(lo = roots[1], hi = roots[2], region = region)
 }
 
-# ---- Classification (BF thresholds; same partition as BER thresholds) ----
+# ---- Classification (BAF thresholds; same partition as BER thresholds) ----
 bsr_classify <- function(bsr, ci_lo = NA_real_, ci_hi = NA_real_) {
   bf <- ber_to_bf(bsr)
   if (is.na(bsr)) return("unclassifiable")
@@ -170,4 +170,4 @@ bsr_diagnostics <- function(nc_log_rr, nc_se_log_rr) {
   )
 }
 
-cat("BSR core functions loaded (v35: BF primary, BER auxiliary, Fieller added).\n")
+cat("BSR core functions loaded (v35: BAF primary, BER auxiliary, Fieller added).\n")

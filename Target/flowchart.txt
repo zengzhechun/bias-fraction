@@ -1,0 +1,231 @@
+Templates for participant selection flow diagrams
+
+
+Contents	
+Example flow diagram	2
+Example flow diagram when cloning is used	3
+Example flow diagram for sequential trial emulation	4
+
+Introduction to flow diagram templates
+This document provides a set of flow diagram templates designed to support transparent reporting in target trial emulations. These diagrams help readers clearly understand how the final study sample was selected from an initial cohort.
+
+The templates are structured to accommodate different scenarios encountered in target trial emulation:
+	•	Flow diagram
+	•	This diagram is helpful when there is a unique time of eligibility and treatment strategies which are distinguishable at baseline. 
+	•	Flow diagram when cloning is used
+	•	This diagram is helpful when there is a unique time of eligibility and treatment strategies are not distinguishable at baseline, handled through cloning, censoring and weighting. Numbers of clones censored due to deviations from the treatment strategies should be listed in the relevant boxes.
+	•	Flow diagram for sequential trials
+	•	This diagram is helpful when there are multiple times individuals could meet eligibility and treatment strategies which are distinguishable when baseline is defined by the investigator (e.g., by calendar time). The unit of analysis in sequentially emulated trials is each individual in each trial (i.e., a person-trial).
+
+Researchers can adapt these templates to their specific study context. For further guidance and resources, visit https://target-guideline.org.
+
+Template 1: Example flow diagram
+
+Participant flow diagram for the observational emulation. 
+For more information, visit: https://target-guideline.org/
+For more information, visit: https://target-guideline.org/
+(n = ) classified into [treatment strategy B]
+
+(n = ) individuals with [condition of interest] assessed for eligibility
+(n = ) individuals excluded 
+(n = ) reason 1 
+(n = ) reason 2
+(n = ) reason 3 
+(n = ) reason 4 
+(n = ) reason 5 
+
+(n = ) classified into [treatment strategy A]
+Treatment strategies
+(n = ) censoring due to nonadherence*
+(n = ) losses to follow-up
+(n = ) competing events
+(n = ) outcomes
+(n = ) censoring due to nonadherence*
+(n = ) losses to follow-up
+(n = ) competing events
+(n = ) outcomes
+
+Follow-up
+(n = ) eligible individuals
+Eligibility
+* if estimating a per-protocol effect
+
+(n = ) classified into [treatment strategy B]
+
+(n = ) individuals with [condition of interest] assessed for eligibility
+(n = ) individuals excluded 
+(n = ) reason 1 
+(n = ) reason 2
+(n = ) reason 3 
+(n = ) reason 4 
+(n = ) reason 5 
+
+(n = ) classified into [treatment strategy A]
+Treatment strategies
+(n = ) censoring due to nonadherence*
+(n = ) losses to follow-up
+(n = ) competing events
+(n = ) outcomes
+(n = ) censoring due to nonadherence*
+(n = ) losses to follow-up
+(n = ) competing events
+(n = ) outcomes
+
+Follow-up
+(n = ) eligible individuals
+Eligibility
+* if estimating a per-protocol effect
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Template 2: Example flow diagram when cloning is used
+
+Participant flow diagram for the observational emulation.
+(n = ) clones classified to [treatment strategy B]
+(n = ) individuals with [condition of interest] assessed for eligibility
+(n = ) individuals excluded 
+(n = ) reason 1 
+(n = ) reason 2
+(n = ) reason 3 
+(n = ) reason 4 
+(n = ) reason 5 
+(n = ) clones classified to [treatment strategy A]
+(n = ) remained adherent to [treatment strategy A] at [timepoint of interest]
+(n = ) remained adherent to [treatment strategy B] at [timepoint of interest]
+Follow-up
+(n = ) eligible individuals
+(n = ) individuals cloned
+Treatment strategies
+(n = ) clones censored to [timepoint of interest] 
+(n = ) reason 1
+(n = ) reason 2
+(n = ) reason 3 
+(n = ) reason 4 
+(n = ) reason 5 
+
+(n = ) clones censored to [timepoint of interest] 
+(n = ) reason 1 
+(n = ) reason 2
+(n = ) reason 3 
+(n = ) reason 4 
+(n = ) reason 5 
+Eligibility
+(n = ) losses to follow-up
+(n = ) competing events
+(n = ) outcomes
+(n = ) losses to follow-up
+(n = ) competing events
+(n = ) outcomes
+(n = ) clones classified to [treatment strategy B]
+(n = ) individuals with [condition of interest] assessed for eligibility
+(n = ) individuals excluded 
+(n = ) reason 1 
+(n = ) reason 2
+(n = ) reason 3 
+(n = ) reason 4 
+(n = ) reason 5 
+(n = ) clones classified to [treatment strategy A]
+(n = ) remained adherent to [treatment strategy A] at [timepoint of interest]
+(n = ) remained adherent to [treatment strategy B] at [timepoint of interest]
+Follow-up
+(n = ) eligible individuals
+(n = ) individuals cloned
+Treatment strategies
+(n = ) clones censored to [timepoint of interest] 
+(n = ) reason 1
+(n = ) reason 2
+(n = ) reason 3 
+(n = ) reason 4 
+(n = ) reason 5 
+
+(n = ) clones censored to [timepoint of interest] 
+(n = ) reason 1 
+(n = ) reason 2
+(n = ) reason 3 
+(n = ) reason 4 
+(n = ) reason 5 
+Eligibility
+(n = ) losses to follow-up
+(n = ) competing events
+(n = ) outcomes
+(n = ) losses to follow-up
+(n = ) competing events
+(n = ) outcomes
+For more information, visit: https://target-guideline.org/
+For more information, visit: https://target-guideline.org/
+
+Template 3: Example flow diagram for sequential trial emulation
+
+Participant flow diagram for the observational emulation.
+(n = ) person-trials across all emulated target trials
+(n = ) person-trials classified into [treatment strategy B]
+(n = ) unique individuals
+(n = ) individuals with [condition of interest] assessed for eligibility
+(n = ) individuals excluded 
+(n = ) reason 1 
+(n = ) reason 2
+(n = ) reason 3 
+(n = ) reason 4 
+(n = ) reason 5 
+
+(n = ) person-trials classified into [treatment strategy A]
+(n = ) unique individuals
+Treatment strategies
+(n = ) censoring due to nonadherence*
+(n = ) losses to follow-up
+(n = ) competing events
+(n = ) outcomes
+(n = ) censoring due to nonadherence*
+(n = ) losses to follow-up
+(n = ) competing events
+(n = ) outcomes
+Follow-up
+(n = ) unique individuals included in at least one emulated target trial
+Eligibility
+* if estimating a per-protocol effect
+
+(n = ) person-trials across all emulated target trials
+(n = ) person-trials classified into [treatment strategy B]
+(n = ) unique individuals
+(n = ) individuals with [condition of interest] assessed for eligibility
+(n = ) individuals excluded 
+(n = ) reason 1 
+(n = ) reason 2
+(n = ) reason 3 
+(n = ) reason 4 
+(n = ) reason 5 
+
+(n = ) person-trials classified into [treatment strategy A]
+(n = ) unique individuals
+Treatment strategies
+(n = ) censoring due to nonadherence*
+(n = ) losses to follow-up
+(n = ) competing events
+(n = ) outcomes
+(n = ) censoring due to nonadherence*
+(n = ) losses to follow-up
+(n = ) competing events
+(n = ) outcomes
+Follow-up
+(n = ) unique individuals included in at least one emulated target trial
+Eligibility
+* if estimating a per-protocol effect
+
+
