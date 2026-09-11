@@ -51,7 +51,7 @@
 
 <h1 data-page-node-id="zovBun5hHliaca6V7B7pbg">BAF 临床应用算法说明 v1</h1>
 <div class="meta" data-page-node-id="m7GkKITQpFWZrVYv0pV2SF">
-  对应论文稿件 v37 · 评估指标 BAF（偏倚份额，bias attribution fraction）· 受众：临床医生（无需统计学或模拟研究背景）· 文档版本：2026-08-26
+  对应论文稿件 v39 · 评估指标 BAF（偏倚分数，bias attribution fraction）· 受众：临床医生（无需统计学或模拟研究背景）· 文档版本：2026-09-11
 </div>
 
 <div class="lede" data-page-node-id="vXAtZBVO3zTg9loQMprlCb">
@@ -77,7 +77,7 @@
     </tr>
     <tr data-page-node-id="EZ7JJ7HSgSDAEtqwO157Nq">
       <td data-page-node-id="jqAhSng4RpoieA0Smt58rZ"><b data-page-node-id="jLWCko8DkcYbW9ZWLMnymd">BAF̂ 估计</b><br data-page-node-id="mJbFrth7rLEFVIzMRtLuQI"><code data-page-node-id="BoJlOjigCcyMKTtACgsreo">BAF_hat</code></td>
-      <td data-page-node-id="DcejoRWPgCSfc6w3bS0pLZ">BAF̂ = |μ̂_B| / (|μ̂_B| + ψ̃)。衡量的偏倚份额。</td>
+      <td data-page-node-id="DcejoRWPgCSfc6w3bS0pLZ">BAF̂ = |μ̂_B| / (|μ̂_B| + ψ̃)。衡量的是偏倚分数。</td>
       <td data-page-node-id="RyqsPX5Hl54eHl5aXfnWLf">0–1（理论边界）</td>
       <td data-page-node-id="qC0BDxn5cqLFg1NTAHwcKq">同一段校准输出，通常与 μ̂_B、ψ̃ 一同报。</td>
     </tr>
@@ -110,7 +110,7 @@
     <tr data-page-node-id="Jwz35NBjQ9X71QkSTsch7H">
       <td data-page-node-id="SEAVKmSMEiDImzJrN0WiEd"><b data-page-node-id="O1JG4qSMapwZOssbqs24Mm">P(偏倚主导) ≈</b></td>
       <td data-page-node-id="9LaoMZS9ENe9EME1SMBl1Y">真值实际落在"偏倚主导"侧的概率（来自模拟研究的统计校正），保留 1 位小数。</td>
-      <td data-page-node-id="aNFDFAFbaRwu1b3j8ESvdR">P(偏倚主导) ≈ 3.1%</td>
+      <td data-page-node-id="aNFDFAFbaRwu1b3j8ESvdR">P(偏倚主导) ≈ 3.6%</td>
     </tr>
     <tr data-page-node-id="LyxtzkGiJcE7FspWI2s1nw">
       <td data-page-node-id="TFX5XzKd0EqCMYHPfquijv"><b data-page-node-id="FX9TtuyAwjRW70nCdN3gH0">BAF̂ 报告值</b></td>
@@ -132,7 +132,7 @@ OUTPUT: verdict, P_bias_dom
 
   2. CI_half_width = (BAF_hi - BAF_lo) / 2
 
-  3. BIN = locate_bin(BAF_hat)        // 12 段读数桶（x 中心: 0.06, 0.17, 0.26, ...）
+  3. BIN = locate_bin(BAF_hat)        // 12 段读数桶（x 中心: 0.09, 0.18, 0.27, ...）
          [NB, WB] = lookup_pBD(BIN)   // 从 §6 的模拟查表（12 段读数桶）：窄/宽两个 P(偏倚主导)
 
   4. P_bias_dom = max(NB, WB)        // 取窄/宽两档的<b data-page-node-id="mCSnoZOSKRvMoGM7oc7ahv">较大</b>值 → 保守判读
@@ -170,19 +170,19 @@ OUTPUT: verdict, P_bias_dom
       <td data-page-node-id="EzpUGFSg1cKJJONfdfyp7E"><b data-page-node-id="Z0p8rAvjDcXrgKjtBYNRFP">0.15</b>（P 偏倚主导）</td>
       <td data-page-node-id="kAitqXtKy11qtOow23RfLr">"可作效应证据"上限。</td>
       <td data-page-node-id="sqDE2lB8R6cRaItJvBzwhN">模拟中低 BAF 段即使宽 CI 仍能维持 P&lt;0.15。</td>
-      <td data-page-node-id="fkjdULH4hLHRtKIrQBgl0b">偏倚份额不超过 15%，可放心使用。</td>
+      <td data-page-node-id="fkjdULH4hLHRtKIrQBgl0b">偏倚分数不超过 15%，可放心使用。</td>
     </tr>
     <tr data-page-node-id="jlD8UfSdyAzjlms0FaaedH">
       <td data-page-node-id="lip6jFZIp6GLvXuDmXNWbv"><b data-page-node-id="fjW2GFPX9z2M6u7YpwvBZr">0.45</b>（P 偏倚主导）</td>
       <td data-page-node-id="PFvG55GUytYzDGGhHeoL9g">"混合·假设生成"上限。</td>
       <td data-page-node-id="8N5piznC30Qnb31sW0Y2Np">模拟中 BAF 居中段窄 CI 可落入此档。</td>
-      <td data-page-node-id="lXW9mNssTGmkHVbOKR54BI">偏倚份额在 15–45% 之间，方向有信号但强度不够，列为假设生成。</td>
+      <td data-page-node-id="lXW9mNssTGmkHVbOKR54BI">偏倚分数在 15–45% 之间，方向有信号但强度不够，列为假设生成。</td>
     </tr>
     <tr data-page-node-id="85I7zNCzpdNTp5EoH8COQ9">
       <td data-page-node-id="EqBdV2YnytIrAoo4JFo450"><b data-page-node-id="YUUHashlsIpSJep0AFIJvk">0.65</b>（P 偏倚主导）</td>
       <td data-page-node-id="TNxGEGlGNXc7nMQszY2SSs">"势均力敌"与"不可作"的分界。</td>
       <td data-page-node-id="9YtPDMRYpLbM5NAlzGHBvx">模拟中高 BAF 段即便窄 CI 也几乎全超此阈值。</td>
-      <td data-page-node-id="FGePrqmxOeHLawv7k4aO6O">偏倚份额过半，不能作为因果证据使用。</td>
+      <td data-page-node-id="FGePrqmxOeHLawv7k4aO6O">偏倚分数过半，不能作为因果证据使用。</td>
     </tr>
   </tbody>
 </table>
@@ -196,8 +196,8 @@ OUTPUT: verdict, P_bias_dom
 <p data-page-node-id="fP6N7FmFMFTQheyk5VbQGT">BAF̂ 是一个比值，理论范围 [0, 1]，但<b data-page-node-id="qMs1vG6F2BDpHviLGUpDoz">实际报告的可信区间会被边界"截断"</b>。这是单调变换的固有性质：BAF = g(x) = |x|/(|x|+ψ̃) 在 x 接近 0 处斜率极陡，在 x 接近 −ψ̃ 处斜率极平。这意味着：</p>
 
 <ul data-page-node-id="ceOrixdpyNDDbepJkkOVWL">
-  <li data-page-node-id="7CK1vNnd4S5GzNC6AshKaF">当 BAF̂ <b data-page-node-id="FEsM9xM2OE6bcp8a3DqNud">接近 0</b>（偏倚份额很小）：BAF̂ 区间<b data-page-node-id="aiVe5TDwYC8nUQGf7n4DjH">下界常贴 0</b>（CI 不会变负），实际可用信息<b data-page-node-id="xxIZzhoFRCXe9FznAkmaCo">只有上半段</b>。</li>
-  <li data-page-node-id="phg7iyuOl3ymMVjCrODojy">当 BAF̂ <b data-page-node-id="F7QwaA1e4tlFzpik4m37ix">接近 1</b>（偏倚份额几乎完全解释）：BAF̂ 区间<b data-page-node-id="T5GtDGG46BeMAO8lysHW29">上界常贴 1</b>（CI 不会超过 1），实际可用信息<b data-page-node-id="xBP3mRIAFVxXARZCyh95Zz">只有下半段</b>。</li>
+  <li data-page-node-id="7CK1vNnd4S5GzNC6AshKaF">当 BAF̂ <b data-page-node-id="FEsM9xM2OE6bcp8a3DqNud">接近 0</b>（偏倚分数很小）：BAF̂ 区间<b data-page-node-id="aiVe5TDwYC8nUQGf7n4DjH">下界常贴 0</b>（CI 不会变负），实际可用信息<b data-page-node-id="xxIZzhoFRCXe9FznAkmaCo">只有上半段</b>。</li>
+  <li data-page-node-id="phg7iyuOl3ymMVjCrODojy">当 BAF̂ <b data-page-node-id="F7QwaA1e4tlFzpik4m37ix">接近 1</b>（偏倚几乎完全解释）：BAF̂ 区间<b data-page-node-id="T5GtDGG46BeMAO8lysHW29">上界常贴 1</b>（CI 不会超过 1），实际可用信息<b data-page-node-id="xBP3mRIAFVxXARZCyh95Zz">只有下半段</b>。</li>
   <li data-page-node-id="gNBAlkLeytaD1EM1yWEncq">当 BAF̂ <b data-page-node-id="gs2MDSRzkuFBvxawXCpZGm">居中</b>（典型读数 0.2–0.8）：CI 通常<b data-page-node-id="n6Hkchh89NN7BvpaBpCEa7">对称</b>，半宽 = (BAF_hi − BAF_lo)/2 即双向都可用。</li>
 </ul>
 
@@ -339,21 +339,21 @@ OUTPUT: verdict, P_bias_dom
     <tr data-page-node-id="Ar5wARDj0C4n7yJ6TEPQkE"><th style="width:10%" data-page-node-id="HW6PcKfTFRSfLTvHWDjm2Q">桶</th><th data-page-node-id="65z8aoP5kIjIoWH8EcGVoc">BAF̂ 读数中心</th><th data-page-node-id="AVHJChhAEukYHep6Fb2z2z">窄档 P(偏倚主导)</th><th data-page-node-id="hv9BfHpYjhg9MFTJQ6RVni">宽档 P(偏倚主导)</th><th data-page-node-id="HjzjEZEs92NWuiMkH6kYg3">保守值 max(窄,宽)</th><th data-page-node-id="TjEc6lEVY8suSeQwzbMFtg">算法判语</th></tr>
   </thead>
   <tbody data-page-node-id="KS5NitQoLqLkaYgXcV2j4L">
-    <tr data-page-node-id="7Pr0uPLwpOUfjo8bAgRFar"><td data-page-node-id="6tJ9IAGkiSEnw98oVx4oA7">1</td><td data-page-node-id="xpe5pje93CcIAs7WvXkbAZ">0.06</td><td data-page-node-id="5G3YDdBWyHB7swDI9uCQIG">0.0019</td><td data-page-node-id="kK7PVAIwNJWNofaNMJaDqV">0.0713</td><td data-page-node-id="3WH4a0iaukphMGS9PRbVYG">0.0713</td><td data-page-node-id="YzFVMK0Q3WKcfahNG7j3Sm"><span class="pill pill-ok" data-page-node-id="rytcKeivQGtqckia25TXs8">可作效应证据</span></td></tr>
-    <tr data-page-node-id="I53F3Yr0cWqR83tyO48TNn"><td data-page-node-id="0MNdISLgpQBnMIb54ePY3y">2</td><td data-page-node-id="C10wyQKXovj7nCdqTJXtg0">0.169</td><td data-page-node-id="4qSROeVW6zZPDNPiV2t1G5">0.0077</td><td data-page-node-id="GxOSM14OYwci9aujghVmt8">0.0757</td><td data-page-node-id="3bDUBH7lf8UQs9deg2GE7c">0.0757</td><td data-page-node-id="HA91AfLkiutdHjSDTYSGLa"><span class="pill pill-ok" data-page-node-id="6HDlz0eVpBa9HOfC5W7PKD">可作效应证据</span></td></tr>
-    <tr data-page-node-id="zdptl9bNquV72AHAUGVCfe"><td data-page-node-id="BvONE8wwgsEyhy5fvkBv4W">3</td><td data-page-node-id="pQn6xbCLAPFxoMfEYJb7op">0.258</td><td data-page-node-id="pWguDitDmylrs8uYwvLOwm">0.0269</td><td data-page-node-id="lgeuy5Fe37mcWK0KdeVcdu">0.1496</td><td data-page-node-id="Q6eUBjFw7jmpkLWNKFRhQy">0.1496</td><td data-page-node-id="ooN5lRcJCzMjHsHwVZdz4O"><span class="pill pill-ok" data-page-node-id="Zq3MZS5RqNv404BHoMQsD9">可作效应证据</span></td></tr>
-    <tr style="background:#EAF4F8" data-page-node-id="GUiFiq8rRwQH3Df5vKh4dp"><td data-page-node-id="KJ5hVvZVhuCg4GOPT92Gub">④（本例）</td><td data-page-node-id="Lv1qRSqcO0okpOp31aJ7KI">0.329</td><td data-page-node-id="XkP5nCZYrK1oFGVghinLTf">0.0878</td><td data-page-node-id="etnP3q2YHWBE9k7aSffFQz">0.2650</td><td data-page-node-id="px39MXQGVzGH7srnoR3Duq">0.2650</td><td data-page-node-id="FoYatE6RMHYnACly0d3ALI"><span class="pill pill-mx" data-page-node-id="REw1Zld82VeObUIOak11XB">混合·假设生成</span></td></tr>
-    <tr data-page-node-id="oGQOoWDRTqpvoE2abhFftg"><td data-page-node-id="9nQcf0RWfQYjajooi1BEBX">5</td><td data-page-node-id="s7sEAToP0GjzOSgDDiCr2U">0.388</td><td data-page-node-id="yiyMuMsqnThaRQCKsQGoXA">0.2151</td><td data-page-node-id="aPJ5rP1OGrqOlGOliHvvW8">0.4160</td><td data-page-node-id="6yZVRkae7Afgac14zMBvWP">0.4160</td><td data-page-node-id="m11AABg4fH6SOcOAB8BA6y"><span class="pill pill-mx" data-page-node-id="VimolLkM95MxmVlkNQvbTK">混合·假设生成</span></td></tr>
-    <tr data-page-node-id="9ZxNcEQGuGtx557uu4mMc2"><td data-page-node-id="fy61BBvAMngVZE0ZYR535o">6</td><td data-page-node-id="OGHLRa1WAln8rAjT0VP1ZM">0.439</td><td data-page-node-id="tQEl4ROjY9a583cXSQAHS8">0.3952</td><td data-page-node-id="tHfa1EW9zyxKGFmRnZOQSt">0.5660</td><td data-page-node-id="LzB00BNIHRYOAe0uCZdzdU">0.5660</td><td data-page-node-id="JR8uYgjpnWvypkzPj1pnNW"><span class="pill pill-tie" data-page-node-id="3kYPc6O8SCnlpnMo55mpO1">势均力敌·暂不下结论</span></td></tr>
-    <tr data-page-node-id="kwPdsjDPG6MUHyWTFG3ivc"><td data-page-node-id="YXnEFEh1A0l7pzSRmXepvC">7</td><td data-page-node-id="tWM2Pji2LrYGCiBqlcjUFJ">0.488</td><td data-page-node-id="HlVJMv7t4Jm6ST7Dr355h2">0.5829</td><td data-page-node-id="D8etZfZmFXwc0Iocs6xJXD">0.7150</td><td data-page-node-id="COMwT9wnX4diyWFZ51w3V1">0.7150</td><td data-page-node-id="4XuzrtKTJC3m5LOnE4Csfm"><span class="pill pill-no" data-page-node-id="xpAj7MrTwCBndoKE21GVIG">不可作效应证据</span></td></tr>
-    <tr data-page-node-id="2spEzC1IJU93AmGcWYAWUU"><td data-page-node-id="eEN1NwCtHe8HqGssfBSxz1">8</td><td data-page-node-id="9yxmNIIiB5Wbvmn5uYLHvY">0.541</td><td data-page-node-id="B1Z1TN28jTtWFcQ9u8DBiE">0.7724</td><td data-page-node-id="VPDYBnkTZoLr8sMAt3KhmX">0.8030</td><td data-page-node-id="Shnwe7P8m9AmPQFIH0Vj2f">0.8030</td><td data-page-node-id="DOwJHD65VpsiqhG3tWvITn"><span class="pill pill-no" data-page-node-id="muZgzheINixl8841WAINHD">不可作效应证据</span></td></tr>
-    <tr data-page-node-id="7eFTVIDcnwpRD08f5K5FSL"><td data-page-node-id="onqEcSpL4TOJyoElq6GJ90">9</td><td data-page-node-id="1utS6iLzPV6mQY4OAn8mcr">0.602</td><td data-page-node-id="9GbSWsAoDCwYctzpfhTDKK">0.9055</td><td data-page-node-id="7T9VYR9CIsIraDZYqFDtp0">0.8738</td><td data-page-node-id="QonUAQLDCjmJAlfMiqSKzK">0.9055</td><td data-page-node-id="iD7JmPf8UfTUgk3pJ8EyG8"><span class="pill pill-no" data-page-node-id="pBTS0bB9l5OSD0dINVNOci">不可作效应证据</span></td></tr>
-    <tr data-page-node-id="vw9GomKZkyHH9Zr9B5AsSt"><td data-page-node-id="raLfHSbFpzRVKYC9R3cxkE">10</td><td data-page-node-id="O85mAzYCSCfA1XwnhPE8jt">0.679</td><td data-page-node-id="CJzlqBT7noSy9kTIpqCKOC">0.9675</td><td data-page-node-id="EpqXkRhXJUSTsOCS0e2ZXV">0.9106</td><td data-page-node-id="7EtVKgw1W5zDQKeRtvVa8u">0.9675</td><td data-page-node-id="Bub6ErI5t53fnA4pR7MpYh"><span class="pill pill-no" data-page-node-id="ITU8SWJ8su4wnrhGtlaej5">不可作效应证据</span></td></tr>
-    <tr data-page-node-id="mq5DwRM9D95yr5jCgYDAnU"><td data-page-node-id="vc7eZJqM5IqFmb605goGV6">11</td><td data-page-node-id="ua2obS9CKQ6LmKRvNme19Z">0.780</td><td data-page-node-id="ltKWQYkBunuZNHG5myPXFH">0.9906</td><td data-page-node-id="u3glbrsrI68jPjU5DK0s9D">0.9358</td><td data-page-node-id="zWHFjrKh7tOXdiUASOK40w">0.9906</td><td data-page-node-id="ECLosFeJ69pKXiuDFYQ1iX"><span class="pill pill-no" data-page-node-id="zKGeVWsEKR32BwZaKZ2EES">不可作效应证据</span></td></tr>
-    <tr data-page-node-id="AxATOBc0Xi8tryuGbw6i5K"><td data-page-node-id="OWlg5RflAxSYI7fhVM9ui6">12</td><td data-page-node-id="xMdBLRXrJc3ZQ4afrHSAQv">0.919</td><td data-page-node-id="cLsfNaMZAjvjeJfWPyP0ig">0.9967</td><td data-page-node-id="7tCi0uQd71jwqnXRc8sDzn">0.9389</td><td data-page-node-id="GXcIP9b6TSSSbHOXw3ZRFY">0.9967</td><td data-page-node-id="yxqSEwNbvyCM68IW5aGqeA"><span class="pill pill-no" data-page-node-id="qSkCbSV9BdjOmhUPq1QB1H">不可作效应证据</span></td></tr>
+    <tr data-page-node-id="7Pr0uPLwpOUfjo8bAgRFar"><td data-page-node-id="6tJ9IAGkiSEnw98oVx4oA7">1</td><td data-page-node-id="xpe5pje93CcIAs7WvXkbAZ">0.0927</td><td data-page-node-id="5G3YDdBWyHB7swDI9uCQIG">0.0062</td><td data-page-node-id="kK7PVAIwNJWNofaNMJaDqV">0.0357</td><td data-page-node-id="3WH4a0iaukphMGS9PRbVYG">0.0357</td><td data-page-node-id="YzFVMK0Q3WKcfahNG7j3Sm"><span class="pill pill-ok" data-page-node-id="rytcKeivQGtqckia25TXs8">可作效应证据</span></td></tr>
+    <tr data-page-node-id="I53F3Yr0cWqR83tyO48TNn"><td data-page-node-id="0MNdISLgpQBnMIb54ePY3y">2</td><td data-page-node-id="C10wyQKXovj7nCdqTJXtg0">0.1833</td><td data-page-node-id="4qSROeVW6zZPDNPiV2t1G5">0.0110</td><td data-page-node-id="GxOSM14OYwci9aujghVmt8">0.0726</td><td data-page-node-id="3bDUBH7lf8UQs9deg2GE7c">0.0726</td><td data-page-node-id="HA91AfLkiutdHjSDTYSGLa"><span class="pill pill-ok" data-page-node-id="6HDlz0eVpBa9HOfC5W7PKD">可作效应证据</span></td></tr>
+    <tr data-page-node-id="zdptl9bNquV72AHAUGVCfe"><td data-page-node-id="BvONE8wwgsEyhy5fvkBv4W">3</td><td data-page-node-id="pQn6xbCLAPFxoMfEYJb7op">0.2654</td><td data-page-node-id="pWguDitDmylrs8uYwvLOwm">0.0429</td><td data-page-node-id="lgeuy5Fe37mcWK0KdeVcdu">0.1386</td><td data-page-node-id="Q6eUBjFw7jmpkLWNKFRhQy">0.1386</td><td data-page-node-id="ooN5lRcJCzMjHsHwVZdz4O"><span class="pill pill-ok" data-page-node-id="Zq3MZS5RqNv404BHoMQsD9">可作效应证据</span></td></tr>
+    <tr style="background:#EAF4F8" data-page-node-id="GUiFiq8rRwQH3Df5vKh4dp"><td data-page-node-id="KJ5hVvZVhuCg4GOPT92Gub">④（本例）</td><td data-page-node-id="Lv1qRSqcO0okpOp31aJ7KI">0.3337</td><td data-page-node-id="XkP5nCZYrK1oFGVghinLTf">0.1114</td><td data-page-node-id="etnP3q2YHWBE9k7aSffFQz">0.2390</td><td data-page-node-id="px39MXQGVzGH7srnoR3Duq">0.2390</td><td data-page-node-id="FoYatE6RMHYnACly0d3ALI"><span class="pill pill-mx" data-page-node-id="REw1Zld82VeObUIOak11XB">混合·假设生成</span></td></tr>
+    <tr data-page-node-id="oGQOoWDRTqpvoE2abhFftg"><td data-page-node-id="9nQcf0RWfQYjajooi1BEBX">5</td><td data-page-node-id="s7sEAToP0GjzOSgDDiCr2U">0.3906</td><td data-page-node-id="yiyMuMsqnThaRQCKsQGoXA">0.2449</td><td data-page-node-id="aPJ5rP1OGrqOlGOliHvvW8">0.3613</td><td data-page-node-id="6yZVRkae7Afgac14zMBvWP">0.3613</td><td data-page-node-id="m11AABg4fH6SOcOAB8BA6y"><span class="pill pill-mx" data-page-node-id="VimolLkM95MxmVlkNQvbTK">混合·假设生成</span></td></tr>
+    <tr data-page-node-id="9ZxNcEQGuGtx557uu4mMc2"><td data-page-node-id="fy61BBvAMngVZE0ZYR535o">6</td><td data-page-node-id="OGHLRa1WAln8rAjT0VP1ZM">0.4404</td><td data-page-node-id="tQEl4ROjY9a583cXSQAHS8">0.4378</td><td data-page-node-id="tHfa1EW9zyxKGFmRnZOQSt">0.5019</td><td data-page-node-id="LzB00BNIHRYOAe0uCZdzdU">0.5019</td><td data-page-node-id="JR8uYgjpnWvypkzPj1pnNW"><span class="pill pill-tie" data-page-node-id="3kYPc6O8SCnlpnMo55mpO1">势均力敌·暂不下结论</span></td></tr>
+    <tr data-page-node-id="kwPdsjDPG6MUHyWTFG3ivc"><td data-page-node-id="YXnEFEh1A0l7pzSRmXepvC">7</td><td data-page-node-id="tWM2Pji2LrYGCiBqlcjUFJ">0.4881</td><td data-page-node-id="HlVJMv7t4Jm6ST7Dr355h2">0.6297</td><td data-page-node-id="D8etZfZmFXwc0Iocs6xJXD">0.6482</td><td data-page-node-id="COMwT9wnX4diyWFZ51w3V1">0.6482</td><td data-page-node-id="4XuzrtKTJC3m5LOnE4Csfm"><span class="pill pill-tie" data-page-node-id="xpAj7MrTwCBndoKE21GVIG">势均力敌·暂不下结论</span></td></tr>
+    <tr data-page-node-id="2spEzC1IJU93AmGcWYAWUU"><td data-page-node-id="eEN1NwCtHe8HqGssfBSxz1">8</td><td data-page-node-id="9yxmNIIiB5Wbvmn5uYLHvY">0.5394</td><td data-page-node-id="B1Z1TN28jTtWFcQ9u8DBiE">0.8121</td><td data-page-node-id="VPDYBnkTZoLr8sMAt3KhmX">0.7680</td><td data-page-node-id="Shnwe7P8m9AmPQFIH0Vj2f">0.8121</td><td data-page-node-id="DOwJHD65VpsiqhG3tWvITn"><span class="pill pill-no" data-page-node-id="muZgzheINixl8841WAINHD">不可作效应证据</span></td></tr>
+    <tr data-page-node-id="7eFTVIDcnwpRD08f5K5FSL"><td data-page-node-id="onqEcSpL4TOJyoElq6GJ90">9</td><td data-page-node-id="1utS6iLzPV6mQY4OAn8mcr">0.5993</td><td data-page-node-id="9GbSWsAoDCwYctzpfhTDKK">0.9283</td><td data-page-node-id="7T9VYR9CIsIraDZYqFDtp0">0.8560</td><td data-page-node-id="QonUAQLDCjmJAlfMiqSKzK">0.9283</td><td data-page-node-id="iD7JmPf8UfTUgk3pJ8EyG8"><span class="pill pill-no" data-page-node-id="pBTS0bB9l5OSD0dINVNOci">不可作效应证据</span></td></tr>
+    <tr data-page-node-id="vw9GomKZkyHH9Zr9B5AsSt"><td data-page-node-id="raLfHSbFpzRVKYC9R3cxkE">10</td><td data-page-node-id="O85mAzYCSCfA1XwnhPE8jt">0.6730</td><td data-page-node-id="CJzlqBT7noSy9kTIpqCKOC">0.9761</td><td data-page-node-id="EpqXkRhXJUSTsOCS0e2ZXV">0.9022</td><td data-page-node-id="7EtVKgw1W5zDQKeRtvVa8u">0.9761</td><td data-page-node-id="Bub6ErI5t53fnA4pR7MpYh"><span class="pill pill-no" data-page-node-id="ITU8SWJ8su4wnrhGtlaej5">不可作效应证据</span></td></tr>
+    <tr data-page-node-id="mq5DwRM9D95yr5jCgYDAnU"><td data-page-node-id="vc7eZJqM5IqFmb605goGV6">11</td><td data-page-node-id="ua2obS9CKQ6LmKRvNme19Z">0.7674</td><td data-page-node-id="ltKWQYkBunuZNHG5myPXFH">0.9936</td><td data-page-node-id="u3glbrsrI68jPjU5DK0s9D">0.9302</td><td data-page-node-id="zWHFjrKh7tOXdiUASOK40w">0.9936</td><td data-page-node-id="ECLosFeJ69pKXiuDFYQ1iX"><span class="pill pill-no" data-page-node-id="zKGeVWsEKR32BwZaKZ2EES">不可作效应证据</span></td></tr>
+    <tr data-page-node-id="AxATOBc0Xi8tryuGbw6i5K"><td data-page-node-id="OWlg5RflAxSYI7fhVM9ui6">12</td><td data-page-node-id="xMdBLRXrJc3ZQ4afrHSAQv">0.8862</td><td data-page-node-id="cLsfNaMZAjvjeJfWPyP0ig">0.9969</td><td data-page-node-id="7tCi0uQd71jwqnXRc8sDzn">0.9718</td><td data-page-node-id="GXcIP9b6TSSSbHOXw3ZRFY">0.9969</td><td data-page-node-id="yxqSEwNbvyCM68IW5aGqeA"><span class="pill pill-no" data-page-node-id="qSkCbSV9BdjOmhUPq1QB1H">不可作效应证据</span></td></tr>
   </tbody>
 </table>
-<p class="legend" style="margin-top:8px" data-page-node-id="hrtUr18VG6AueKfLDbU3GR">注：桶号按 BAF̂ 升序；判语由保守值经 §3 第 5 步阈值（&lt;0.15 / 0.15–0.45 / 0.45–0.65 / ≥0.65）判定。本例 BAF̂ = 0.33 落在第 4 桶（已高亮），保守值 0.265 → 混合·假设生成。</p>
+<p class="legend" style="margin-top:8px" data-page-node-id="hrtUr18VG6AueKfLDbU3GR">注：桶号按 BAF̂ 升序；判语由保守值经 §3 第 5 步阈值（&lt;0.15 / 0.15–0.45 / 0.45–0.65 / ≥0.65）判定。本例 BAF̂ = 0.33 落在第 4 桶（已高亮），保守值 0.239 → 混合·假设生成。</p>
 
 <p data-page-node-id="AaVpcCv59ZxjwWMn0rj3RM">假设某观察性研究报告：</p>
 <ul data-page-node-id="tSC1BtsK1nAU8pOFUPD5JS">
@@ -366,20 +366,20 @@ OUTPUT: verdict, P_bias_dom
 <pre data-page-node-id="X73ufiBYtyFHY5ZWDlorxq">
 1. p_cal = 0.012 < 0.05  → 进入第二层
 2. CI_half_width = (0.50 - 0.15) / 2 = 0.175  → 区间偏宽
-3. BIN: BAF̂ = 0.33 → 落在第 4 桶（x ≈ 0.329）
-4. 查表：第 4 桶 窄档 pBD = 0.0878，宽档 pBD = 0.265
-5. P_bias_dom = max(0.0878, 0.265) = 0.265
-6. P_bias_dom = 0.265 落在 0.15–0.45 → 混合·假设生成
+3. BIN: BAF̂ = 0.33 → 落在第 4 桶（x ≈ 0.3337）
+4. 查表：第 4 桶 窄档 pBD = 0.1114，宽档 pBD = 0.2390
+5. P_bias_dom = max(0.1114, 0.2390) = 0.2390
+6. P_bias_dom = 0.2390 落在 0.15–0.45 → 混合·假设生成
 </pre>
 
 <p data-page-node-id="zeHbU6pR4h3k5uKJOXuJW7"><b data-page-node-id="ZAaLZ3NnNYhf3PaMuIVM3W">输出给医生：</b></p>
 <div style="background: var(--bg-soft); border: 1px solid var(--line); border-radius: 6px; padding: 12px 16px; margin: 10px 0;" data-page-node-id="SHtA9l40NgmuBvGa6JCoYC">
   <div data-page-node-id="OYOH5QCWVaJNg8m26ECgp6"><b data-page-node-id="RPgWae5BppYTky9ENmcHYo">BAF̂ = 0.33 (CI 0.15–0.50)，校准 p = 0.012</b></div>
   <div style="margin-top:8px" data-page-node-id="8pwpYbVmWhqJRPkxuYTsCM"><span class="pill pill-mx" data-page-node-id="oUrqxETiW627zGVt3lft4B">混合·假设生成</span>
-    &nbsp; P(偏倚主导) ≈ <b style="font-size:18px;color:#8B6B00" data-page-node-id="Zl0GZG7rDyl2N7fQ3eiVKC">26.5%</b>
+    &nbsp; P(偏倚主导) ≈ <b style="font-size:18px;color:#8B6B00" data-page-node-id="Zl0GZG7rDyl2N7fQ3eiVKC">23.9%</b>
   </div>
   <div style="margin-top:6px; color: var(--fg-mute); font-size:13px;" data-page-node-id="Dxj7Jq6Q2L7N6jn3aNLbjS">
-    解读：偏倚份额约 1/3、信号显著，但 CI 偏宽使真值偏倚主导概率达 26.5%，落在混合区间（15–45%）。建议作为假设生成使用，需更多独立证据支持。
+    解读：偏倚分数约 1/3、信号显著，但 CI 偏宽使真值偏倚主导概率达 23.9%，落在混合区间（15–45%）。建议作为假设生成使用，需更多独立证据支持。
   </div>
 </div>
 
@@ -402,13 +402,13 @@ OUTPUT: verdict, P_bias_dom
   <li data-page-node-id="Hh2ScH2xz0J7NhlrScayhn"><b data-page-node-id="vCZ5KhZa1NFVakw4xUkHxI">Q：BAF̂ = 1 怎么处理？</b><br data-page-node-id="sq0iNMpqwJaErF0X1OGd16">
       A：BAF̂ = 1 意味着整个效应都被系统偏倚解释。如果 p_cal &lt; 0.05（信号居然显著）但 BAF̂ = 1，几乎肯定是"假信号"，算法的"不可作效应证据"档正是为这种情况设计的。</li>
   <li data-page-node-id="FHfHNeCRb5uWwMVzqSH73c"><b data-page-node-id="xwgH1L0sAqjYaXnCbbCNiI">Q：为什么"势均力敌"是一个独立档？为什么不归到"不可作"？</b><br data-page-node-id="oRNbjLut8oEi0EjUjvkSek">
-      A：因为 BAF 居中、CI 偏宽时，<b data-page-node-id="ArtcBm60DmMUNNRhNaVeNC">我们不知道是真信号还是偏倚主导</b>。把它判为"不可作"会丢掉可能的真效应；判为"可作"又会引入假阳性。势均力敌档说"<b data-page-node-id="sqSaqnyPp5qVQCykYBfDdR">待证据累积</b>"，不是放弃判断，是给一个更细的处理路径（参见 v39draft §9 混合区处理清单）。</li>
+      A：因为 BAF 居中、CI 偏宽时，<b data-page-node-id="ArtcBm60DmMUNNRhNaVeNC">我们不知道是真信号还是偏倚主导</b>。把它判为"不可作"会丢掉可能的真效应；判为"可作"又会引入假阳性。势均力敌档说"<b data-page-node-id="sqSaqnyPp5qVQCykYBfDdR">待证据累积</b>"，不是放弃判断，是给一个更细的处理路径（参见配套互动讲解器 §9 混合区处理清单）。</li>
   <li data-page-node-id="UX3pj2FBWRiQxWCBe4dn7c"><b data-page-node-id="IEXt89vKF5rvcuzMfSpnSV">Q：如果论文报告的是 BAF（不报告 CI）怎么办？</b><br data-page-node-id="41H9SCEZK7dCx0Kus1YjEI">
       A：算法需要 BAF 的 CI 才能定位 12 段读数桶。<b data-page-node-id="7wizc7N8pCVrcAPlEKneOr">缺 CI 不要硬猜</b>，请直接向作者索要 Bootstrap CI 后再判。</li>
-  <li data-page-node-id="jQBop40jiQhOIzidsuzZsP"><b data-page-node-id="ZhLbKvGiiNJ2NSnJJUfFWq">Q：算法输出"P(偏倚主导) ≈ 3.1%"，但这一位数是不是太粗？</b><br data-page-node-id="jAiiuAKm2FQsGHnU0f5j8E">
+  <li data-page-node-id="jQBop40jiQhOIzidsuzZsP"><b data-page-node-id="ZhLbKvGiiNJ2NSnJJUfFWq">Q：算法输出"P(偏倚主导) ≈ 3.6%"，但这一位数是不是太粗？</b><br data-page-node-id="jAiiuAKm2FQsGHnU0f5j8E">
       A：保留 1 位小数是设计选择。<b data-page-node-id="diOIaBKODAWBZStxYfvAAu">刻意粗一些</b>是因为概率本身来自 96 万次模拟的经验分布，单数点估计的尾位数字不应过度解读。如有需要可在内部查 D.relia 数据拿更高精度，但给临床的输出就到这里为止。</li>
   <li data-page-node-id="yJIHnRx3KecO3IN65lZqbd"><b data-page-node-id="ViWGaHARqEtVnpdV0mqOQk">Q：软件报给我的 95% CI，到底是「窄档」还是「宽档」？</b><br data-page-node-id="fveXZCoFx90BL5iSCJS5wL">
-      A：<b data-page-node-id="AcTdCDSbaHwgNfHm1oKev4">只有一个 CI，它本质既不是窄也不是宽。</b>软件从你的 μ̂_B 经 Bootstrap 得到唯一一条 95% CI（如 [0.10, 0.45]），用单调变换 g 映射成 BAF 的 CI，这就是你看到的全部。所谓「窄/宽」只是算法拿这条 CI 的<b data-page-node-id="W2Ez8kCbRO9HYh40GneAPb">半宽</b>（如 (0.45−0.10)/2 = 0.175）去跟固定阈值 0.133 比一比、贴的内部标签，用来决定去查哪一张预计算表。<br data-page-node-id="9KlsCxCeblZD0BGuc1ag3m">
+      A：<b data-page-node-id="AcTdCDSbaHwgNfHm1oKev4">只有一个 CI，它本质既不是窄也不是宽。</b>软件从你的 μ̂_B 经 Bootstrap 得到唯一一条 95% CI（如 [0.10, 0.45]），用单调变换 g 映射成 BAF 的 CI，这就是你看到的全部。所谓「窄/宽」只是算法拿这条 CI 的<b data-page-node-id="W2Ez8kCbRO9HYh40GneAPb">半宽</b>（如 (0.45−0.10)/2 = 0.175）去跟固定阈值 0.1299 比一比、贴的内部标签，用来决定去查哪一张预计算表。<br data-page-node-id="9KlsCxCeblZD0BGuc1ag3m">
       两张表（<code data-page-node-id="wYMTfyrIJNdIxcQux0yIv9">D.reliaSplit.narrow</code> / <code data-page-node-id="vBNl4xuRJVeEGELuR7ecg4">.wide</code>）是 96 万次模拟<b data-page-node-id="gBntKG57U0wneDD2rBXV8H">离线一次性算好的</b>条件概率（「在 CI 窄的前提下真偏倚主导的比例」与「在 CI 宽的前提下」的比例），<b data-page-node-id="j6TpLI2oxvHsEFXBjvVQuB">不是你这次运行时生成的，也不是两条不同的 CI</b>。算法读完两列后取 <code data-page-node-id="BUVt2C9MKDSk8LJsAnmlUF">max(窄, 宽)</code> 作保守判读，所以你最终看到的那个 P 值已经是两档里的「更坏情形」。正因如此你完全不需要知道本次被归到窄还是宽，这也是当初把它从临床界面隐掉的原因。</li>
 </ol>
 
@@ -436,29 +436,29 @@ OUTPUT: verdict, P_bias_dom
     <tr data-page-node-id="QgHtYpZsFSURCBDyaWm6NN"><td data-page-node-id="JVDaLBO28rXzd8kHBKqw6V">只看 p 的朴素读法</td><td data-page-node-id="CiIBsSu8udKgngAH4ZFJaB">显著 → 治疗有效</td><td data-page-node-id="0hKfLypLLHVbbrs0ADGYhX">显著 → 治疗有效（与研究 1 同结论）</td></tr>
     <tr data-page-node-id="thExrHkaEO21AjjkD5Ix5o">
       <td data-page-node-id="XxUfnp3ARu5NpbNzDMSTTc">框架输出</td>
-      <td data-page-node-id="bF212s5OJR3d6WF0SFSiqr"><span class="pill pill-mx" data-page-node-id="M3fVNGwpjIORPYhXqOLF0S">混合·假设生成</span><br data-page-node-id="J3KFAjrKfk3i1hU0UyVYWp">P(偏倚主导) ≈ 26.5%</td>
-      <td data-page-node-id="Z2jqtDfh9oh04SiMUQbOrG"><span class="pill pill-red" data-page-node-id="nTLWNjRjOXIIE8S6c6ZF7S">不可作效应证据</span><br data-page-node-id="BbKpRqCvnBAdjA436tlChv">P(偏倚主导) ≈ 94%</td>
+      <td data-page-node-id="bF212s5OJR3d6WF0SFSiqr"><span class="pill pill-mx" data-page-node-id="M3fVNGwpjIORPYhXqOLF0S">混合·假设生成</span><br data-page-node-id="J3KFAjrKfk3i1hU0UyVYWp">P(偏倚主导) ≈ 23.9%</td>
+      <td data-page-node-id="Z2jqtDfh9oh04SiMUQbOrG"><span class="pill pill-red" data-page-node-id="nTLWNjRjOXIIE8S6c6ZF7S">不可作效应证据</span><br data-page-node-id="BbKpRqCvnBAdjA436tlChv">P(偏倚主导) ≈ 99.7%</td>
     </tr>
   </tbody>
 </table>
 
 <p data-page-node-id="famboCXc0tGEBOfuPYSXyi">研究 2 里 BAF̂ = 0.85 意味着「表观效应的 85% 是系统性偏倚」，几乎不是真效应。若临床医生按「p &lt; 0.05 = 有效」去推荐研究 2 的药物，等于把一个基本由混杂造成的<b data-page-node-id="hm435GLBPfg70YKph2j5RF">假性效应</b>当成真治疗效应推荐给病人。这正是 BAF 层<b data-page-node-id="jw3Wu2Y39KAVmG0WLPDBaT">独立提供、单看 p 值给不出</b>的信息，也是本框架真正的价值所在。</p>
 
-<h3 data-page-node-id="FMsFJYnDm8KwhyM85YjuFN">9.2 关于「P(偏倚主导) ≈ 26.5% 没增加信息」</h3>
+<h3 data-page-node-id="FMsFJYnDm8KwhyM85YjuFN">9.2 关于「P(偏倚主导) ≈ 23.9% 没增加信息」</h3>
 
-<p data-page-node-id="Ikc9FKs1EZlt3pg9wWptiO">你手算的「1/3」是 BAF̂ 的<b data-page-node-id="atYvOu18VCAJF63hwGscd3">点估计</b>（本研究偏倚份额的分解）；而 26.5% 是模拟校准后的「真实处于偏倚主导体制的概率」，并且因为你的 CI 偏宽被<b data-page-node-id="Xevaz1OEeq6ZGyA1Tt7uGa">上调</b>了（同一读数桶：窄档仅 8.8%、宽档 26.5%）。这是两个不同的问题：</p>
+<p data-page-node-id="Ikc9FKs1EZlt3pg9wWptiO">你手算的「1/3」是 BAF̂ 的<b data-page-node-id="atYvOu18VCAJF63hwGscd3">点估计</b>（本研究对偏倚分数的分解）；而 23.9% 是模拟校准后的「真实处于偏倚主导体制的概率」，并且因为你的 CI 偏宽被<b data-page-node-id="Xevaz1OEeq6ZGyA1Tt7uGa">上调</b>了（同一读数桶：窄档仅 11.1%、宽档 23.9%）。这是两个不同的问题：</p>
 <ul data-page-node-id="ZGoa3c3DJkXfzORyIygLYU">
   <li data-page-node-id="drIPd9ldoPTSX02B2QUDEn">BAF̂ = 0.33 → 「这个研究的效应里，估计 1/3 是偏倚」（分解）</li>
-  <li data-page-node-id="LYsQGNZrTPK92exgloiSYC">P(偏倚主导) ≈ 26.5% → 「考虑到你的 CI 很宽，模拟里同类研究真正落在偏倚主导体制的概率是 26.5%」（体制归类 + 宽度修正）</li>
+  <li data-page-node-id="LYsQGNZrTPK92exgloiSYC">P(偏倚主导) ≈ 23.9% → 「考虑到你的 CI 很宽，模拟里同类研究真正落在偏倚主导体制的概率是 23.9%」（体制归类 + 宽度修正）</li>
 </ul>
-<p data-page-node-id="e1K8RWzRDBcSIaGDwcpOA0">朴素 RR + CI + p 既给不出 26.5% 这个数，也给不出「混合」这个决策档。框架在中段 BAF 的增量，是用 CI 宽度修正了你偏乐观的点估计，并给出体制归类。</p>
+<p data-page-node-id="e1K8RWzRDBcSIaGDwcpOA0">朴素 RR + CI + p 既给不出 23.9% 这个数，也给不出「混合」这个决策档。框架在中段 BAF 的增量，是用 CI 宽度修正了你偏乐观的点估计，并给出体制归类。</p>
 
 <h3 data-page-node-id="HBQPtsUwoBGnf0FSYAOizb">9.3 诚实的局限（先承认，才说得服人）</h3>
 
 <p data-page-node-id="jPjwErKSbFyCFksEVZU0Sb">本框架的威力是<b data-page-node-id="nYzG4gAQgx1f8Insq8ZYcC">不对称</b>的：在两端（红 / 绿）它很强，能拦住假性效应、也能背书真效应；在<b data-page-node-id="pFMxPBrGYuUwr0t3hLCe4B">中段 BAF 它本就是「诚实的不确定」</b>。对研究 1 这种中等 BAF，框架确实不「拍板」，它的价值恰恰是<b data-page-node-id="vlHVjzxqtgW1HXaiUxNQEW">拒绝让你仅凭 p &lt; 0.05 就宣布有效</b>，逼你走「生成假设、累积更多证据」这条路。所以临床同事觉得「好像没增加判断」，往往正是因为数据本来就不该让你下结论，框架只是诚实地说了出来。</p>
 
 <div class="footer" data-page-node-id="pVBJ3EM2SqaEzVzjtpwjRg">
-文档版本 v1 · 2026-08-26 · 与 v37 论文及配套互动讲解器 §8 节配套使用。修改建议请回到 §8 表格源数据（<code data-page-node-id="lPYWDtq7APHEvbvWM5lbSa">D.relia</code> / <code data-page-node-id="xpCAihDFfmDSzEhfEvnv7q">D.reliaSplit.narrow</code> / <code data-page-node-id="KEtb0PQPxo1HF7KC0B8ypo">D.reliaSplit.wide</code>）。
+文档版本 v1 · 2026-09-11 · 与 v39 论文及配套互动讲解器 §8 节配套使用。修改建议请回到 §8 表格源数据（<code data-page-node-id="lPYWDtq7APHEvbvWM5lbSa">D.relia</code> / <code data-page-node-id="xpCAihDFfmDSzEhfEvnv7q">D.reliaSplit.narrow</code> / <code data-page-node-id="KEtb0PQPxo1HF7KC0B8ypo">D.reliaSplit.wide</code>）。
 </div>
 
 </body>

@@ -183,3 +183,30 @@ Added for v39: `R/27`–`R/29`, `R/90`–`R/91`, six v39 `.qmd` sources, six ren
 manuscripts, the v39 figure and table exports, `Target/` (TARGET reporting materials), and
 `docs/`. Large simulation objects (tens of MB) and the row-level LTMLE frames remain excluded.
 
+## 2026-09-11 (follow-up) — `算法说明_临床版_v1.html` realigned to the v39 lookup
+
+The clinical algorithm sheet had been only **partially** resynchronised: its simulation size had been
+updated to `96 万次 / 960 个条件`, but its 12-bin lookup table, its narrow/wide threshold and its
+worked example were still the pre-v39 values. Because the sheet is published on the same Pages site
+as the v39 explainer, two companion documents were quoting different lookup tables for the same
+algorithm. Every replacement below was taken mechanically from `output/tables/v39_all_numbers.json`.
+
+| Item | Before | After (v39) |
+|---|---|---|
+| Version banner | `对应论文稿件 v37` + `2026-08-26` | `对应论文稿件 v39` + `2026-09-11` |
+| Term used for BAF | `偏倚份额` (9 occurrences) | `偏倚分数`, matching the explainer and README |
+| Narrow/wide threshold | `0.133` | `0.1299` (`part2.ci_width.median_half_width`) |
+| Bin centres | `0.06, 0.17, 0.26, …` | `0.09, 0.18, 0.27, …` |
+| 12 bin rows (centre / narrow / wide / conservative) | v37-era values | `part2.lookup`, all 48 cells |
+| Worked example (BAF 0.33, CI 0.15–0.50) | bin 4, `0.0878 / 0.265` → `P ≈ 26.5%` | bin 4, `0.1114 / 0.2390` → `P ≈ 23.9%` |
+| Counterexample (BAF 0.85, CI 0.75–0.97) | `P ≈ 94%` | `P ≈ 99.7%` |
+| Output-format example | `P ≈ 3.1%` | `P ≈ 3.6%` |
+| Bin 7 verdict | `不可作效应证据` | `势均力敌·暂不下结论` (0.6482 < 0.65, so v39 classifies it as competitive) |
+
+Verification performed on the shipped file: all 48 lookup cells re-parsed from the HTML and compared
+cell-by-cell against `part2.lookup` (12/12 rows exact); HTML tag pairing checked with `html.parser`
+(0 mismatches); the doubled CJK dash `——` count is 0; and the residual scan confirms no `v37`,
+`0.133`, `26.5%`, `0.0878` or `偏倚份额` remains. The bin-7 verdict change is the one substantive
+downstream effect: the v39 lookup puts that bin just under the 0.65 break, so it moves from
+"not usable" to "competitive, no verdict". No manuscript, table or figure number is affected.
+
