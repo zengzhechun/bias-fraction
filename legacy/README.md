@@ -36,3 +36,12 @@ v39 explainers state figures that the v40 manuscript no longer reports.
 
 An archival script that performed this move is kept at
 `manuscript/_archive_v39_to_legacy.py` in the source project (it defaults to a dry run).
+
+## One deliberate inconsistency: the postcode
+
+Everything under `legacy/` spells the Tongzhou Campus postcode as **101149**. That value is
+wrong — the hospital's own site gives `No. 225 Songzhuang South 1st Street, Tongzhou District,
+Beijing **101118**`. It has been corrected to 101118 in every **current (v40)** source and render.
+The archived files were deliberately **left as they were originally submitted**, so that each
+`legacy/` artefact stays byte-identical to the version it records. If you are reading a v34–v39
+file and need the address, use 101118.

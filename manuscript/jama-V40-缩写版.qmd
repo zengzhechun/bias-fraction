@@ -251,7 +251,7 @@ cap_fig3 <- paste0(
 ^3^ Beijing Institute of Heart, Lung and Blood Vessel Diseases, Beijing, China
 
 **Corresponding author:** Zeng Zhechun, MD, MPH
-Beijing Anzhen Hospital, Capital Medical University; Beijing Institute of Heart, Lung and Blood Vessel Diseases, Tongzhou Campus, No. 225 Songzhuang South 1st Street, Tongzhou District, Beijing 101149, China
+Beijing Anzhen Hospital, Capital Medical University; Beijing Institute of Heart, Lung and Blood Vessel Diseases, Tongzhou Campus, No. 225 Songzhuang South 1st Street, Tongzhou District, Beijing 101118, China
 Email: zengzhechun@icloud.com
 
 **Study Type:** Original Investigation.

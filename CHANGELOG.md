@@ -314,10 +314,43 @@ Full details in `docs/第40版_README.md` and the source project's
   (`v40_lookup_holdout.rds`, `v40_gdmt_missing_sensitivity.rds`, `v40_ba_gibbs_stats.rds`) are
   committed.
 
-### Known follow-up
+### Clinical walkthrough re-synced to v40
 
-`算法说明_临床版_v1.html` / `algorithm_walkthrough_zh.html` still carry the **v39 lookup values**
-(bin centres 0.09 / 0.18 / 0.27 … and a bin-7 verdict of 势均力敌) while its banner reads v40. The
-v40 lookup is 0.125 / 0.233 / 0.310 … with bin 7 onward *not usable as effect evidence*. A
-mechanical re-sync against `output/tables/v40_all_numbers.json` (`part2.lookup`) is pending
-confirmation, as the fix changes displayed numbers.
+`算法说明_临床版_v1.html` / `algorithm_walkthrough_zh.html` had a v40 banner over a **v39 lookup
+table**. It has now been re-synced to `output/tables/v40_all_numbers.json` (`part2.lookup`), 43
+edits across one document:
+
+- **All 12 lookup rows rewritten** bin by bin (centres 0.125 / 0.233 / 0.310 / 0.372 / 0.424 /
+  0.471 / 0.516 / 0.565 / 0.623 / 0.694 / 0.782 / 0.892), with the narrow / wide / conservative
+  columns updated to match. Each row keeps its original `data-page-node-id` anchors.
+- **Verdict tiers follow the v40 table**: bins 1–3 usable · bins 4–5 mixed · bin 6 competitive ·
+  **bins 7–12 not usable as effect evidence** (previously bin 7 onward read 势均力敌).
+- **Worked example updated**: BAF̂ 0.33 → **0.37**; conservative P(BD) 23.9% → **27.1%**; narrow /
+  wide 0.1114 / 0.2390 → **0.0901 / 0.2709**; bin centre x ≈ 0.3337 → **0.3723**.
+- **Counter-example table**: study 2's P(BD) 99.7% → **99.9%**.
+- **Evidence base string** `96 万次（960 条件 × 1000）` → **`192 万次（1,920 条件 × 1000）`** (5 places);
+  CI half-width reference 0.1299 → **0.0885** (= `part2.ci_width.median_half_width`); the
+  layer-1 illustration 3.6% → **2.8%**.
+- **Banner and footer** dated 2026-09-11 → **2026-09-30**, version `v1` → **`v1.1`**.
+
+Verified cell by cell: 12/12 lookup rows match the JSON exactly; no v39-era value survives.
+The file is byte-identical to the source project's copy (md5 `7d841a80…`), in both the Chinese
+name and the ASCII alias.
+
+### Postcode correction (ZIP)
+
+The Anzhen Hospital Tongzhou Campus postcode was written as **101149** throughout. The hospital's
+own site lists `No. 225 Songzhuang South 1st Street, Tongzhou District, Beijing 101118`
+(Chaoyang Campus: 100029). Corrected to **101118** in:
+
+- **7 qmd sources** — `manuscript/{manuscript_v40, manuscript_jama_v40, jama-V40-缩写版,
+  manuscript_medarchive_v40, }.qmd` and `submission/{manuscript_jama_v40, jama-V40-投稿版,
+  manuscript_medarchive_v40}.qmd`;
+- **5 rendered DOCX** in `paper/` — `manuscript-JNO-V40.docx`, `jama-V40-缩写版.docx`,
+  `manuscript_jama_v40.docx`, `manuscript_medarchive_v40.docx`, `manuscript_v40.docx`.
+
+Each DOCX was rewritten with a byte-preserving zip re-pack (member order, compression method and
+timestamps carried over); all five are now byte-identical to the corresponding files in the source
+`Submit/` and `manuscript/` trees. `submission/Cover_Letter.txt` already read 101118 and was not
+touched. The `legacy/` archive keeps the original 101149 spelling on purpose — see
+`legacy/README.md`.
