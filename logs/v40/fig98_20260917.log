@@ -1,0 +1,37 @@
+Warning message:
+package ‘magick’ was built under R version 4.4.3 
+[1] reading inputs ... 
+    mu = -0.1678  sigma = 0.1129  SE(mu) = 0.0717  K = 12 
+    Q1 BAF = 0.875 [0.385, 0.992]  cal P = 0.8940 
+    Q2 BAF = 0.460 [0.186, 0.619]  cal P = 0.1026 
+[2] calibration funnel ... 
+Warning message:
+`geom_errorbarh()` was deprecated in ggplot2 4.0.0.
+ℹ Please use the `orientation` argument of `geom_errorbar()` instead. 
+`height` was translated to `width`.
+`height` was translated to `width`.
+[3] BAF classification panel ... 
+`height` was translated to `width`.
+[4] stacking the JAMA case figure ... 
+    WROTE fig3_null_bf_panels.png (2240 x 2110, 1410 KB) 
+[5] architecture diagram ... 
+[6] null distribution ... 
+    axis -0.799 to 0.314; 12 controls plotted, x range -0.769 to 0.178 
+[7] BAF-hat against BAF-true ... 
+    960,000 repetitions, 66 unique true values 
+    18 bins, 24000 to 108,000 repetitions per bin 
+[8] nested strategy cascade ... 
+[9] zone confusion ... 
+[10] directional roles ... 
+    4 roles, 1,920 conditions, 1,920,000 repetitions 
+ 
+[11] done. Figures written: 
+   output/figures/fig01_calibration_plot.png (154 KB) 
+   output/figures/fig02_BF_main.png (103 KB) 
+   output/figures/v40/fig3_null_bf_panels.png (1410 KB) 
+   output/figures/v40/figP0_architecture.png (136 KB) 
+   output/figures/v40/figP0B_null_distribution.png (146 KB) 
+   output/figures/v40/figP1B_baf_vs_true.png (161 KB) 
+   output/figures/v40/figP2E_strategy_cascade.png (116 KB) 
+   output/figures/v40/figP2F_confusion3x3.png (100 KB) 
+   output/figures/v40/figP3_direction_roles.png (238 KB) 

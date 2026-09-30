@@ -1,0 +1,29 @@
+[1] Stacking 960 conditions x 1000 reps ...
+    Finite rows kept: 960000 
+    Zone counts: 
+  bias-dominated effect-dominated            mixed 
+          504000           180000           276000 
+[2] Bland-Altman stats (n_used = 960000 ):
+    bias=-0.0690, sd=0.1387, LoA=[-0.3408, 0.2028]
+    in_LoA=900272 (93.778%), CCC=0.7807, r_prop=-0.2988, slope=-0.1814, t=-306.7
+    saved: /Users/zengzhechun/SynologyDrive/工作/数据分析项目/心电图大模型/心电图公开数据集/02 mimic-iv-ecg/Topic1_LTMLE_Betablocker/第39版/output/tables/v39_part1_ba_gibbs_full_stats.csv 
+    interior (excl psi=-0.01): n=864000 bias=-0.0492 ccc=0.8153
+    measured stats-table height: 3.51 in; slot = 3.96 in
+Warning messages:
+1: Contour data has duplicated x, y coordinates.
+ℹ 9800 duplicated rows have been dropped. 
+2: Removed 140 rows containing non-finite outside the scale range
+(`stat_contour()`). 
+3: Removed 10080 rows containing missing values or values outside the scale range
+(`geom_raster()`). 
+[3] full tri-panel saved: /Users/zengzhechun/SynologyDrive/工作/数据分析项目/心电图大模型/心电图公开数据集/02 mimic-iv-ecg/Topic1_LTMLE_Betablocker/第39版/output/figures/v39/figI_bland_altman_gibbs_2d.png  (9 x 13.51 in) 
+Warning messages:
+1: Contour data has duplicated x, y coordinates.
+ℹ 9800 duplicated rows have been dropped. 
+2: Removed 140 rows containing non-finite outside the scale range
+(`stat_contour()`). 
+3: Removed 10080 rows containing missing values or values outside the scale range
+(`geom_raster()`). 
+    compact mid+stats saved: /Users/zengzhechun/SynologyDrive/工作/数据分析项目/心电图大模型/心电图公开数据集/02 mimic-iv-ecg/Topic1_LTMLE_Betablocker/第39版/output/figures/v39/figI_bland_altman_gibbs_2d_panel.png  (9 x 9.41 in) 
+
+=== DONE ===

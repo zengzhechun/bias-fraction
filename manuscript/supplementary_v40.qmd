@@ -1,0 +1,675 @@
+---
+title: "Supplementary Appendix: Quantifying Systematic Bias in Observational Causal Estimates Using Negative Controls: The Bias Attribution Fraction"
+author:
+  - name: Zeng Zhechun
+    degrees: MD, MPH
+    affiliation: "1,2"
+    email: zengzhechun@icloud.com
+    corresponding: true
+  - name: Wang Jinwen
+    degrees: MD, PhD
+    affiliation: "1,2"
+  - name: Zuo Huijuan
+    degrees: MD, MPH
+    affiliation: "1,2"
+  - name: Shu Lixia
+    degrees: PhD
+    affiliation: "1,2"
+date: "2026-08-27"
+bibliography: references.bib
+csl: american-medical-association.csl
+format:
+  docx:
+    toc: false
+    number-sections: false
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+^1^ Beijing Anzhen Hospital, Capital Medical University, Beijing 100029, China
+
+^2^ Beijing Institute of Heart, Lung and Blood Vessel Diseases, Beijing, China
+
+```{r setup, include=FALSE}
+suppressPackageStartupMessages({
+  library(jsonlite)
+  library(knitr)
+})
+source("../R/00_config.R")
+source("../R/01_bsr_core.R")
+
+library(EmpiricalCalibration)
+
+NUM <- jsonlite::fromJSON(file.path(TAB_DIR, "v40_all_numbers.json"),
+                          simplifyVector = FALSE)
+
+# Dual-view operating characteristics: the same rules R0-R4, C1-C2 scored twice,
+# once taking "declared usable" as the positive call (effect-dominated view, ED)
+# and once taking "withheld" as the positive call (bias-dominated view, BD), each
+# with sensitivity, specificity, PPV and NPV. Written by R/23_dual_view_metrics.R.
+dual <- jsonlite::fromJSON(file.path(TAB_DIR, "v40_dual_view.json"),
+                           simplifyVector = TRUE)
+
+des       <- NUM$design          # primary grid only (design description)
+des_p     <- NUM$design_pooled   # merged primary + mirror pool (evidence base)
+p1_int    <- NUM$part1$interior
+p1_full   <- NUM$part1$full
+l1        <- NUM$part2$layer1
+ciw       <- NUM$part2$ci_width
+disc      <- NUM$part2$discrimination
+strat     <- NUM$part2$strategies
+lookup    <- NUM$part2$lookup
+flow      <- NUM$part2$flow
+subg      <- NUM$part2$subgroups
+cirole    <- NUM$part2$ci_width_role
+confusion3x3 <- NUM$part2$confusion3x3
+cases     <- NUM$part3$cases
+
+# ---- v40 换口径：负对照面板与主分析同暴露定义（审稿意见第 2 条） ------------
+# 已发表对象 DATA/bias_calibration_results.rds 保留未覆盖；本稿一律读 guideline
+# 版本（R/92 提升经验原假设，带三重自校验）。旧的 diag_matched_null_impact.json
+# 是换口径前的"若对齐会怎样"诊断，口径已正式落地，本稿不再引用。
+nc_gl_cal  <- readRDS(file.path(OUT_DIR, "data",
+                                "bias_calibration_results_guideline.rds"))$negative_controls
+bsr_pub    <- readRDS(file.path(OUT_DIR, "data", "bsr_results_v35.rds"))
+n_nc_below <- sum(nc_gl_cal$logRr < 0)
+n_nc_above <- sum(nc_gl_cal$logRr > 0)
+
+# ---- 负对照筛选流程审计表（R/94_negative_control_screening_audit.R，第 4 条）---
+# 四级筛选链：L0 20 个候选 -> L1 代码可行性 16 个 -> L2 事件量门槛 14 个 ->
+# L3 分析窗事件量门槛 12 个。全部计数由脚本复算，不在正文写死。
+ncs        <- read.csv(file.path(TAB_DIR, "v40_negative_control_screening.csv"),
+                       stringsAsFactors = FALSE)
+n_L0       <- 20L
+n_L1       <- nrow(ncs)
+n_L2       <- sum(ncs$pass_L2)
+n_L3       <- sum(ncs$pass_L3)
+ncs_ex_L2  <- ncs[!ncs$pass_L2, ]
+ncs_ex_L3  <- ncs[ncs$pass_L2 & !ncs$pass_L3, ]
+
+# ---- 射血分数代理分析（R/95_ejection_fraction_proxy_sensitivity.R，第 5 条）---
+efp <- read.csv(file.path(TAB_DIR, "v40_ejection_fraction_proxy.csv"),
+                stringsAsFactors = FALSE)
+efc <- read.csv(file.path(TAB_DIR, "v40_ejection_fraction_classification.csv"),
+                stringsAsFactors = FALSE)
+ef_vals <- function(sg, col) efp[[col]][efp$subgroup == sg]
+sg_full  <- "Full cohort (all I50.x)"
+sg_hfref <- "Probable HFrEF"
+sg_hfpef <- "Probable HFpEF"
+
+# ---- 方向覆盖扩展：镜像 mu_B 网格（R/96 仿真 + R/97 汇总，S5.6） -------------
+# 主网格 psi 与 mu_B 同号，只覆盖「偏倚放大」；镜像网格把 mu_B 取正号，得到
+# 缩小 / 完全抵消 / 反转三种情形。下列字段除 bias_mean / rmse / med_half / ccc
+# 外全部是**比例**（0-1），渲染时必须走 kpct()（内部已 ×100），不要用 pct()。
+dreg <- read.csv(file.path(TAB_DIR, "v40_direction_summary.csv"),
+                 stringsAsFactors = FALSE)
+dreg$regime <- factor(dreg$regime,
+                      levels = c("inflation", "shrinkage", "cancellation", "reversal"))
+dreg <- dreg[order(dreg$regime), ]
+dr_lab <- c(inflation = "Inflation", shrinkage = "Shrinkage",
+            cancellation = "Cancellation", reversal = "Reversal")
+n_dir_cond  <- sum(dreg$n_cond)
+n_dir_reps  <- sum(dreg$n_rep)
+
+# 跨支对照用的派生量（S5.6 / eMethods「Directional coverage」引用）。
+# 方向情形只改变偏倚的符号，因此四支的点估计质量落在同一尺度上，变的是报告
+# 区间的宽度。条件级长表另做一次匹配分层核对：把真实偏倚分数限制在 0.35-0.45、
+# 阴性对照数固定为 K=50、sigma_psi 固定为 0.06，再比较放大与缩小两支的覆盖率，
+# 以排除「覆盖率只取决于真实值落在 0-1 刻度哪一段」这一解释。
+dr_val <- function(rg, col) dreg[[col]][as.character(dreg$regime) == rg]
+dcnd   <- read.csv(file.path(TAB_DIR, "v40_direction_regimes.csv"),
+                   stringsAsFactors = FALSE)
+dmt    <- dcnd$K == 50 & dcnd$sigma_ps == 0.06 &
+          dcnd$bf_true >= 0.35 & dcnd$bf_true < 0.45
+dr_matched <- function(rg, col) mean(dcnd[[col]][dmt & dcnd$regime == rg])
+dr_abs_bias_max <- max(abs(dreg$bias_mean))
+dr_rmse_lo      <- min(dreg$rmse)
+dr_rmse_hi      <- max(dreg$rmse)
+
+# ---- 暴露三级分布（S1.5「Beta-blocker exposure」用） --------------------------
+# 分母为分析队列（宽限期存活者），与主稿 Table 3 一致。
+.flow_ga   <- as.data.frame(readRDS(file.path(DATA_DIR, "ltmle_wide_K2_guideline.rds")))
+.flow_ga   <- .flow_ga[.flow_ga$Y_W0 == 0L, ]
+n_analytic <- nrow(.flow_ga)
+n_exp_0    <- sum(.flow_ga$A_W0 == 0L, na.rm = TRUE)
+n_exp_1    <- sum(.flow_ga$A_W0 == 1L, na.rm = TRUE)
+n_exp_2    <- sum(.flow_ga$A_W0 == 2L, na.rm = TRUE)
+
+# ---- 缺失处理敏感性（S5.3 / Table S12）-------------------------------------
+# 在 setup 里读，供其后的散文用 inline 表达式取数，避免句子随换口径而过期。
+gms          <- read.csv(file.path(TAB_DIR, "v40_gdmt_missing_sensitivity.csv"),
+                         stringsAsFactors = FALSE)
+gm_rr_lo     <- min(as.numeric(gms$rr))
+gm_rr_hi     <- max(as.numeric(gms$rr))
+gm_bf_pub    <- as.numeric(gms$bf[1])
+gm_bf_alt_lo <- min(as.numeric(gms$bf[-1]))
+gm_bf_alt_hi <- max(as.numeric(gms$bf[-1]))
+gm_n_notuse  <- sum(gms$verdict[-1] == "not usable as effect evidence")
+gm_n_alt     <- nrow(gms) - 1L
+
+sup_sigma_b <- as.numeric(cases[[1]]$sigma_b)
+sup_calp_q2 <- as.numeric(cases[[2]]$cal_p)
+sens      <- NUM$part3$sensitivity
+nc        <- NUM$part3$nc
+
+fmt_pct <- function(x, d = 1) sprintf(paste0("%.", d, "f"), as.numeric(x))
+fmt_num <- function(x, d = 2) sprintf(paste0("%.", d, "f"), as.numeric(x))
+# kpct is for fields stored as proportions (eg dual$truth_share$mixed = 0.2875)
+# that must be shown as 28.7%.
+kpct <- function(x, d = 1) paste0(fmt_pct(100 * as.numeric(x), d), "%")
+pct <- function(x, d = 1) paste0(fmt_pct(x, d), "%")
+# helper to make a kable with rounded percentage / numeric columns
+kpct <- function(x, d = 1) paste0(fmt_pct(100 * as.numeric(x), d), "%")
+
+```
+
+This supplementary appendix provides the methodological detail, full lookup table, and complete case-study estimation output that support the main manuscript. All numbers are reproduced from the single JSON file `output/tables/v40_all_numbers.json` generated by the analysis pipeline, which is shared with the companion interactive explainer.
+
+---
+
+## S1. Extended methods
+
+### S1.1 Full simulation design
+
+The simulation crossed five factors in a full factorial design within each of two half-grids that differ only in the sign of the bias center: the primary grid, and a companion grid of identical size generated with the same procedure and a disjoint random-number stream (seed 100,043 versus 43), which flips the sign of μ_B at every level while holding all other factors fixed. The pooled design comprises `r fmt_num(des_p$n_conditions, 0)` conditions, each replicated `r fmt_num(des$n_reps_per_cond, 0)` times for a total of `r format(des_p$n_total, big.mark = ",")` repetitions, and every performance analysis in the main manuscript and in this appendix is computed on that pooled evidence base. The factors and levels were:
+
+- True effect on the log relative risk scale, ψ, with `r length(des$psi_levels)` levels from `r fmt_num(des$psi_levels[1], 2)` to `r fmt_num(des$psi_levels[length(des$psi_levels)], 2)`.
+- Systematic bias center, μ_B, with `r length(des$mu_b_levels)` magnitudes given at both signs (negative in the primary grid, positive in the companion grid), from −0.40 to −0.05 and +0.05 to +0.40 in steps of 0.05.
+- Between-negative-control variance of the bias, σ_ps, with `r length(des$sigma_ps_levels)` levels (`r fmt_num(des$sigma_ps_levels[1], 2)`, `r fmt_num(des$sigma_ps_levels[2], 2)`).
+- Number of negative controls, K, with `r length(des$K_levels)` levels (`r paste(des$K_levels, collapse = ", ")`).
+- Exchangeability violation, with `r length(des$exV_levels)` levels (`r des$exV_levels[1]`, `r des$exV_levels[2]`, where 0.3 denotes a 30% violation rate).
+
+The data-generating process was a logistic regression in which each negative-control estimate was drawn as Y_k ~ N(μ_B, σ_B^2 + s_k^2), with the target estimate generated under the analogous model. By construction, each repetition carried a known truth BAF_{true} in [0, 1], an estimated BAF̂, and a calibrated P-value. The design allocated `r format(des$n_interior, big.mark = ",")` interior repetitions (excluding the ψ = -0.01 boundary level) and `r format(des$n_boundary, big.mark = ",")` boundary repetitions. The truth composition was `r kpct(des$truth_share$bias_dominated, 1)` bias-dominated, `r kpct(des$truth_share$mixed, 1)` mixed, and `r kpct(des$truth_share$effect_dominated, 1)` effect-dominated.
+
+### S1.2 Bias Attribution Fraction definition and interval construction
+
+The Bias Attribution Fraction is BAF = |μ̂_B| / (|μ̂_B| + |ψ̃|), where μ̂_B is the estimated center of the empirical null and ψ̃ is the calibrated log relative risk. Because BAF is a ratio of two jointly estimated quantities, the delta method is unstable when ψ̃ is near zero. The credible interval was therefore constructed by propagating uncertainty rather than approximating it: a set of draws of μ_B was generated from the fitted systematic error model, and each draw was passed through the same function BAF = |μ_B| / (|μ_B| + |Y - μ_B|), with the observed target estimate Y held at its observed value. The 2.5% and 97.5% empirical quantiles of the resulting BAF distribution formed the interval, and the point estimate was the median of that same distribution, so an estimate always lies inside the interval reported for it. In the simulation the draws were posterior draws from the systematic error model Y_k ~ N(μ_B, σ_B^2 + s_k^2), fitted by a Gibbs sampler with priors μ_B ~ N(0, 1) and σ_B^2 ~ InverseGamma(0.5, 0.05); in the case study they were nonparametric bootstrap resamples of the negative-control panel, with the empirical null refitted within each resample. Both constructions yield a distribution for BAF itself, and a bootstrap percentile distribution can be read as an approximation to a posterior under an uninformative prior, so a single term, credible interval, is used for both.
+
+### S1.3 Negative-control selection for the case study
+
+The negative-control panel was assembled before any case-study estimate was produced, and no control was added or removed afterwards. A candidate was an outcome with no plausible causal pathway from either treatment strategy and therefore expected to show a null association with it. Screening proceeded in four levels, summarised in Table S13.
+
+The candidate list contained `r n_L0` outcomes chosen for biological plausibility of a null association and for coverage of distinct clinical domains, spanning infection, gastrointestinal, trauma, ophthalmology, rheumatology, urology, oncology, dental, and vascular disease.
+
+Four candidates were removed on code feasibility. Fracture, burn, and poisoning are recorded with external-cause codes, and inguinal hernia is recorded surgically; neither family is captured in the MIMIC-IV diagnoses table, and each had no records there. That left `r n_L1` candidates with usable code definitions.
+
+The remaining candidates had to reach at least `r NC_MIN_EVENTS` hospitalizations in the heart-failure cohort, counted as distinct patients carrying the code in the index hospitalization or in any later hospitalization. `r nrow(ncs_ex_L2)` candidates failed this level, `r paste(ncs_ex_L2$label, collapse = " and ")`, with `r paste(format(ncs_ex_L2$n_patients_probe, big.mark = ","), collapse = " and ")` qualifying patients respectively, leaving `r n_L2`.
+
+Finally the event count had to reach `r NC_MIN_EVENTS` inside the analysis window itself, which excludes patients who died during the 7-day grace period and counts only events occurring after it. `r nrow(ncs_ex_L3)` further candidates failed here, `r paste(ncs_ex_L3$label, collapse = " and ")`, with `r paste(ncs_ex_L3$n_events_analytic, collapse = " and ")` events in that window, leaving the `r n_L3` controls of the reported panel.
+
+Both quantitative thresholds were fixed before the panel was screened and were applied mechanically, so the panel size was determined by the data source rather than by the results. No candidate was removed on the basis of the strength or the direction of its estimated association, and the panel is not the subset of candidates that happened to appear null: `r n_nc_above` of the `r n_L3` retained controls in fact have uncalibrated relative risks above 1. The reported panel is therefore predominantly but not exclusively protective, with calibrated log relative risks ranging from `r fmt_num(nc$logrr_min, 3)` to `r fmt_num(nc$logrr_max, 3)` (`r n_nc_below` below the null and `r n_nc_above` above it). A Shapiro-Wilk test of the empirical null residuals yielded p = `r fmt_num(nc$shapiro_p, 3)`, consistent with approximate normality of the null.
+
+### S1.4 Heart failure cohort and the ejection-fraction proxy
+
+Eligibility was anchored on a heart-failure discharge diagnosis rather than on measured left ventricular function. Heart failure was defined as any ICD-10-CM diagnosis code beginning with I50 or any of the ICD-9-CM codes 428.0, 428.1, 428.20 through 428.23, 428.30 through 428.33, 428.40 through 428.43, and 428.9. Because neither MIMIC-IV nor MIMIC-IV-ECG records left ventricular ejection fraction, no ejection-fraction threshold could be applied, and the cohort mixes reduced with preserved systolic function. The proxy used to test whether that heterogeneity drives the case-study result is defined in S5.5.
+
+### S1.5 Beta-blocker exposure and guideline target dose
+
+For question 1 the exposure was receipt, during the 7 days after the first electrocardiogram, of a beta-blocker with Class I evidence in heart failure at or above 50% of its guideline target dose. Three agents qualified, with these target daily doses: carvedilol 50 mg, metoprolol succinate 200 mg, and bisoprolol 10 mg. Beta-blockers without Class I evidence in this population, namely metoprolol tartrate, atenolol, nebivolol, propranolol, and sotalol, did not count toward exposure, so a patient receiving only one of them is classified as unexposed.
+
+The daily dose was reconstructed from the hospital prescription record rather than taken from a study-specific instrument. The recorded dose value was multiplied by the recorded number of doses per 24 hours, with a missing or non-positive value of the latter set to once daily; the product was expressed as a percentage of the drug's target dose, computed separately for each agent; and percentages above 200% were set missing, because a value that extreme reflects a recording unit rather than a plausible dose. Dose was then summarised per patient as the maximum percentage across qualifying prescriptions whose start date fell in the window. A patient was coded as at or above the target dose (level 2) when that maximum reached 50%, as partially exposed (level 1) when a qualifying beta-blocker was recorded below 50%, and as unexposed (level 0) when no qualifying prescription was found. In the analytic cohort the distribution was `r format(n_exp_0, big.mark = ",")` (`r kpct(n_exp_0 / n_analytic, 1)`) unexposed, `r format(n_exp_1, big.mark = ",")` (`r kpct(n_exp_1 / n_analytic, 1)`) partially exposed, and `r format(n_exp_2, big.mark = ",")` (`r kpct(n_exp_2 / n_analytic, 1)`) at or above the target dose; question 1 compares the last group with the two others combined.
+
+Question 2 used the same dose reconstruction within each of three foundational drug classes rather than for a single agent. The classes were renin-angiotensin system inhibitors (angiotensin-converting enzyme inhibitors, angiotensin receptor blockers, and the angiotensin receptor-neprilysin inhibitor), mineralocorticoid receptor antagonists, and beta-blockers. A class counted toward the score when at least one agent within it reached 50% of its target dose, and the score was the number of classes that counted, so that the exposed group for question 2 was a score of at least 2 of 3. Target daily doses were as given above for beta-blockers and, for the other two classes, were lisinopril 35, enalapril 20, ramipril 10, captopril 150, quinapril 40, trandolapril 4, fosinopril 40, benazepril 40, perindopril 8, moexipril 30, valsartan 320, losartan 150, candesartan 32, irbesartan 300, olmesartan 40, telmisartan 80, and sacubitril with valsartan 400 mg/day for renin-angiotensin system inhibitors, and spironolactone 50 and eplerenone 50 mg/day for mineralocorticoid receptor antagonists.
+
+### S1.6 Exposure definition shared by the negative-control panel and the target estimates
+
+The negative-control panel and the target estimates are produced on the same cohort, the same 10 baseline covariates, the same 7-day grace period, and the same estimators; the only quantity that differs is the outcome. In particular the empirical null that calibrates both case-study estimates is fitted on the same guideline-restricted exposure contrast that defines the target estimates, rather than on a contrast that counts all beta-blocker agents. Misalignment on this point is not innocuous: under the broader all-agent contrast the fitted between-control standard deviation was `r fmt_num(bsr_pub$bb$bsr$sigma_bias, 3)` and the question-2 calibrated P value `r fmt_num(bsr_pub$gdmt$bsr$cal_p, 3)`, whereas under the aligned contrast they are `r fmt_num(sup_sigma_b, 3)` and `r fmt_num(sup_calp_q2, 3)`; the wider null and the larger calibrated P value are the values used throughout this manuscript.
+
+---
+
+## S2. Part I supplementary: Bland-Altman agreement
+
+The interior analysis (primary) excludes the ψ = -0.01 boundary level to avoid near-boundary pathologies. The full analysis includes it. Both are reported below.
+
+```{r ba-table}
+ba <- data.frame(
+  Analysis = c("Interior (primary)", "Full (incl. boundary)"),
+  N = c(p1_int$n, p1_full$n),
+  `Mean diff (BAFhat-BAFtrue)` = c(p1_int$bias, p1_full$bias),
+  `SD diff` = c(p1_int$sd_diff, p1_full$sd_diff),
+  `LoA low` = c(p1_int$loa_lo, p1_full$loa_lo),
+  `LoA high` = c(p1_int$loa_hi, p1_full$loa_hi),
+  `CCC` = c(p1_int$ccc, p1_full$ccc),
+  `Prop. bias slope` = c(p1_int$slope, p1_full$slope),
+  MAE = c(p1_int$mae, p1_full$mae),
+  RMSE = c(p1_int$rmse, p1_full$rmse)
+)
+kable(ba, digits = c(0, 0, 3, 3, 3, 3, 3, 4, 3, 3),
+      caption = "Table S1. Bland-Altman agreement of BAFhat as an estimator of BAFtrue.")
+```
+
+The worst single-condition mean signed difference among the `r fmt_num(NUM$part1$n_conditions_interior, 0)` interior conditions was `r fmt_num(NUM$part1$interior_worst_cond_bias, 3)`. The proportional-bias slope regression rejected the null of no proportional bias in both analyses (interior slope `r fmt_num(p1_int$slope, 4)`, 95% CI `r fmt_num(p1_int$slope_lo, 4)` to `r fmt_num(p1_int$slope_hi, 4)`; full slope `r fmt_num(p1_full$slope, 4)`, 95% CI `r fmt_num(p1_full$slope_lo, 4)` to `r fmt_num(p1_full$slope_hi, 4)`). The estimator systematically underestimates BAF_{true}, and the underestimation grows with the magnitude of BAF_{true}.
+
+---
+
+## S3. Part II supplementary: decision-rule detail
+
+### S3.1 Full 12-bucket lookup table
+
+Each bucket reports the count of repetitions with narrow and wide credible intervals, the probability of being bias-dominated under the narrow reading, the wide reading, and the conservative max(narrow, wide) reading, together with the verdict zone.
+
+```{r lookup-table}
+lk_rows <- function(L) {
+  data.frame(
+    Bin = sapply(L, `[[`, "bin"),
+    `BAF centre` = sapply(L, `[[`, "bf_centre"),
+    `n narrow` = sapply(L, `[[`, "n_narrow"),
+    `n wide` = sapply(L, `[[`, "n_wide"),
+    `pBD narrow` = sapply(L, function(x) kpct(x$p_bd_narrow, 2)),
+    `pBD wide` = sapply(L, function(x) kpct(x$p_bd_wide, 2)),
+    `pBD cons.` = sapply(L, function(x) kpct(x$p_bd_conservative, 2)),
+    Verdict = sapply(L, `[[`, "verdict")
+  )
+}
+kable(lk_rows(lookup), digits = c(0, 3, 0, 0, 0, 0, 0, 0),
+      caption = "Table S2. Twelve-bucket equal-frequency lookup table mapping BAFhat x interval width to probability of being bias-dominated.")
+```
+
+### S3.2 Three readings of the lookup
+
+The lookup supports a pooled reading (CI width ignored), a width-specific reading, and the conservative max(narrow, wide) reading used in the manuscript.
+
+```{r reading-table}
+rr <- cirole$rules
+rd <- data.frame(
+  Reading = sapply(rr, `[[`, "reading"),
+  `Misuse rate (%)` = sapply(rr, function(x) fmt_pct(x$bd_among_declared_pct, 2)),
+  `Declare usable (%)` = sapply(rr, function(x) fmt_pct(x$declare_usable_pct, 1)),
+  # spec_bd_pct 是 R/18 的历史命名，它算的是 P(扣下 | 真偏倚主导)，即 BD 视角的
+  # 灵敏度而非特异度；表头按正确语义写，变量名保持不变（改变量名要动 R/18）。
+  `Sens ED (%)` = sapply(rr, function(x) fmt_pct(x$sens_ed_pct, 1)),
+  `Sens BD (%)` = sapply(rr, function(x) fmt_pct(x$spec_bd_pct, 1))
+)
+kable(rd, digits = 0,
+      caption = paste0("Table S3. Comparison of three readings of the lookup table. ",
+                       "Sens ED, share of truly effect-dominated repetitions declared usable; ",
+                       "Sens BD, share of truly bias-dominated repetitions withheld."))
+```
+
+The conservative reading changed `r fmt_pct(cirole$pct_verdict_changed_spec_vs_pool, 2)` of verdicts relative to the pooled reading and `r fmt_pct(cirole$pct_verdict_changed_cons_vs_pool, 2)` relative to the width-specific reading; the maximum absolute within-bin probability gap was `r fmt_num(cirole$max_abs_prob_gap_within_bin, 3)`, and adding CI half-width moved the AUC by only `r fmt_num(cirole$delta_auc_from_ci_width, 5)`.
+
+### S3.3 Nested strategy comparison
+
+Strategies R0 through R4 add one component at a time; C1 and C2 are stand-alone comparators that do not use the calibrated P-value. Every rule is scored twice, once from each viewpoint of Table 4 in the main text, so Table S4 reports eight operating characteristics per rule. The two readings are not mirror images because truth has three levels and the mixed zone is negative in both.
+
+```{r strategy-table}
+RULE_LABEL <- c(
+  R0 = "R0 uncalibrated P < .05 (no bias correction)",
+  R1 = "R1 calibrated P < .05 (layer 1 only)",
+  R2 = "R2 layer 1, plus BAF point estimate below 0.5, the bias-dominated threshold",
+  R3 = "R3 layer 1, plus the whole credible interval of BAF below 0.5, the bias-dominated threshold",
+  R4 = "R4 layer 1, plus probability of bias dominance below 15%",
+  C1 = "C1 BAF point estimate below 0.5, the bias-dominated threshold, no layer 1",
+  C2 = "C2 the whole credible interval of BAF below 0.5, the bias-dominated threshold, no layer 1"
+)
+# 双视角 10 列。旧版本的 "Spec BD" 列命名有误：它拿到的是
+# strat$spec_bd_pct，其实是 BD 视角的 sensitivity（真偏倚主导且被扣下），
+# 不是 specificity。R/23 重命名后数字不变、语义对齐。
+# Misuse 列删掉：它等于 100 减 NPV(BD)，保留会重复且占宽度。
+stopifnot(identical(dual$strategies$rule,
+                    sub(" .*", "", sapply(strat, `[[`, "strategy"))))
+st <- data.frame(
+  # 规则标签：管线里的内部说法换成读者能独立读懂的表述
+  # （与正文 Table 4 的 Definition 列同口径，避免两处说法打架）
+  Strategy            = unname(RULE_LABEL[dual$strategies$rule]),
+  `Declare usable (%)` = fmt_pct(dual$strategies$declare_usable_pct, 1),
+  `Sens, ED (%)`      = fmt_pct(dual$strategies$sens_ed, 1),
+  `Spec, ED (%)`      = fmt_pct(dual$strategies$spec_ed, 1),
+  `PPV, ED (%)`       = fmt_pct(dual$strategies$ppv_ed, 1),
+  `NPV, ED (%)`       = fmt_pct(dual$strategies$npv_ed, 1),
+  `Sens, BD (%)`      = fmt_pct(dual$strategies$sens_bd, 1),
+  `Spec, BD (%)`      = fmt_pct(dual$strategies$spec_bd, 1),
+  `PPV, BD (%)`       = fmt_pct(dual$strategies$ppv_bd, 1),
+  `NPV, BD (%)`       = fmt_pct(dual$strategies$npv_bd, 1),
+  check.names = FALSE
+)
+kable(st, digits = 0, align = c("l", rep("r", 9)),
+      caption = paste0(
+        "Table S4. Nested strategy comparison, read from two viewpoints. ",
+        "In the effect-dominated view (ED) a positive call is to declare a repetition usable and a positive truth is to be truly effect-dominated; ",
+        "in the bias-dominated view (BD) a positive call is to withhold and a positive truth is to be truly bias-dominated. ",
+        "Sens, share of truly positive repetitions the rule called positive; Spec, share of truly negative repetitions the rule called negative; ",
+        "PPV, share of repetitions the rule called positive that were truly positive; NPV, share the rule called negative that were truly negative. ",
+        "The misuse rate reported in Table 4 of the main text is 100 minus NPV in the BD view. Truth has three levels (effect-dominated ",
+        kpct(dual$truth_share$effect_dominated, 1), ", mixed ", kpct(dual$truth_share$mixed, 1),
+        ", bias-dominated ", kpct(dual$truth_share$bias_dominated, 1),
+        "), and the mixed zone is negative in both views, so the views are not mirror images and no pair of columns sums to 100."))
+```
+
+### S3.4 Decision flow by stage
+
+```{r flow-table}
+fl <- data.frame(
+  Stage = sapply(flow, `[[`, "stage"),
+  N = sapply(flow, `[[`, "n"),
+  `Bias-dominated (n)` = sapply(flow, `[[`, "bd_true_n"),
+  `BD share (%)` = sapply(flow, function(x) fmt_pct(x$bd_share_pct, 1))
+)
+kable(fl, digits = 0,
+      caption = "Table S5. Decision flow across layers of the rule.")
+```
+
+### S3.5 Verdict versus truth (3 by 3 confusion)
+
+```{r confusion-table}
+cf <- data.frame(
+  Truth = sapply(confusion3x3, `[[`, "truth"),
+  `bias-dominated` = sapply(confusion3x3, `[[`, "bias-dominated"),
+  `mixed` = sapply(confusion3x3, `[[`, "mixed"),
+  `effect-dominated` = sapply(confusion3x3, `[[`, "effect-dominated"),
+  `Row total` = sapply(confusion3x3, `[[`, "row_total")
+)
+kable(cf, digits = 0,
+      caption = "Table S6. Confusion matrix of assigned verdict zone against simulated truth.")
+```
+
+Zone accuracy was `r fmt_pct(NUM$part2$zone_accuracy$overall, 1)` overall, `r fmt_pct(NUM$part2$zone_accuracy$bias_dominated, 1)` among bias-dominated, `r fmt_pct(NUM$part2$zone_accuracy$mixed, 1)` among mixed, and `r fmt_pct(NUM$part2$zone_accuracy$effect_dominated, 1)` among effect-dominated repetitions.
+
+### S3.6 Subgroup robustness
+
+```{r subgroup-table}
+sg <- data.frame(
+  Subgroup = sapply(subg, `[[`, "subgroup"),
+  N = sapply(subg, `[[`, "n"),
+  `Layer1 pass (%)` = sapply(subg, function(x) fmt_pct(x$layer1_pass_pct, 1)),
+  `BD among pass (%)` = sapply(subg, function(x) fmt_pct(x$bd_among_layer1_pct, 1)),
+  `Declare usable (%)` = sapply(subg, function(x) fmt_pct(x$declare_usable_pct, 1)),
+  `BD among usable (%)` = sapply(subg, function(x) fmt_pct(x$bd_among_declared_pct, 2)),
+  `Median half-width` = sapply(subg, `[[`, "median_half_width")
+)
+kable(sg, digits = c(0, 0, 1, 1, 1, 2, 3),
+      caption = paste0("Table S7. Misuse rate across ", length(subg), " pre-specified subgroups."))
+```
+
+### S3.7 Discrimination
+
+```{r discrimination-table}
+dc <- data.frame(
+  Predictor = sapply(disc, `[[`, "predictor"),
+  `AUC` = sapply(disc, function(x) fmt_num(x$auc, 3)),
+  `LR chi2 note` = sapply(disc, function(x) ifelse(x$note == "", "-", x$note))
+)
+kable(dc, digits = 0,
+      caption = "Table S8. Discrimination (AUC). The area under the curve is read from the bias-dominated view, meaning that withholding a repetition is a positive call and being truly bias-dominated is a positive truth. Figure 7 of the main text reports the same three scores from both viewpoints.")
+```
+
+The likelihood-ratio chi-square test for adding credible-interval half-width to BAF̂ was χ² = `r sub(".*chi2 = ([0-9.]+).*", "\\1", disc[[3]]$note)`, df = 1, p < .001. The odds ratio per unit increase in CI half-width was `r fmt_num(NUM$part2$or_half_width, 2)`.
+
+### S3.8 Credible-interval width and coverage
+
+The median half-width was `r fmt_num(ciw$median_half_width, 3)` (quartiles `r fmt_num(ciw$quartiles_half[1], 3)`, `r fmt_num(ciw$quartiles_half[3], 3)`). Coverage of the Gibbs posterior 95% credible interval was `r fmt_pct(100 * ciw$coverage_overall, 1)` overall, `r fmt_pct(100 * ciw$coverage_narrow, 1)` for narrow intervals, and `r fmt_pct(100 * ciw$coverage_wide, 1)` for wide intervals. Mean half-width by K was `r fmt_num(ciw$mean_half_by_K[1], 3)` for K = 12 and `r fmt_num(ciw$mean_half_by_K[2], 3)` for K = 25. The calibrated P-value at the 0.05 threshold declared `r fmt_pct(100 * l1$pass_rate_overall, 1)` of repetitions passable versus `r fmt_pct(100 * l1$naive_pass_rate, 1)` for the uncalibrated P-value; the pass rate among bias-dominated truth was `r fmt_pct(100 * l1$pass_rate_by_truth$bias_dominated, 1)`, among mixed `r fmt_pct(100 * l1$pass_rate_by_truth$mixed, 1)`, and among effect-dominated `r fmt_pct(100 * l1$pass_rate_by_truth$effect_dominated, 1)`.
+
+---
+
+## S4. Part III supplementary: case-study estimation
+
+### S4.1 Negative-control empirical null
+
+The jointly estimated empirical null had center μ̂_B = `r fmt_num(cases[[1]]$mu_b, 3)` and scale σ̂_B = `r fmt_num(cases[[1]]$sigma_b, 3)`; the Shapiro-Wilk test of the `r fmt_num(nc$K, 0)` negative-control residuals gave p = `r fmt_num(nc$shapiro_p, 3)`, and the calibrated log relative risks of the controls ranged from `r fmt_num(nc$logrr_min, 3)` to `r fmt_num(nc$logrr_max, 3)`.
+
+### S4.2 Full case estimation
+
+```{r case-table}
+cs <- data.frame(
+  Question = c(cases[[1]]$exposure, cases[[2]]$exposure),
+  `Uncal RR` = c(cases[[1]]$rr_uncal, cases[[2]]$rr_uncal),
+  `Cal RR` = c(cases[[1]]$rr_cal, cases[[2]]$rr_cal),
+  `Cal P` = c(cases[[1]]$cal_p, cases[[2]]$cal_p),
+  `BAFhat` = c(cases[[1]]$bf, cases[[2]]$bf),
+  `BAF lo` = c(cases[[1]]$bf_lo, cases[[2]]$bf_lo),
+  `BAF hi` = c(cases[[1]]$bf_hi, cases[[2]]$bf_hi),
+  `p bias-dom` = c(cases[[1]]$p_bias_dominated, cases[[2]]$p_bias_dominated),
+  Verdict = c(cases[[1]]$verdict, cases[[2]]$verdict)
+)
+kable(cs, digits = c(0, 3, 3, 4, 3, 3, 3, 3, 0),
+      caption = "Table S9. Full estimation output for the two clinical questions.")
+```
+
+### S4.3 Sensitivity analyses (question 1)
+
+Leave-one-out across the `r fmt_num(nc$K, 0)` negative controls gave BAF̂ ranging from `r fmt_num(sens$loo_bf_min, 3)` to `r fmt_num(sens$loo_bf_max, 3)` (fall-back BAF̂ = `r fmt_num(sens$loo_fall_bf, 3)`). Replacement of the Super Learner library gave BAF̂ = `r fmt_num(sens$sl_bf[1], 3)` (`r fmt_num(sens$sl_bf_lo[1], 3)` to `r fmt_num(sens$sl_bf_hi[1], 3)`), `r fmt_num(sens$sl_bf[2], 3)` (`r fmt_num(sens$sl_bf_lo[2], 3)` to `r fmt_num(sens$sl_bf_hi[2], 3)`), and `r fmt_num(sens$sl_bf[3], 3)` (`r fmt_num(sens$sl_bf_lo[3], 3)` to `r fmt_num(sens$sl_bf_hi[3], 3)`) under the three alternative libraries. The Gaussian-process propensity-score perturbation gave calibrated relative risk `r fmt_num(sens$gp_cal_rr[1], 3)` to `r fmt_num(sens$gp_cal_rr[2], 3)` and BAF̂ `r fmt_num(sens$gp_bf[1], 3)` to `r fmt_num(sens$gp_bf[2], 3)`. All sensitivity analyses preserved the "not usable as effect evidence" verdict for question 1 and the "competitive, no verdict" zone for question 2.
+
+---
+
+## S5. Additional sensitivity and validation analyses
+
+### S5.1 Held-out validation of the lookup table
+
+The lookup is built from all `r format(des_p$n_total, big.mark = ",")` repetitions of the pooled design and then used to score the reporting rules on the same repetitions, so its reported operating characteristics are in-sample. We bounded the resulting optimism by rebuilding the entire lookup, including the bin edges, the median half-width that separates narrow from wide intervals, and the per-bin probabilities, on training data alone, and then applying it unchanged to held-out data. Two schemes were used, each repeated across five folds. In the first, 20% of repetitions were held out within every condition, so that both training and test data span the whole factorial grid; the misuse rate of every rule was then unchanged to two decimal places, which supports the argument that at least `r format(des$n_reps_per_cond, big.mark = ",")` repetitions per cell makes the in-sample optimism negligible when only repetitions are swapped. In the second, 20% of the `r fmt_num(des_p$n_conditions, 0)` conditions were held out entirely, which additionally tests grid cells that never contributed to the lookup; the share declared usable was essentially unchanged, and the misuse rate of the strictest rule (R4) rose from 2.7% to 2.8%, the largest excursion across the five folds being 4.0% and the largest increase for any rule 0.12 percentage points (Table S10). Generalisation to unseen cells therefore costs little, but it is not free, and the ordering of the rules is preserved.
+
+```{r sup-holdout}
+ho <- read.csv(file.path(TAB_DIR, "v40_lookup_holdout.csv"), stringsAsFactors = FALSE)
+ho$rule_short <- sub(" .*", "", ho$rule)
+ho$scheme_lab <- ifelse(ho$scheme == "rep", "20% of repetitions held out", "20% of conditions held out")
+ho <- ho[order(match(ho$scheme, c("rep", "condition")),
+               match(ho$rule_short, c("R0","R1","R2","R3","R4","C1","C2"))), ]
+ht <- data.frame(
+  `Held out` = ho$scheme_lab,
+  Rule = ho$rule_short,
+  `Declared usable, training (%)` = pct(ho$declare_train, 1),
+  `Declared usable, test (%)` = pct(ho$declare_test, 1),
+  `Misuse, training (%)` = pct(ho$misuse_train, 2),
+  `Misuse, test (%)` = pct(ho$misuse_test, 2),
+  `Misuse across folds (%)` = sprintf("%.1f\u2013%.1f", ho$misuse_test_min, ho$misuse_test_max),
+  check.names = FALSE, stringsAsFactors = FALSE
+)
+kable(ht, caption = paste0(
+  "Table S10. Five-fold held-out validation of the BAF reliability lookup, for the seven reporting ",
+  "rules of Table 4. The lookup, including its bin edges, its median half-width, and its per-bin ",
+  "probabilities, was rebuilt on training data only and applied unchanged to the held-out data; the ",
+  "training columns report its performance on the data used to build it, so the gap between the ",
+  "training and test columns is the in-sample optimism. Misuse is the share of repetitions declared ",
+  "usable that were in truth bias-dominated."))
+```
+
+### S5.2 Joint propagation of empirical-null and target-estimate uncertainty
+
+The reported credible interval propagates draws of the empirical-null mean while holding the observed target estimate fixed, so it omits the sampling variability of that estimate and undercovers. To quantify what this omission costs, we recomputed the interval with the omitted term added, drawing the calibrated target estimate from a normal distribution centred on its observed value with its own standard error. Both intervals were computed within the same repetitions, so the comparison is paired. Across the settings examined, coverage rose from 78.8% to 97.7%, the median half-width widened from 0.132 to 0.222, and the yield of the strictest interval rule fell from 24.3% to 13.2% of repetitions, with 11.2% of repetitions changing that rule's decision (Table S11). The undercoverage reported in the main text is therefore attributable specifically to the omitted term. The direction in which that omission propagates to the reporting rules is easy to misstate, and the natural reading is the wrong one. R3 declares an estimate usable only when the whole credible interval lies below 0.5, and a narrower interval satisfies that condition more often, not less often; the reported interval therefore inflates the yield of the rule rather than deflating it. The same argument applies to the misuse rate, because the repetitions that cease to qualify once coverage is restored are those carrying the least evidence against bias dominance: restoring nominal coverage lowered the yield from 24.3% to 13.2% and the misuse rate from 5.1% to 0.6%. The yield and the misuse rate reported for R3 in the main text are accordingly upper bounds on the values that would obtain at nominal coverage, not lower bounds.
+
+```{r sup-joint}
+ij <- read.csv(file.path(TAB_DIR, "v40_interval_joint_propagation.csv"), stringsAsFactors = FALSE)
+ij2 <- data.frame(
+  Scope = ij$scope,
+  N = format(ij$n, big.mark = ","),
+  `Coverage, reported (%)` = pct(ij$coverage_current, 1),
+  `Coverage, joint (%)` = pct(ij$coverage_joint, 1),
+  `Median half-width, reported` = fmt_num(ij$median_halfwidth_current, 3),
+  `Median half-width, joint` = fmt_num(ij$median_halfwidth_joint, 3),
+  `Rule yield, reported (%)` = pct(ij$R3_yield_current, 1),
+  `Rule yield, joint (%)` = pct(ij$R3_yield_joint, 1),
+  `Rule misuse, reported (%)` = pct(ij$R3_misuse_current, 2),
+  `Rule misuse, joint (%)` = pct(ij$R3_misuse_joint, 2),
+  check.names = FALSE, stringsAsFactors = FALSE
+)
+kable(ij2, caption = paste0(
+  "Table S11. Interval coverage, precision, and rule performance when the sampling variability of ",
+  "the calibrated target estimate is propagated jointly with that of the empirical null, compared ",
+  "with the reported interval, which holds the target estimate fixed. Both intervals were computed ",
+  "within the same ", format(ij$n[1], big.mark = ","), " repetitions, so the comparison is paired. ",
+  "Rule is the strictest interval rule (R3). The joint interval is wider and attains nominal ",
+  "coverage, at the cost of a lower yield."))
+```
+
+### S5.3 Missing-data handling for the guideline-directed medical therapy exposure
+
+Of the 14,677 patients in the question-2 cohort, 3,494 (23.8%) had an indeterminate guideline-directed medical therapy score at baseline. The primary analysis classified them as not optimized, which is a design decision rather than a data fact. We therefore repeated the question-2 estimation under four conventions: indeterminate as suboptimal (the published analysis), complete case, indeterminate as optimized, and multiple imputation, in which the exposure was drawn from a logistic model of exposure on the ten baseline covariates and combined across ten imputations by Rubin's rules. The target estimate moved substantially across conventions (uncalibrated relative risk `r fmt_num(gm_rr_lo, 2)` to `r fmt_num(gm_rr_hi, 2)`), but the calibrated P value never fell below .05 and no convention produced a usable determination; the bias fraction rose from `r fmt_num(gm_bf_pub, 3)` under the published convention to between `r fmt_num(gm_bf_alt_lo, 3)` and `r fmt_num(gm_bf_alt_hi, 3)` under the others, and `r gm_n_notuse` of the `r gm_n_alt` alternative conventions moved the determination to not usable as effect evidence rather than the competitive determination returned by the published convention (Table S12). The published convention is thus the most favourable of the four, so the qualitative conclusion is not an artefact of it. The negative-control panel is fitted on the guideline-restricted cohort, so it shares the exposure contrast of the target estimates rather than the contrast that counts all beta-blocker agents. Aligning it in that way changed the empirical null (SD `r fmt_num(bsr_pub$bb$bsr$sigma_bias, 3)` under the earlier all-agent panel versus `r fmt_num(sup_sigma_b, 3)` here) and moved the question-2 calibrated P value from `r fmt_num(bsr_pub$gdmt$bsr$cal_p, 3)` to `r fmt_num(sup_calp_q2, 3)`, so the layer-1 pass that question 2 would have obtained under the earlier panel was not robust to the realignment; with the aligned panel neither question passes layer 1, while both determinations are unchanged.
+
+```{r sup-missing}
+gm <- data.frame(
+  `Indeterminate exposure handled as` = gms$tag,
+  N = format(gms$n, big.mark = ","),
+  `Uncalibrated RR` = fmt_num(gms$rr, 3),
+  `Uncalibrated RR 95% CI` = sprintf("%.3f\u2013%.3f", gms$rr_lo, gms$rr_hi),
+  `Calibrated P` = sub("^0\\.", ".", fmt_num(gms$cal_p, 4)),
+  BAF = fmt_num(gms$bf, 3),
+  `BAF 95% credible interval` = sprintf("%.3f\u2013%.3f", gms$bf_lo, gms$bf_hi),
+  `P(bias-dominated)` = fmt_num(gms$p_bias_dominated, 3),
+  Determination = gms$verdict,
+  check.names = FALSE, stringsAsFactors = FALSE
+)
+kable(gm, caption = paste0(
+  "Table S12. Question 2 under four conventions for the ", format(gms$n[1] - gms$n[2], big.mark = ","),
+  " patients (", kpct((gms$n[1] - gms$n[2]) / gms$n[1], 1), ") with an indeterminate ",
+  "guideline-directed medical therapy score. The bias fraction and its credible interval are computed ",
+  "with the same bootstrap estimator and n_boot used for the published analysis, and the ",
+  "determination is read from the same lookup table, so the only quantity that varies across rows is ",
+  "the target estimate. The first row reproduces the published question-2 result exactly."))
+```
+
+### S5.4 Screening flow for the negative control panel
+
+The four screening levels described in S1.3 are set out in Table S13.
+
+```{r sup-nc-screening}
+ncflow <- data.frame(
+  Level = c("Candidate list",
+            "Code feasibility",
+            "Cohort event count",
+            "Analysis-window event count"),
+  Criterion = c(
+    "Outcomes with no plausible causal pathway from either treatment strategy",
+    "Code family represented in the MIMIC-IV diagnoses table",
+    paste0("At least ", NC_MIN_EVENTS, " hospitalizations coded for the outcome in the heart-failure cohort"),
+    paste0("At least ", NC_MIN_EVENTS, " events among patients who survived the 7-day grace period")),
+  Entering = c(n_L0, n_L1, n_L2, n_L3 + nrow(ncs_ex_L3)),
+  Removed = c(4, 0, nrow(ncs_ex_L2), nrow(ncs_ex_L3)),
+  Remaining = c(n_L1, n_L2, n_L3, n_L3),
+  `Outcomes removed` = c(
+    "Fracture, burn, poisoning, inguinal hernia (no records in the diagnoses table)",
+    "None",
+    paste0(paste(ncs_ex_L2$label, collapse = "; "), " (",
+           paste(format(ncs_ex_L2$n_patients_probe, big.mark = ","), collapse = " and "),
+           " qualifying patients)"),
+    paste0(paste(ncs_ex_L3$label, collapse = "; "), " (",
+           paste(ncs_ex_L3$n_events_analytic, collapse = " and "),
+           " events in the window)")),
+  check.names = FALSE, stringsAsFactors = FALSE
+)
+kable(ncflow, caption = paste0(
+  "Table S13. Screening flow from the candidate list to the reported negative control panel. Both quantitative ",
+  "thresholds (", NC_MIN_EVENTS, " hospitalizations, then ", NC_MIN_EVENTS,
+  " events inside the analysis window) were fixed before screening and applied mechanically, and no candidate ",
+  "was removed on the basis of the strength or direction of its estimated association with the exposure."))
+```
+
+### S5.5 Ejection-fraction proxy sensitivity analysis
+
+Eligibility for the case study was anchored on a heart-failure discharge diagnosis rather than on measured left ventricular function, because neither MIMIC-IV nor MIMIC-IV-ECG records the left ventricular ejection fraction, so no ejection-fraction threshold could be applied and the cohort mixes reduced with preserved systolic function (S1.4). To test whether that heterogeneity drives the case-study result, we applied a prespecified proxy.
+
+Probable heart failure with reduced ejection fraction was defined as a systolic heart failure code (ICD-10-CM I50.2x) or an electrocardiographic pattern of QRS duration of at least 120 ms together with left bundle-branch block, a pattern that would satisfy a criterion for cardiac resynchronization therapy and is therefore typical of reduced ejection fraction. Probable heart failure with preserved ejection fraction was defined as a diastolic code (I50.3x) without a systolic code and without that pattern. The two categories are mutually exclusive and together cover only part of the cohort: of `r format(efc$n_cohort[4], big.mark = ",")` hospitalizations, `r format(efc$n_cohort[1], big.mark = ",")` (`r pct(efc$pct_cohort[1], 1)`) were classified as probable reduced and `r format(efc$n_cohort[2], big.mark = ",")` (`r pct(efc$pct_cohort[2], 1)`) as probable preserved, leaving `r pct(efc$pct_cohort[3], 1)` that met neither definition.
+
+Question 1 was then re-estimated within each proxy subgroup under otherwise identical settings, meaning the same cohort definition, the same ten baseline covariates, the same 7-day grace period, the same estimators, and the same guideline-matched empirical null. The uncalibrated relative risk was `r fmt_num(ef_vals(sg_hfref, "rr_uncal"), 3)` in probable reduced ejection fraction versus `r fmt_num(ef_vals(sg_full, "rr_uncal"), 3)` in the full cohort; the bias fraction and its credible interval were `r fmt_num(ef_vals(sg_hfref, "baf"), 3)` (`r fmt_num(ef_vals(sg_hfref, "baf_lo"), 3)` to `r fmt_num(ef_vals(sg_hfref, "baf_hi"), 3)`) against `r fmt_num(ef_vals(sg_full, "baf"), 3)` (`r fmt_num(ef_vals(sg_full, "baf_lo"), 3)` to `r fmt_num(ef_vals(sg_full, "baf_hi"), 3)`), and the calibrated P value was `r fmt_num(ef_vals(sg_hfref, "cal_p"), 3)` against `r fmt_num(ef_vals(sg_full, "cal_p"), 3)`. In probable preserved ejection fraction the corresponding values were `r fmt_num(ef_vals(sg_hfpef, "rr_uncal"), 3)`, `r fmt_num(ef_vals(sg_hfpef, "baf"), 3)` (`r fmt_num(ef_vals(sg_hfpef, "baf_lo"), 3)` to `r fmt_num(ef_vals(sg_hfpef, "baf_hi"), 3)`), and `r fmt_num(ef_vals(sg_hfpef, "cal_p"), 3)`. No subgroup passed layer 1, and all three remained bias-dominated, so the case-study conclusion does not depend on how the ejection fraction is distributed within the cohort. Table S14 gives the full comparison.
+
+```{r sup-ef-proxy}
+efp_tab <- data.frame(
+  Subgroup = efp$subgroup,
+  N = format(efp$n, big.mark = ","),
+  `Deaths, No.` = format(efp$n_deaths, big.mark = ","),
+  `Uncalibrated RR` = fmt_num(efp$rr_uncal, 3),
+  `Calibrated RR` = fmt_num(efp$rr_cal, 3),
+  `Calibrated P` = sub("^0\\.", ".", fmt_num(efp$cal_p, 4)),
+  `BAFhat` = fmt_num(efp$baf, 3),
+  `BAF 95% credible interval` = sprintf("%.3f\u2013%.3f", efp$baf_lo, efp$baf_hi),
+  `P(bias-dominated)` = fmt_num(efp$p_bias_dominated, 3),
+  check.names = FALSE, stringsAsFactors = FALSE
+)
+kable(efp_tab, caption = paste0(
+  "Table S14. Question 1 re-estimated within ejection-fraction proxy subgroups under otherwise identical ",
+  "settings (same cohort definition, same 10 baseline covariates, same 7-day grace period, same estimators, ",
+  "same guideline-matched empirical null). Probable reduced ejection fraction is a systolic heart-failure code ",
+  "(ICD-10-CM I50.2x) or QRS of at least 120 ms with left bundle-branch block; probable preserved ejection ",
+  "fraction is a diastolic code (I50.3x) without a systolic code and without that pattern. The two strata are ",
+  "mutually exclusive; ", pct(efc$pct_cohort[3], 1), " of hospitalizations met neither definition and are ",
+  "excluded from both."))
+```
+
+---
+
+### S5.6 Directional coverage of the simulation grid
+
+The BAF definition uses absolute values, which makes the metric indifferent to the direction in which the bias acts, so one BAF value is compatible with bias that inflates the apparent effect, bias that shrinks it toward the null, and bias that reverses its sign. The primary grid sets ψ and μB to the same sign and therefore characterizes only the first of those three roles. To cover the other two, we ran a mirror grid that keeps the ten ψ levels and the eight μB magnitudes of the primary grid but gives μB a positive sign, holding σψ, K, and the exchangeability factor at the same levels, so that the two grids differ in one factor only. Within the mirror grid, the sign of the expected observed effect, ψ + μB, separates the cells into three roles: shrinkage, when μB opposes ψ and is smaller in absolute value; cancellation, when the two are equal in absolute value; and reversal, when μB is larger. The four roles together span `r fmt_num(n_dir_cond, 0)` conditions and `r format(n_dir_reps, big.mark = ",")` repetitions. These are the same repetitions that every performance number in the main manuscript pools; this section disaggregates them by role.
+
+Table S15 reports, for each role, the number of conditions it contains, the mean signed difference between BAF̂ and BAF_true, its root mean squared error, the median half-width of the credible interval, and the coverage of that interval. Table S16 reports, for the same four roles, agreement between the classified zone and the true zone, the share of repetitions that pass layer 1, the yield of the reporting rule R3, the share of the estimates R3 endorses that are in fact bias-dominated, and the share of cells whose true BAF lies above 0.5.
+
+The point accuracy of the estimator carries across roles. The mean signed error of BAF̂ never exceeded `r fmt_num(dr_abs_bias_max, 3)` in absolute value in any role, and the root mean squared error stayed between `r fmt_num(dr_rmse_lo, 3)` and `r fmt_num(dr_rmse_hi, 3)`. That is the consequence of a definition that depends on the absolute magnitudes of the bias and of the calibrated effect rather than on their signs.
+
+Coverage of the credible interval does not carry across roles. It was `r kpct(dr_val("inflation", "coverage"), 1)` where the bias inflates the apparent effect, `r kpct(dr_val("shrinkage", "coverage"), 1)` where it shrinks the effect toward the null, `r kpct(dr_val("cancellation", "coverage"), 1)` where the two cancel, and `r kpct(dr_val("reversal", "coverage"), 1)` where the bias reverses the sign of the effect, against a nominal 95% in every role. The difference is not a consequence of where the true value falls on the 0 to 1 scale. Restricting attention to cells whose true BAF lies between 0.35 and 0.45 with K = 50 and σψ = 0.06, coverage was `r kpct(dr_matched("inflation", "coverage"), 1)` under inflation and `r kpct(dr_matched("shrinkage", "coverage"), 1)` under shrinkage. What moves is the width of the reported interval rather than the error of the estimate: in that matched set the mean of the per-condition median half-widths was `r fmt_num(dr_matched("inflation", "med_half") / dr_matched("inflation", "rmse"), 2)` times the mean root mean squared error under inflation and `r fmt_num(dr_matched("shrinkage", "med_half") / dr_matched("shrinkage", "rmse"), 2)` times under shrinkage. The reason is arithmetic. A draw of the bias center that is larger in absolute value makes the calibrated effect smaller whenever the two have the same sign, so the numerator and the denominator of the ratio |μ̂B| / |ψ̃| move in opposite directions and the ratio disperses; when the signs are opposed they move together and the ratio is stable. Bias that opposes the effect therefore returns a narrower interval, and an estimate that looks more precise, than the error of that estimate supports.
+
+The reporting rule R3 reads the upper end of that interval and inherits the shortfall. It endorsed an estimate in `r kpct(dr_val("inflation", "R3_yield"), 1)` of repetitions where the bias inflates the effect, `r kpct(dr_val("shrinkage", "R3_yield"), 1)` where it shrinks the effect, `r kpct(dr_val("cancellation", "R3_yield"), 1)` where the two cancel, and `r kpct(dr_val("reversal", "R3_yield"), 1)` where the bias reverses the sign. Zone agreement moves in the opposite direction and is highest in the reversal role, at `r kpct(dr_val("reversal", "zone_match"), 1)`, so the three-zone classification identifies bias dominance even in the role where R3 almost never endorses an estimate; the quantity that governs the safety of the rule is the interval, not the zone. Where the central estimate lies below 0.5, a narrower interval satisfies the condition that the whole interval lie below 0.5 more often, which is one reason the yield of R3 is highest in the shrinkage role and lowest in the reversal role, where the central estimate lies above 0.5 and a narrower interval moves that condition further out of reach. The misuse rate is informative only in the inflation role, where cells of both kinds are present, and there `r kpct(dr_val("inflation", "R3_misuse"), 1)` of the estimates R3 endorsed were in fact bias-dominated. No cell in the shrinkage or cancellation roles has a true BAF above the 0.5 boundary and every cell in the reversal role does, so in those three roles the misuse rate is fixed by construction rather than estimated. In the reversal role that leaves the `r kpct(dr_val("reversal", "R3_yield"), 1)` of repetitions in which R3 endorsed an estimate as false endorsements, every one of them.
+
+Cancellation is a limiting case rather than a typical one. It arises only when the bias and the true effect are equal in absolute value, which sets the true BAF to exactly 0.5 by identity, and it accounts for `r format(dr_val("cancellation", "n_cond"), big.mark = ",")` of the `r format(n_dir_cond, big.mark = ",")` conditions. Because the true value then falls on the boundary that separates the zones, coverage of the interval and agreement of the zone coincide exactly at `r kpct(dr_val("cancellation", "coverage"), 1)` in that role, so neither figure should be read as a typical-case rate.
+
+```{r sup-dir-a}
+dir_tab_a <- data.frame(
+  Role = dr_lab[as.character(dreg$regime)],
+  Conditions = format(dreg$n_cond, big.mark = ","),
+  `Mean BAFhat minus BAFtrue` = gsub("-", "\u2212", fmt_num(dreg$bias_mean, 3)),
+  RMSE = fmt_num(dreg$rmse, 3),
+  `Median interval half-width` = fmt_num(dreg$med_half, 3),
+  `Interval coverage` = kpct(dreg$coverage, 1),
+  check.names = FALSE, stringsAsFactors = FALSE
+)
+kable(dir_tab_a, row.names = FALSE, caption = paste0(
+  "Table S15. Point accuracy of the BAF estimator and coverage of its credible interval when the systematic bias ",
+  "plays each of the four possible roles with respect to the true effect. Inflation is the primary grid, in which ",
+  "the bias has the same sign as the true effect; shrinkage, cancellation, and reversal come from a mirror grid that ",
+  "keeps every other design factor unchanged and gives the bias center a positive sign. The role is assigned by the ",
+  "sign of the expected observed effect, \u03c8 + \u03bcB. The mean signed difference and the root mean squared error ",
+  "are on the BAF scale, as is the median half-width of the reported 95% credible interval; coverage is the share of ",
+  "repetitions in which that interval contains the true BAF. The four roles together span ",
+  format(sum(dreg$n_cond), big.mark = ","), " conditions and ", format(sum(dreg$n_rep), big.mark = ","),
+  " repetitions."))
+```
+
+```{r sup-dir-b}
+dir_tab_b <- data.frame(
+  Role = dr_lab[as.character(dreg$regime)],
+  `Zone agreement` = kpct(dreg$zone_match, 1),
+  `Layer-1 pass` = kpct(dreg$layer1_pass, 1),
+  `R3 yield` = kpct(dreg$R3_yield, 1),
+  `R3 misuse` = kpct(dreg$R3_misuse, 1),
+  `True BAF above 0.5` = kpct(dreg$pct_bd_true, 1),
+  check.names = FALSE, stringsAsFactors = FALSE
+)
+kable(dir_tab_b, row.names = FALSE, caption = paste0(
+  "Table S16. Classification and rule performance when the systematic bias plays each of the four possible roles. ",
+  "Zone agreement is the share of repetitions in which the three-zone classification matches the true zone; layer 1 ",
+  "is the calibrated P value below .05; R3 declares an estimate usable only when it passes layer 1 and its whole ",
+  "credible interval lies below 0.5; and the misuse rate is the share of the estimates R3 endorses that are in fact ",
+  "bias-dominated. The final column gives the share of cells in each role whose true BAF lies above 0.5, the ",
+  "boundary of the bias-dominated zone; no cell in the shrinkage or cancellation roles exceeds it and every cell in ",
+  "the reversal role does, so the misuse rate is informative only in the inflation role, where both kinds of cell ",
+  "are present."))
+```
+
+---
+
+## S7. Supplementary figures
+
+```{r sup-fig-direction, echo=FALSE, out.width="100%"}
+knitr::include_graphics(file.path(FIG_DIR, "v40", "figP3_direction_roles.png"))
+```
+
+**Figure S1.** Coverage of the 95% credible interval, and performance of the
+reporting rule R3, when the systematic bias plays each of the four possible
+roles with respect to the true effect. Panel A gives interval coverage by role,
+with the nominal 95% level marked; the number beneath each bar is the mean
+signed error of BAF̂, which stays within `r fmt_num(dr_abs_bias_max, 3)` of
+zero in every role, so the accuracy of the point estimate carries across roles
+while the coverage of its interval does not. Panel B gives the share of
+repetitions R3 declares usable and the share of those that were truly
+bias-dominated: the rule is at its most permissive where the bias shrinks the
+effect and at its most dangerous where the bias reverses it, where
+`r kpct(dr_val("reversal", "R3_misuse"), 1)` of the estimates it endorses are
+false endorsements. Both panels use the `r fmt_num(n_dir_cond, 0)` conditions
+and `r format(n_dir_reps, big.mark = ",")` repetitions of Table S15 and Table
+S16, and are drawn from the same summary file, so the figure and the two tables
+cannot drift apart.
+
+---
+
+## S6. Software and reproducibility
+
+The estimator is implemented in the R package EmpiricalCalibration [@schuemie2018empirical]; the BAF extension is provided by the accompanying R code archived with this manuscript. The analysis pipeline reads MIMIC IV and MIMIC IV ECG under approved data-use agreements; the derived negative-control and estimation tables, the simulation frame, and the single JSON of reported numbers are released with the manuscript repository. The companion interactive explainer consumes the same JSON so that every figure and table in the manuscript and the explainer are guaranteed to agree.

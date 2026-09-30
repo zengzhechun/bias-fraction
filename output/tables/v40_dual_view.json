@@ -1,0 +1,114 @@
+{
+  "n_total": 1920000,
+  "truth_share": {
+    "effect_dominated": 0.1875,
+    "mixed": 0.2875,
+    "bias_dominated": 0.525
+  },
+  "strategies": [
+    {
+      "rule": "R0",
+      "declare_usable_pct": 67.70651,
+      "sens_ed": 82.279444,
+      "spec_ed": 35.656474,
+      "ppv_ed": 22.78569,
+      "npv_ed": 89.711226,
+      "sens_bd": 31.080357,
+      "spec_bd": 66.36568,
+      "ppv_bd": 50.527793,
+      "npv_bd": 46.55933
+    },
+    {
+      "rule": "R1",
+      "declare_usable_pct": 61.842604,
+      "sens_ed": 88.145556,
+      "spec_ed": 44.227308,
+      "ppv_ed": 26.724767,
+      "npv_ed": 94.174895,
+      "sens_bd": 57.575298,
+      "spec_bd": 83.304496,
+      "ppv_bd": 79.216704,
+      "npv_bd": 63.984426
+    },
+    {
+      "rule": "R2",
+      "declare_usable_pct": 44.179896,
+      "sens_ed": 88.134722,
+      "spec_ed": 65.963526,
+      "ppv_ed": 37.40448,
+      "npv_ed": 96.014447,
+      "sens_bd": 86.133631,
+      "spec_bd": 77.68432,
+      "ppv_bd": 81.010519,
+      "npv_bd": 83.52227
+    },
+    {
+      "rule": "R3",
+      "declare_usable_pct": 35.455156,
+      "sens_ed": 84.604444,
+      "spec_ed": 75.886987,
+      "ppv_ed": 44.741964,
+      "npv_ed": 95.527657,
+      "sens_bd": 93.13998,
+      "spec_bd": 67.060307,
+      "ppv_bd": 75.75894,
+      "npv_bd": 89.842069
+    },
+    {
+      "rule": "R4",
+      "declare_usable_pct": 22.087448,
+      "sens_ed": 82.075,
+      "spec_ed": 91.755833,
+      "ppv_ed": 69.673339,
+      "npv_ed": 95.68627,
+      "sens_bd": 98.729762,
+      "spec_bd": 45.095943,
+      "ppv_bd": 66.52731,
+      "npv_bd": 96.980751
+    },
+    {
+      "rule": "C1",
+      "declare_usable_pct": 51.27599,
+      "sens_ed": 98.288333,
+      "spec_ed": 59.573013,
+      "ppv_ed": 35.94092,
+      "npv_ed": 99.341316,
+      "sens_bd": 81.742262,
+      "spec_bd": 87.769846,
+      "ppv_bd": 88.077084,
+      "npv_bd": 81.306431
+    },
+    {
+      "rule": "C2",
+      "declare_usable_pct": 38.673854,
+      "sens_ed": 91.001111,
+      "spec_ed": 73.401667,
+      "ppv_ed": 44.119493,
+      "npv_ed": 97.248659,
+      "sens_bd": 91.865476,
+      "spec_bd": 72.427851,
+      "ppv_bd": 78.644067,
+      "npv_bd": 88.957333
+    }
+  ],
+  "auc": [
+    {
+      "score": "Calibrated P alone",
+      "auc_ed": 0.721455,
+      "auc_bd": 0.787266,
+      "_row": "Calibrated P alone"
+    },
+    {
+      "score": "BAF-hat alone",
+      "auc_ed": 0.9496,
+      "auc_bd": 0.921758,
+      "_row": "BAF-hat alone"
+    },
+    {
+      "score": "BAF-hat + CI half-width",
+      "auc_ed": 0.95006,
+      "auc_bd": 0.922764,
+      "_row": "BAF-hat + CI half-width"
+    }
+  ]
+}

@@ -1,0 +1,50 @@
+Warning message:
+package ‘data.table’ was built under R version 4.4.3 
+BSR core functions loaded (v35: BAF primary, BER auxiliary, Fieller added).
+[自校验1] 诊断 arm_k2 vs DATA 负对照对象：max|ΔlogRr| = 4.899e-12，max|Δse| = 1.936e-12
+宽限期取子集：3/5/7/10/14（文件另有 ，本次不用，以保持改动可归因于换面板）
+
+[自校验2] published_k2 vs output/data/bsr_results_v35.rds
+    mu_bias.mean    sigma_bias.sd log_rr_true.mean            cal_p 
+               0                0                0                0 
+  bf_plugin.mean        bf_median    bf_ci_lo.2.5%   bf_ci_hi.97.5% 
+               0                0                0                0 
+      class_diff 
+               0 
+    mu_bias.mean    sigma_bias.sd log_rr_true.mean            cal_p 
+               0                0                0                0 
+  bf_plugin.mean        bf_median    bf_ci_lo.2.5%   bf_ci_hi.97.5% 
+               0                0                0                0 
+      class_diff 
+               0 
+sl   最大偏差: bf=0.000e+00  bf_ci_lo=0.000e+00  bf_ci_hi=0.000e+00  bsr=0.000e+00
+loo  最大偏差: bf=0.000e+00  bsr=0.000e+00
+gp   最大偏差: cal_rr=0.000e+00  bf=0.000e+00
+diag 最大偏差: mu.mean=0.000e+00  sigma.sd=0.000e+00  shapiro_p=1.415e-11
+自校验2 通过：K2 面板全字段逐位复现已发表对象。
+
+[正式口径] matched_to_main（guideline 队列，暴露率 12.1%）
+自校验3 通过：SL 的 rr 与宽限期的 uncal_rr 两次运行一致（面板无关项未被误改）。
+
+           panel case mu_bias sigma_bias rr_uncal rr_cal log_rr_cal   cal_p
+    published_k2   bb -0.1905    0.06797   0.8315 1.0059   0.005918 0.94637
+ matched_to_main   bb -0.1678    0.11289   0.8315 0.9834  -0.016789 0.89396
+    published_k2 gdmt -0.1905    0.06797   0.6821 0.8252  -0.192125 0.04519
+ matched_to_main gdmt -0.1678    0.11289   0.6821 0.8067  -0.214833 0.10264
+ layer1_pass bf_plugin    baf baf_lo baf_hi half_width     zone_class
+       FALSE    0.9699 0.9067 0.7389 0.9928     0.1270 bias-dominated
+       FALSE    0.9090 0.8747 0.3847 0.9922     0.3037          mixed
+        TRUE    0.4979 0.5101 0.3564 0.6033     0.1234          mixed
+       FALSE    0.4385 0.4596 0.1856 0.6186     0.2165          mixed
+
+BB  LOO BAF 范围: 0.815 - 0.955（原 0.891 - 0.990）
+BB  LOO bsr 范围: 4.403 - 21.052（原 8.169 - 102.712）
+SL  bf: 0.871, 0.871, 0.876（原 0.901, 0.896, 0.918）
+GP  bf: 0.935, 0.857, 0.903, 0.951, 0.872（原 0.946, 0.973, 0.976, 0.931, 0.801）
+NC  logRR 范围: [-0.769, 0.178]；全部保护性 = FALSE（原 TRUE）
+NC  Shapiro p = 0.1714（原 0.1678）
+
+已写出:
+  output/data/bsr_results_v35_guideline.rds
+ output/data/negative_controls_expanded_guideline.rds
+ output/tables/v39_guideline_null_promotion.csv

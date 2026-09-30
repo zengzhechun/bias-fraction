@@ -29,6 +29,17 @@ _prerender_backup/
 simulation/v39_ba_gibbs_reps.rds
 simulation/v39_interval_joint_reps.rds
 
+# v40: large simulation objects (regenerate via R/16_sim_v37p1_80grid.R, R/27-R/29,
+# R/96_mirror_mu_regimes.R). The three small ones that ARE committed are listed in
+# R/_sync_v40_to_github.py (SIM_SMALL_RDS): v40_lookup_holdout.rds,
+# v40_gdmt_missing_sensitivity.rds, v40_ba_gibbs_stats.rds.
+simulation/v40_ba_gibbs_reps.rds
+simulation/v40_interval_joint_reps.rds
+simulation/v40_comparison_results*.rds
+simulation/v40_sim_frame*.rds
+# Mirror grid (R/96) writes a ~100 MB result object; regenerate rather than commit
+simulation/v40_comparison_results_mirror.rds
+
 # 同步/渲染过程中产生的备份目录
 *_backup*/
 _prerender_backup_*/

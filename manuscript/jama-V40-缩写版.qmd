@@ -1,0 +1,725 @@
+---
+title: "Quantifying Bias in Causal Estimates Using Negative Controls: The Bias Attribution Fraction"
+author:
+  - name: Zeng Zhechun
+    degrees: MD, MPH
+    affiliation: "1,2,3"
+    email: zengzhechun@icloud.com
+    corresponding: true
+  - name: Wang Jinwen
+    degrees: MD, PhD
+    affiliation: "1,2,3"
+  - name: Zuo Huijuan
+    degrees: MD, MPH
+    affiliation: "1,2,3"
+  - name: Shu Lixia
+    degrees: PhD
+    affiliation: "1,2,3"
+date: "2026-08-27"
+bibliography: references.bib
+csl: american-medical-association.csl
+format:
+  docx:
+    toc: false
+    number-sections: false
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+```{r setup, include=FALSE}
+suppressPackageStartupMessages({
+  library(jsonlite)
+  library(knitr)
+})
+source("../R/00_config.R")
+source("../R/01_bsr_core.R")
+library(EmpiricalCalibration)
+
+NUM <- jsonlite::fromJSON(file.path(TAB_DIR, "v40_all_numbers.json"),
+                          simplifyVector = FALSE)
+# Dual-view operating characteristics: same rules, both positive definitions
+# (declared usable = positive, or withheld = positive), so Table 2 and Figure 2
+# show the rule as it is written and as it is usually read. Written by
+# R/23_dual_view_metrics.R.
+dual <- jsonlite::fromJSON(file.path(TAB_DIR, "v40_dual_view.json"),
+                           simplifyVector = TRUE)
+
+des       <- NUM$design          # primary grid only (design description)
+des_p     <- NUM$design_pooled   # merged primary + mirror pool (evidence base)
+p1_int    <- NUM$part1$interior
+p1_full   <- NUM$part1$full
+l1        <- NUM$part2$layer1
+ciw       <- NUM$part2$ci_width
+strat     <- NUM$part2$strategies
+lookup    <- NUM$part2$lookup
+disc      <- NUM$part2$discrimination
+subg      <- NUM$part2$subgroups
+cases     <- NUM$part3$cases
+
+# Rows of the subgroup table that vary the number of negative controls.
+# Located by name rather than by index, so that adding or removing a K level
+# needs no edit here: K_lo/K_hi always point at the smallest and largest K.
+k_rows <- grep("^K = ", sapply(subg, `[[`, "subgroup"))
+K_lo   <- subg[[k_rows[1]]]
+K_hi   <- subg[[k_rows[length(k_rows)]]]
+K_lo_n <- sub("K = ([0-9]+).*", "\\1", K_lo$subgroup)
+K_hi_n <- sub("K = ([0-9]+).*", "\\1", K_hi$subgroup)
+BB  <- cases[[1]]
+GDM <- cases[[2]]
+
+sens      <- NUM$part3$sensitivity
+ncinfo    <- NUM$part3$nc
+
+# RR 95% CIs for the two case questions, read from the calibration RDS so the
+# reported intervals stay tied to the estimation output. The JSON cases carry
+# only point estimates; both the uncalibrated and calibrated RR CIs are used
+# inline in the Results sentences below (reviewer item #24).
+# v40 换口径（审稿意见第 2 条）：校准后的 RR 与区间必须与同句的 cal_p、BAF 同源，
+# 即一律读 guideline 面板的输出。DATA/bias_calibration_results.rds 是换口径前的
+# K2 面板，保留未覆盖，只作历史留档，稿内不得再引用。
+.cal_gdl <- file.path(OUT_DIR, "data", "bias_calibration_results_guideline.rds")
+.cal_pth <- if (file.exists(.cal_gdl)) .cal_gdl else
+  file.path(DATA_DIR, "bias_calibration_results.rds")
+cal_res <- readRDS(.cal_pth)
+bb_cal  <- cal_res$calibrated[["BB 1-Year Mortality"]]
+gdm_cal <- cal_res$calibrated[["GDMT >=2/3 Classes (1-Year)"]]
+
+
+# 基线特征表（新增 Table 3，由 R/24_baseline_table_publication.R 生成）
+bl <- readRDS(file.path(TAB_DIR, "baseline_table1.rds"))
+n_bl_total <- as.integer(bl$Overall[bl$Variable == "N"])
+
+# 入组流程：评估合格数、宽限期排除数、分析队列数三者必须自洽。前两个取自
+# LTMLE 输入文件，第三个由前两者相减得出，再与 Table 3 的 N 用 stopifnot
+# 交叉校验，避免任何一个数字单独漂移而不被发现。
+.flow_rds <- file.path(DATA_DIR, "ltmle_wide_K2_guideline.rds")
+pct_main_exposed <- NA_real_
+if (file.exists(.flow_rds)) {
+  .flow         <- as.data.frame(readRDS(.flow_rds))
+  n_flow_screen <- nrow(.flow)
+  n_flow_excl   <- sum(.flow$Y_W0 == 1L, na.rm = TRUE)
+  # 主分析的暴露率：指南限制文件里 A_W0 >= 2 的比例
+  # 分母取分析队列（宽限期存活者），与 Table 3 的分母一致。若用整份文件计，
+  # 会得到 11.8%（含宽限期内死亡者），与本稿表格口径不一致。
+  .flow_an <- .flow[.flow$Y_W0 == 0L, , drop = FALSE]
+  pct_main_exposed <- 100 * mean(.flow_an$A_W0 >= 2, na.rm = TRUE)
+} else {
+  # 有据可查的回退值（宽限期内死亡，见 R/25_adjusted_smd_iptw.R 的注释）
+  n_flow_screen <- 15053L
+  n_flow_excl   <- 376L
+  pct_main_exposed <- 12.07
+}
+n_flow_analytic <- as.integer(n_flow_screen - n_flow_excl)
+stopifnot(identical(n_flow_analytic, as.integer(n_bl_total)))
+
+# v40 换口径（审稿意见第 2 条）：负对照面板的暴露定义现已与主分析完全一致。
+# 旧口径把 12 个负对照拟合在 ltmle_wide_K2.rds 上（A_W0 计入全部 β 受体阻滞剂，
+# 43.0% 达 ≥50% 靶剂量），而两个目标估计拟合在 ltmle_wide_K2_guideline.rds 上
+# （A_W0 只计 carvedilol / metoprolol succinate / bisoprolol，12.1% 达阈值）。
+# OHDSI 经验校准要求负对照与目标估计走同一处理对比，两侧不一致是设计缺陷。
+# 本稿起负对照在指南限制队列上用 question 1 的暴露对比重新估计：
+#   R/90_diag_nc_exposure_consistency.R  两套面板的诊断对照
+#   R/92_promote_guideline_null.R        提升为正式口径（三重自校验，偏差为 0）
+#   R/93_promote_guideline_calibration.R 校准后 RR/CI 同步换面板
+# 已发表对象 bsr_results_v35.rds 保留未覆盖，仅用于在 Limitations 中如实披露
+# 换口径前后的变化。
+bsr_gdl <- readRDS(file.path(OUT_DIR, "data", "bsr_results_v35_guideline.rds"))
+bsr_pub <- readRDS(file.path(OUT_DIR, "data", "bsr_results_v35.rds"))
+
+# 负对照面板逐条估计：用于如实交代方向构成（几条在 1 以下、几条在 1 以上），
+# 不再断言面板「全部为保护性或零关联」。
+nc_est          <- readRDS(file.path(OUT_DIR, "data",
+                                    "negative_controls_expanded_guideline.rds"))$estimates
+n_nc_below_null <- sum(nc_est$logRr < 0)
+n_nc_above_null <- sum(nc_est$logRr > 0)
+
+# Question 2 缺失处理敏感性（R/29_gdmt_missing_sensitivity.R），已换用指南面板；
+# 四种口径的行内数字全部由该表驱动，避免正文与重新生成的表脱节。
+msens     <- read.csv(file.path(TAB_DIR, "v40_gdmt_missing_sensitivity.csv"),
+                      stringsAsFactors = FALSE)
+msens_pub <- msens[1, ]
+n_msens_notuse <- sum(msens$verdict == "not usable as effect evidence")
+# SMD 汇总（表题用，需在渲染前算好）
+smd_vals <- suppressWarnings(as.numeric(bl$SMD))
+smd_vals <- smd_vals[!is.na(smd_vals)]
+n_imb    <- sum(smd_vals > 0.10)
+iptw_vals <- suppressWarnings(as.numeric(bl$`SMD (IPTW)`))
+iptw_vals <- iptw_vals[!is.na(iptw_vals)]
+n_imb_iptw <- sum(iptw_vals > 0.10)
+max_smd_iptw <- max(iptw_vals, na.rm = TRUE)
+
+# Q2 (GDMT) baseline balance (Plan A): 与 Q1 同口径, 二进制对比 per run_ltmle_gdmt.R
+blq2 <- readRDS(file.path(TAB_DIR, "adjusted_smd_iptw_gdmt.rds"))
+q2_summ        <- blq2$summary
+q2_n_total     <- q2_summ$n_total
+q2_n_opt       <- q2_summ$n_opt
+q2_n_not       <- q2_summ$n_not
+q2_n_imb_unadj <- q2_summ$n_imb_unadj
+q2_n_imb_adjA  <- q2_summ$n_imb_adjA
+q2_max_adjA    <- q2_summ$max_adjA
+q2_max_unadj   <- q2_summ$max_unadj
+
+fmt_pct <- function(x, d = 1) sprintf(paste0("%.", d, "f"), as.numeric(x))
+fmt_num <- function(x, d = 2) sprintf(paste0("%.", d, "f"), as.numeric(x))
+
+# Figure legend bodies. Defined once here and referenced by both the chunk
+# fig.cap and the end-of-document Figure Legends section, so the two copies
+# cannot drift apart. Note: knitr chunk options are R expressions, so inline
+# `r ...` syntax does NOT work inside fig.cap; building the string here with
+# paste0 is the only way to keep these numbers tied to the JSON.
+# Evidence-pool counts come from the merged two-grid pool; the design
+# description keeps the primary grid. Truth shares are identical in both.
+n_tot_sp <- format(des_p$n_total, big.mark = " ")
+
+# Truth composition and panel size, derived from the JSON so that the
+# manuscript cannot drift from the simulation design (review finding #14).
+ts        <- des$truth_share
+sh_ed     <- sprintf("%.1f", 100 * ts$effect_dominated)
+sh_mix    <- sprintf("%.1f", 100 * ts$mixed)
+sh_bd     <- sprintf("%.1f", 100 * ts$bias_dominated)
+truth_txt <- paste0(sh_ed, "% / ", sh_mix, "% / ", sh_bd, "%")
+nc_k      <- fmt_num(NUM$part3$nc$K, 0)
+n_tot_txt <- format(des_p$n_total, big.mark = ",")
+
+# Subgroup rows that vary the exchangeability assumption, located by name.
+sg_name  <- sapply(subg, function(x) x$subgroup)
+subg_held <- subg[[which(sg_name == "bias exchangeability held")]]
+subg_viol <- subg[[which(sg_name == "30% exchangeability violation")]]
+
+cap_fig1 <- paste0(
+  "Bland-Altman agreement of the BAF estimator with the true BAF, Monte Carlo simulation across two grids, a primary grid and a sign-flipped companion (n = ",
+  n_tot_sp, " repetitions across ", fmt_num(des_p$n_conditions, 0),
+  " conditions); the empirical null fitted separately in each repetition was estimated by ",
+  "a conjugate Gibbs sampler. The x-axis is the true BAF of the simulated condition; the y-axis ",
+  "is the signed difference in each repetition BAF-hat minus BAF-true. The 2D density (warm ramp ",
+  "on white) summarizes all ", n_tot_sp, " repetitions. The solid horizontal line is the overall ",
+  "mean bias, the two dashed red lines are the 95% limits of agreement, and the inset table ",
+  "reports bias, SD, limits of agreement, Lin concordance correlation coefficient, and the ",
+  "proportional bias slope. The estimator systematically underestimates BAF-true."
+)
+
+cap_fig2 <- paste0(
+  "Receiver operating characteristic analysis for the reporting rules of Table 2, read from two ",
+  "viewpoints. Curves: the calibrated P value alone, BAF-hat alone, and BAF-hat plus its interval ",
+  "half-width; the in-panel tables report the area under each curve in that panel. Triangles: ",
+  "the operating points of R0 through R4 and C1, C2 of Table 2. Panel A. Effect-dominated view. ",
+  "Reference standard: truly effect-dominated. Positive call: declared usable as effect evidence. ",
+  "Panel B. Bias-dominated view. Reference standard: truly bias-dominated. Positive call: withheld. ",
+  "Truth has three levels (effect-dominated, mixed, bias-dominated, ", truth_txt, "), and the ",
+  "mixed zone falls outside the positive group of both views, which is why the views are not mirror ",
+  "images and why the same curve has a different area in each panel. Adding BAF-hat, not the interval ",
+  "width, carries the discriminatory information beyond the calibrated P value; the rules of Table 2 ",
+  "are read here as a stress test of the curves, every rule being one cut of the underlying score."
+)
+
+cap_fig3 <- paste0(
+  "Empirical null distribution and bias fraction for the two clinical questions. A, Empirical ",
+  "null distribution estimated from the negative control outcomes (left, beta-blocker question; ",
+  "right, guideline-directed medical therapy question). The fitted center (gray vertical dashed ",
+  "line at ", sprintf("%.3f", BB$mu_b), ", with its 95% confidence band shown as a shaded gray ",
+  "strip) marks the estimated mean systematic bias; the ", nc_k, " negative controls appear as filled ",
+  "circles with horizontal 95% confidence intervals on their own track. The funnel-shaped red ",
+  "dashed curves mark the 95% prediction interval of the empirical null model at each standard ",
+  "error, the region within which a true null estimate is expected to fall. The red diamond is ",
+  "the uncalibrated target estimate and the green diamond the calibrated estimate. B, Bias ",
+  "fraction (BAF) for the two clinical questions (BB, beta-blocker; GDMT, guideline-directed ",
+  "medical therapy), read as a continuous estimator of residual bias. Shaded zones indicate the ",
+  "three classification regions (effect-dominated, mixed, bias-dominated). Points show BAF ",
+  "estimates with 95% credible intervals; dashed lines at BAF = 1/3 and BAF = 0.5 denote zone ",
+  "boundaries."
+)
+
+# 表题字符串：须在 fmt_num 定义之后构建，供 chunk 选项 tbl-cap 用 !expr 取值。
+# （flextable::set_caption 在本 Quarto→docx 链路下不生效；表题须走 Quarto 的 tbl-cap，
+#   这样才会落成 Table Caption 样式，按 JAMA 口径不计入正文字数）
+# (unused cap_tbl2 object removed in v40: Table 3 carries its caption inline.)
+
+
+
+
+
+
+
+```
+
+^1^ Beijing Anzhen Hospital, Capital Medical University, Beijing 100029, China
+
+^2^ National Clinical Research Center for Cardiovascular Diseases, Beijing, China
+
+^3^ Beijing Institute of Heart, Lung and Blood Vessel Diseases, Beijing, China
+
+**Corresponding author:** Zeng Zhechun, MD, MPH
+Beijing Anzhen Hospital, Capital Medical University; Beijing Institute of Heart, Lung and Blood Vessel Diseases, Tongzhou Campus, No. 225 Songzhuang South 1st Street, Tongzhou District, Beijing 101149, China
+Email: zengzhechun@icloud.com
+
+**Study Type:** Original Investigation.
+
+**Keywords:** Bias Attribution Fraction, Bias (Epidemiology), Target Trial Emulation, Observational Studies as Topic, Reproducibility of Results.
+
+## Key Points
+
+*Question:* Can the Bias Attribution Fraction, derived from negative control calibration, quantify how much of an observational causal estimate is systematic bias?
+
+*Findings:* In a `r format(des_p$n_total, big.mark = ",")`-repetition simulation, BAF tracked the truth with moderate agreement and, added to the calibrated P value, lowered the misuse rate from `r paste0(fmt_pct(strat[[2]]$bd_among_declared_pct,1), "%")` to `r paste0(fmt_pct(strat[[5]]$bd_among_declared_pct,1), "%")`. In the beta-blocker case study (`r format(n_flow_analytic, big.mark = ",")` patients), BAF separated two questions that the calibrated P value did not, one bias-dominated and the other in the mixed zone.
+
+*Meaning:* BAF extends the binary calibrated P value into whether a signal exists, its size, and the fraction attributable to bias, at no additional data cost.
+
+## Abstract
+
+*Importance.* Only 30.8% of 237 target trial emulation (TTE) studies used statistical methods to assess the no-unmeasured-confounding assumption. Negative control calibration detects residual bias but returns only a calibrated P value, without quantifying bias relative to the surviving effect.
+
+*Objective.* To develop and evaluate the Bias Attribution Fraction (BAF), a bounded metric quantifying the fraction of systematic bias in a calibrated effect estimate.
+
+*Design, Setting, and Participants.* A factorial simulation (`r format(des_p$n_total, big.mark = ",")` repetitions; a primary grid plus a sign-flipped companion grid of identical size, pooled for all performance analyses) evaluated the BAF estimator by Bland-Altman agreement (primary) and a two-layer decision rule (calibrated P value, then BAF and its interval). It was then applied in a beta-blocker case study under a TARGET-compliant TTE design with doubly robust targeted maximum likelihood estimation and `r fmt_num(NUM$part3$nc$K,0)` negative controls, in 14,677 patients with heart failure for 1-year mortality (MIMIC-IV, 2008–2019).
+
+*Exposures.* (1) Achieving at least 50% of guideline-recommended beta-blocker target dose within 7 days; (2) receiving guideline-directed medical therapy with at least two of three foundational drug classes.
+
+*Main Outcomes and Measures.* The primary outcome was Bland-Altman agreement; the decision rule and case-study determinations were secondary.
+
+*Results.* Bland-Altman analysis showed mean bias `r fmt_num(p1_int$bias,3)` in the interior analysis (`r format(p1_int$n, big.mark = ",")` repetitions; concordance `r fmt_num(p1_int$ccc,2)`) and `r fmt_num(p1_full$bias,3)` across all `r format(p1_full$n, big.mark = ",")` repetitions (`r paste0(fmt_pct(p1_full$pct_in_loa,1), "%")` within limits of agreement), with stronger proportional bias near BAF = 1. The two-layer rule cut misuse (usable calls that were truly bias-dominated) from `r paste0(fmt_pct(strat[[2]]$bd_among_declared_pct,1), "%")` to `r paste0(fmt_pct(strat[[5]]$bd_among_declared_pct,1), "%")`, and misuse fell monotonically across K = `r K_lo_n` to `r K_hi_n` negative controls. In the case study, question 1 was bias-dominated (BAF = `r fmt_num(BB$bf,2)` [95% credible interval, `r fmt_num(BB$bf_lo,2)`-`r fmt_num(BB$bf_hi,2)`]) despite the TARGET-compliant design and TMLE. Neither question passed the calibrated-P screen; question 2 had a BAF of `r fmt_num(GDM$bf,2)` (95% credible interval, `r fmt_num(GDM$bf_lo,2)`-`r fmt_num(GDM$bf_hi,2)`) in the mixed zone with the interval spanning both zone boundaries, supporting a competitive determination with no usable determination.
+
+*Conclusions and Relevance.* BAF quantifies the fraction of systematic bias in the calibrated signal, a bounded complement to the calibrated P value. A rigorously designed case study still showed the beta-blocker target-dose question to be bias-dominated, so empirical bias diagnostics are necessary, not optional; this demonstration is not evidence of drug ineffectiveness.
+
+## Introduction
+
+Target trial emulation [@hernan2016bigdata] and targeted maximum likelihood estimation [@lendle2017ltmle; @vanderlaan2011targeted] cannot remove unmeasured confounding: of 237 target trial emulation studies surveyed, only 30.8% assessed it statistically [@ren2026tte]. The healthy adherer effect, in which adherence predicts better outcomes for events the therapy cannot plausibly affect, illustrates the threat [@simpson2006healthy; @shrank2011healthy], and the E-value [@vanderweele2017evalue] quantifies the confounding needed to overturn a result, not how much of the association is bias.
+
+Rigorous eligibility criteria, time-zero alignment, and doubly robust estimation remove bias visible in measured covariates, but none bounds the bias remaining when a prognostic factor was never recorded, and nothing in a reported effect size, confidence interval, and P value reveals when that bias dominates.
+
+The Observational Health Data Sciences and Informatics (OHDSI) consortium estimates an empirical null from negative controls, outcomes not causally affected by the treatment but sharing its confounding structure, and returns a calibrated P value [@schuemie2014interpreting] and calibrated effect [@schuemie2018empirical]. Calibration answers only whether the calibrated P value rejects the null, not how large the bias is relative to the surviving signal. We propose the Bias Attribution Fraction (BAF) = |$\hat{\mu}_B$| / (|$\hat{\mu}_B$| + |$\tilde{\psi}$|), the fraction of that signal attributable to systematic bias on a bounded [0, 1] scale. Existing bias analyses return an adjusted estimate rather than a share of the association [@lash2009qba; @greenland1996basic; @schneeweiss2006; @maclehose2005], and negative-control methods stop at that P value [@schuemie2014interpreting; @shi2020negative]. We assess how accurately BAF recovers the true bias in simulation and what it reveals in a TARGET-compliant emulation calibrated with `r fmt_num(NUM$part3$nc$K,0)` negative controls.
+
+
+
+## Methods
+
+**The credibility metric.** Consider an observational study of a binary treatment $A$ and outcome $Y$ with target estimand $\psi = \log \mathrm{RR}_{\text{true}}$, estimated by TMLE as $\hat{\psi}_{\text{obs}}$ with standard error $\hat{\sigma}_{\text{obs}}$. Suppose $K$ negative control outcomes share the confounding structure of $Y$ but are not causally affected by $A$; each yields $\hat{\gamma}_k$ with standard error $\hat{\tau}_k$.
+
+The key assumption is bias exchangeability: conditional on measured covariates, the residual bias affecting $\hat{\psi}_{\text{obs}}$ is distributed as that governing the negative control estimates. Like the assumption it diagnoses, it cannot be verified from data.
+
+Under bias exchangeability, $\mu_B$ is estimated by fitting an empirical null to $\{(\hat{\gamma}_k, \hat{\tau}_k)\}_{k=1}^{K}$ with the fitNull function of the EmpiricalCalibration R package [@schuemie2014interpreting], yielding $\hat{\mu}_B$ and $\hat{\sigma}_B$. The bias-corrected estimate is $\tilde{\psi} = \hat{\psi}_{\text{obs}} - \hat{\mu}_B$, with calibrated standard error $\tilde{\sigma} = \sqrt{\hat{\sigma}_{\text{obs}}^2 + \hat{\sigma}_B^2}$.
+
+Building on this framework, we define the Bias Attribution Fraction as
+
+$$\mathrm{BAF} = \frac{|\hat{\mu}_B|}{|\hat{\mu}_B| + |\tilde{\psi}|} = \frac{|\hat{\mu}_B|}{|\hat{\mu}_B| + |\hat{\psi}_{\text{obs}} - \hat{\mu}_B|}.$$
+
+Absolute values keep BAF between 0 and 1 whatever the sign of either component, so the metric is scale-invariant and bounded [@vanderweele2017evalue]. One BAF is therefore consistent with bias that inflates the effect, shrinks it toward the null, or reverses its sign; the primary grid sets the true effect and the true bias to the same sign and so evaluates the inflationary regime in detail, while a companion grid of the same size flips that sign and covers the other two (Supplement 1); the two grids are pooled for every performance analysis reported below. We define three regions: bias-dominated when BAF exceeds 0.5 ($|\mu_B| > |\tilde{\psi}|$), effect-dominated when BAF falls below 1/3 ($|\mu_B| < |\tilde{\psi}|/2$), and mixed in between.
+
+**Interval estimation.** BAF is a ratio whose denominator is itself a difference of estimates, so its uncertainty cannot be inherited from a standard error. We therefore propagate it: draws of $\mu_B$ are passed through the BAF function with $\hat{\psi}_{\mathrm{obs}}$ held fixed, and the interval is the 2.5th to 97.5th percentile of the resulting distribution, its point estimate the median. It is a credible interval, not a confidence interval. Sampling details and the half-width summary, $(\widehat{\mathrm{BAF}}_{\mathrm{hi}} - \widehat{\mathrm{BAF}}_{\mathrm{lo}})/2$, appear in eMethods in Supplement 1.
+
+**Simulation.** Because the true bias is unknown in any application, its recovery cannot be judged from data, so we simulated a factorial design with the truth known by construction, including settings that violate bias exchangeability deliberately. Five factors were crossed following the ADEMP framework [@morris2019simulation] in the primary grid, `r fmt_num(des$n_conditions,0)` conditions × `r fmt_num(des$n_reps_per_cond,0)` repetitions (`r format(des$n_total, big.mark = ",")`); a companion grid of the same size flips the sign of the true systematic bias, and pooling the two grids yields `r format(des_p$n_total, big.mark = ",")` repetitions across `r fmt_num(des_p$n_conditions,0)` conditions, the base for every performance analysis reported below. Table 1 lists the factors with the bias center at both signs, and eMethods in Supplement 1 justifies each level [@simpson2006healthy]. Analyses used R 4.4.1 with bafratio 0.4.0, EmpiricalCalibration 3.1.4, and ltmle 1.3.0, with fixed random seeds (43 for the primary grid and 100 043 for the companion grid, whose random number stream is disjoint from the primary one).
+
+::: {custom-style="Table Caption"}
+**Table 1. Simulation design.**
+:::
+
+```{r jama-table-simdesign}
+suppressPackageStartupMessages({library(flextable); library(officer)})
+
+n_cond <- fmt_num(des_p$n_conditions, 0)
+n_rep  <- fmt_num(des$n_reps_per_cond, 0)
+psi_lo <- fmt_num(min(unlist(des$psi_levels)), 2)
+psi_hi <- fmt_num(max(unlist(des$psi_levels)), 2)
+mu_lo  <- fmt_num(min(unlist(des$mu_b_levels)), 2)
+mu_hi  <- fmt_num(max(unlist(des$mu_b_levels)), 2)
+# 镜像半网格把 μ_B 的符号整体翻转，故合并设计的 μ_B 有 2×8=16 档（无 0 档）
+mu_lo_p <- paste0("+", fmt_num(-max(unlist(des$mu_b_levels)), 2))
+mu_hi_p <- paste0("+", fmt_num(-min(unlist(des$mu_b_levels)), 2))
+n_mu_lev <- as.character(2 * length(unlist(des$mu_b_levels)))
+sps    <- paste(sapply(unlist(des$sigma_ps_levels), function(x) fmt_num(x, 2)), collapse = ", ")
+Ks     <- paste(unlist(des$K_levels), collapse = ", ")
+
+# 临床读者更习惯 RR 尺度，故把可换算的效应量就地给出 RR 等价。
+# 判据：只有「效应量」(psi, mu_B, 偏移) 是 log RR，可以 exp() 换算；
+#       标准差 (sigma_psi, sigma_B, 对照 SE) 描述的是 log 尺度上的散布，
+#       exp() 之后不再是相对风险，故不给 RR 等价，表注会说明这一点。
+rr_rng <- function(lo, hi) paste0(" (RR, ", fmt_num(exp(lo), 2),
+                                  "-",     fmt_num(exp(hi), 2), ")")
+rr_psi <- rr_rng(min(unlist(des$psi_levels)),  max(unlist(des$psi_levels)))
+# μ_B 双符号：负半 RR 0.67-0.95，正半 RR 1.05-1.49（均由 exp() 算出，不心算）
+rr_mu  <- paste0(" (RR, ", fmt_num(exp(min(unlist(des$mu_b_levels))), 2),
+                 "-", fmt_num(exp(max(unlist(des$mu_b_levels))), 2),
+                 " and ", fmt_num(exp(-max(unlist(des$mu_b_levels))), 2),
+                 "-", fmt_num(exp(-min(unlist(des$mu_b_levels))), 2), ")")
+# 偏移量 +0.15 未进 JSON，仍与设计保持一致地写死，但 RR 等价由 exp() 算出，不心算
+rr_exv <- paste0(" (RR, ", fmt_num(exp(0.15), 2), ")")
+
+# 表注举例用的两个值（同样动态取，避免与表格里的数字脱节）
+rr_psi_lo  <- fmt_num(exp(min(unlist(des$psi_levels))), 2)
+pct_lo_psi <- fmt_num(100 * (1 - exp(min(unlist(des$psi_levels)))), 0)
+
+# Levels 列一律从设计对象取，不写死：K 在 v40b 由 2 档扩到 3 档时，写死的
+# "2" 会与同一行动态的 Values 列（12, 25, 50）自相矛盾。
+nlev <- function(x) as.character(length(unlist(x)))
+
+d <- data.frame(
+  Element = c(paste0("Fixed within a condition (defines the ", n_cond, " conditions)"),
+              "True effect", "Systematic bias center",
+              "Standard error of the target estimate", "Negative controls",
+              "Exchangeability violation",
+              paste0("Redrawn in each of the ", n_rep, " repetitions"),
+              "Target estimate", "Control estimates", "Control standard errors"),
+  Levels  = c("", nlev(des$psi_levels), n_mu_lev,
+              nlev(des$sigma_ps_levels), nlev(des$K_levels),
+              nlev(des$exV_levels), "", "1", "K", "K"),
+  Values  = c("", paste0(psi_lo, " to ", psi_hi, ", equally spaced", rr_psi),
+              paste0(mu_lo, " to ", mu_hi, " and ", mu_lo_p, " to ", mu_hi_p,
+                     ", in steps of 0.05", rr_mu),
+              sps, Ks, paste0("None; 30% of controls shifted by +0.15", rr_exv),
+              "", "", "", "Uniform (0.03, 0.12)"),
+  stringsAsFactors = FALSE
+)
+
+ft <- flextable(d)
+# 符号用 KaTeX 渲染为真 OMML（as_equation 内部即数学模式，不需 $ 定界符）
+ft <- compose(ft, j = 1, i = 2, value = as_paragraph("True effect, ", as_equation("\\psi")))
+ft <- compose(ft, j = 1, i = 3, value = as_paragraph("Systematic bias center, ", as_equation("\\mu_B")))
+ft <- compose(ft, j = 1, i = 4, value = as_paragraph("Standard error of the target estimate, ", as_equation("\\sigma_\\psi")))
+ft <- compose(ft, j = 1, i = 5, value = as_paragraph("Negative controls, ", as_equation("K")))
+ft <- compose(ft, j = 2, i = c(9, 10), value = as_paragraph(as_equation("K")))
+ft <- compose(ft, j = 3, i = 8, value = as_paragraph(
+      as_equation("\\hat{\\psi}_{\\mathrm{obs}}=\\psi+\\mu_B+\\varepsilon"), ", with ",
+      as_equation("\\varepsilon\\sim\\mathrm{N}(0,\\sigma_\\psi^2)")))
+ft <- compose(ft, j = 3, i = 9, value = as_paragraph(
+      as_equation("\\hat{\\gamma}_k\\sim\\mathrm{N}(\\mu_B,\\sigma_B^2)"), ", with ",
+      as_equation("\\sigma_B=0.05")))
+
+sec_rows  <- c(1, 7)
+item_rows <- c(2:6, 8:10)
+
+# merge_at 要求所选行连续，故逐行合并
+ft <- merge_at(ft, i = 1, j = 1:3, part = "body")
+ft <- merge_at(ft, i = 7, j = 1:3, part = "body")
+ft <- theme_booktabs(ft)                                      # JAMA 三线表
+ft <- fontsize(ft, size = 9, part = "all")
+ft <- bold(ft, part = "header")
+ft <- bold(ft, i = sec_rows, part = "body")
+ft <- align(ft, j = 1, align = "left",   part = "all")
+ft <- align(ft, j = 2, align = "center", part = "all")
+ft <- align(ft, j = 3, align = "left",   part = "all")
+ft <- padding(ft, i = item_rows, j = 1, padding.left = 14, part = "body")   # 条目缩进
+ft <- width(ft, j = 1, width = 2.35)
+ft <- width(ft, j = 2, width = 0.70)
+ft <- width(ft, j = 3, width = 2.95)
+ft <- set_header_labels(ft, Element = "Element", Levels = "Levels", Values = "Values")
+ft
+```
+
+
+::: {custom-style="Table Caption"}
+The upper block lists the five crossed factors, every combination of which is one condition; the lower block lists the quantities redrawn within each repetition, its only sources of variation because the truth is fixed within a condition. Effects are on the log relative-risk scale; the relative risks in parentheses are their exponentials, so a log relative risk of `r psi_lo` is a relative risk of `r rr_psi_lo`, a `r pct_lo_psi`% lower risk. Standard errors describe spread rather than an effect and have no relative-risk equivalent. The true effect $\psi$ is negative at every level. In the 960 conditions where the bias center shares its sign, the bias inflates the apparent effect; in the 960 conditions where it opposes the effect, the bias shrinks it, cancels it exactly, or reverses its sign. The two half-grids are pooled for every performance analysis, and the opposing half is additionally analysed role by role (eTables 13 and 14 in Supplement 1). Justification for each level appears in eMethods in Supplement 1.
+:::
+
+**Performance measures.** The repetitions answered two questions. The first asked how closely $\widehat{\mathrm{BAF}}$ tracks the truth, by Bland-Altman analysis [@blandaltman1986] with the signed difference $\widehat{\mathrm{BAF}} - \mathrm{BAF}_{\mathrm{true}}$ plotted against $\mathrm{BAF}_{\mathrm{true}}$; summaries were the mean signed difference, its SD, the 95% limits of agreement, and the Lin concordance correlation coefficient [@lin1989ccc], with proportional bias tested by regressing the difference on $\mathrm{BAF}_{\mathrm{true}}$. Because the least negative effect level (ψ = `r fmt_num(unlist(des$psi_levels)[length(unlist(des$psi_levels))],2)`) drives $\mathrm{BAF}_{\mathrm{true}}$ against the estimator's bound of 1, we prespecified the full pooled design and an interior set excluding it.
+
+The second asked whether a reporting rule built on $\widehat{\mathrm{BAF}}$ separates trustworthy from untrustworthy estimates. Layer 1 declares an estimate usable when its calibrated P value is below .05; layer 2 maps $\widehat{\mathrm{BAF}}$ with its interval half-width, through a lookup table split at the median half-width (eTables 1 and 2 in Supplement 1), to a conservative probability that the estimate is bias-dominated, and then to one of four determinations: usable as effect evidence below 15%, mixed and hypothesis-generating below 45%, competitive below 65%, and not usable at 65% or above. Each rule is summarized by its share declared usable and its misuse rate; discrimination was compared across the calibrated P value alone, $\widehat{\mathrm{BAF}}$ alone, and $\widehat{\mathrm{BAF}}$ with its half-width. The mixed zone is negative in both views, so both are reported.
+
+**TTE case study.** Two target trial emulations [@hernan2016bigdata] were conducted in MIMIC-IV linked to MIMIC-IV-ECG [@johnson2023mimic; @johnson2023mimic2], with every design decision checked against the TARGET guideline [@cashin2025target]. Participants were adults hospitalized for heart failure who were new users of beta-blockers, and the outcome was one-year all-cause mortality. Strategies were ascertained over a 7-day grace period with time zero at its end, so the design avoids immortal time bias and time-varying confounding but estimates a baseline-strategy contrast, not the effect of sustained adherence. Question 1 compared achieving at least 50% of the guideline-recommended beta-blocker target dose with failing to reach it; the qualifying agents, their target doses, and the derivation of the in-hospital daily dose are given in eMethods in Supplement 1. Question 2 compared guideline-directed medical therapy (at least two of three foundational drug classes at adequate dose) with not receiving it, a definition predating sodium-glucose cotransporter 2 inhibitors in heart failure [@mcmurray2019dapagliflozin; @packer2020empagliflozin].
+
+One-year all-cause mortality was estimated by targeted maximum likelihood estimation (TMLE) [@vanderlaan2011targeted], a doubly robust, semiparametric efficient estimator of the log relative risk. For question 1 the treatment mechanism used a Super Learner [@vanderlaan2007superlearner] of two learners (main-term and Lasso logistic regression) with a main-term logistic outcome model; for question 2 both models were main-term logistic regressions (SL.glm), as for the negative controls. The negative controls shared the target estimates' hospitalizations, window, exclusion, covariates, estimator, and exposure contrast, the last because the panel was fitted on the guideline-restricted cohort, in which exposure is defined as for question 1 by receipt of carvedilol, metoprolol succinate, or bisoprolol at or above 50% of the target dose, covering `r sprintf("%.1f", pct_main_exposed)`% of the analytic cohort. The resulting empirical null (mean bias `r sprintf("%.3f", BB$mu_b)`, SD `r sprintf("%.3f", BB$sigma_b)`) was applied to both questions [@lipsitch2010negative; @schuemie2018empirical]; the candidate list, the screening levels, and the per-control estimates appear in eMethods and eTable 6 in Supplement 1.
+
+**Data source and participants.** The case study used MIMIC-IV (version 2.2) linked at the stay level to MIMIC-IV-ECG (version 1.0.1), covering intensive care unit admissions at Beth Israel Deaconess Medical Center between 2008 and 2019 [@johnson2023mimic; @johnson2023mimic2]. Eligible adults had a first intensive care unit stay, at least 24 hours of continuous monitoring, and a 12-lead electrocardiogram during the index stay. Of `r format(n_flow_screen, big.mark = ",")` heart-failure hospitalizations assessed, `r format(n_flow_excl, big.mark = ",")` did not survive the 7-day grace period, leaving `r format(n_flow_analytic, big.mark = ",")`. The institutional review boards approved the study with a waiver of informed consent.
+
+## Results
+
+**Simulation.**
+
+**Bland-Altman agreement.** The prespecified primary analysis set was the interior of the grid, excluding the ψ = `r fmt_num(des$psi_levels[length(des$psi_levels)],2)` boundary level where $\mathrm{BAF}_{\mathrm{true}}$ approaches 1; there $\widehat{\mathrm{BAF}}$ had mean difference `r fmt_num(p1_int$bias,3)` across `r format(p1_int$n, big.mark = ",")` repetitions with Lin concordance `r fmt_num(p1_int$ccc,3)`. Across all `r format(p1_full$n, big.mark = ",")` repetitions of the full design the mean difference was `r fmt_num(p1_full$bias,3)` with 95% limits of agreement `r fmt_num(p1_full$loa_lo,3)` to `r fmt_num(p1_full$loa_hi,3)`, concordance `r fmt_num(p1_full$ccc,3)`, and `r paste0(fmt_pct(p1_full$pct_in_loa,1), "%")` within the limits; proportional bias was significant (slope `r fmt_num(p1_full$slope,4)`, P < .001). $\widehat{\mathrm{BAF}}$ therefore underestimates $\mathrm{BAF}_{\mathrm{true}}$, concentrated near the boundary (Figure 1).
+
+**Discrimination.** In the bias-dominated view, the calibrated P value alone reached an AUC of `r fmt_num(disc[[1]]$auc,3)`; adding $\widehat{\mathrm{BAF}}$ raised it to `r fmt_num(disc[[2]]$auc,3)`, and adding the interval half-width moved it by `r paste0(ifelse(disc[[3]]$auc >= disc[[2]]$auc, "+", "-"), fmt_num(abs(disc[[3]]$auc - disc[[2]]$auc), 4))` (likelihood ratio χ² = `r sub(".*chi2 = ([0-9.]+).*", "\\1", disc[[3]]$note)`, df = 1, P < .001), too small to change any classification. In the effect-dominated view the same three scores reached `r fmt_num(dual$auc$auc_ed[1],3)`, `r fmt_num(dual$auc$auc_ed[2],3)` and `r fmt_num(dual$auc$auc_ed[3],3)`: $\widehat{\mathrm{BAF}}$ ranks effect-dominated estimates better than bias-dominated ones (`r fmt_num(dual$auc$auc_ed[2],2)` vs `r fmt_num(dual$auc$auc_bd[2],2)`), the reverse of the calibrated P value.
+
+**Reporting rule performance.** Table 2 and Figure 2 show each rule as an operating point: each added component declares fewer estimates usable but a smaller share of those declarations is wrong. Under the calibrated P value alone, `r paste0(fmt_pct(strat[[2]]$declare_usable_pct,1), "%")` of repetitions were declared usable and `r paste0(fmt_pct(strat[[2]]$bd_among_declared_pct,1), "%")` of those were in truth bias-dominated; under the most stringent rule (R4), only `r paste0(fmt_pct(strat[[5]]$bd_among_declared_pct,1), "%")` were. The number of negative controls was itself a design lever: across K = `r K_lo_n` to `r K_hi_n`, the median interval half-width fell from `r fmt_num(K_lo$median_half_width,3)` to `r fmt_num(K_hi$median_half_width,3)` and the misuse rate from `r paste0(fmt_pct(K_lo$bd_among_declared_pct,1), "%")` to `r paste0(fmt_pct(K_hi$bd_among_declared_pct,1), "%")` (eTable 3 in Supplement 1).
+
+
+```{r jama-fig-ba, fig.cap=NULL, out.width="100%"}
+knitr::include_graphics(file.path(FIG_DIR, "v40", "figI_bland_altman_gibbs_2d_panel.png"))
+```
+
+::: {.landscape}
+
+```{r jama-fig-roc, fig.cap=NULL, out.width="100%"}
+knitr::include_graphics(file.path(FIG_DIR, "v40", "figP2C_roc_paper.png"))
+```
+
+::: {custom-style="Table Caption"}
+**Table 2. Performance of the nested reporting rules across `r n_tot_sp` simulated repetitions, read from two viewpoints.** Every rule withholds a repetition unless all the conditions listed for it are met; only then is the repetition declared usable as effect evidence. A single rule has two readings at once. The **effect-dominated view** (columns under the left grey band) takes a positive call to be "declared usable" and a positive truth to be truly effect-dominated. The **bias-dominated view** (columns under the right grey band) takes a positive call to be "withheld" and a positive truth to be truly bias-dominated. In each view: Sens = share of truly positive repetitions the rule called positive; Spec = share of truly negative repetitions the rule called negative; PPV = share of repetitions the rule called positive that were truly positive; NPV = share the rule called negative that were truly negative. Truth has three levels (effect-dominated `r sh_ed`%, mixed `r sh_mix`%, bias-dominated `r sh_bd`%); the mixed zone is negative in both views, so the views are not mirror images. The rules are ordered by the positive-call rate of the bias-dominated view; within each group the stricter rule is below. Layer 1 is a calibrated P value below .05. R0 uses the uncalibrated P value. R1 is layer 1 alone; R2, R3 and R4 each add one requirement to it: R2, $\widehat{\mathrm{BAF}}$ below 0.5; R3, the whole 95% credible interval of $\widehat{\mathrm{BAF}}$ below 0.5, the bias-dominated threshold, so that the interval is clear of bias dominance; R4, a calibrated probability that the repetition is truly bias-dominated below 15%, read from eTable 1 in Supplement 1. C1 and C2 apply the two $\widehat{\mathrm{BAF}}$ requirements without layer 1, which is why they are listed apart.
+:::
+
+```{r jama-table2}
+# 双视角 10 列性能表：每条规则同时给出「判可用视角」与「扣下视角」下的
+# 灵敏度、特异度、PPV、NPV。8 指标由 R/23_dual_view_metrics.R 预先算好
+# 写入 v40_dual_view_strategy.csv；这里不重算 960,000，只读 CSV + 加规则
+# 标签与多级表头。多级表头在 8.33 in 横向版心放下时按 0.45 / 1.90 / 0.70×8
+# 分配列宽；纵向版心装不下，已与 Figure 2 一起放在后面的横向节里。
+suppressPackageStartupMessages(library(flextable))
+
+DUAL <- read.csv(file.path(TAB_DIR, "v40_dual_view_strategy.csv"),
+                 stringsAsFactors = FALSE)
+stopifnot(setequal(DUAL$rule, c("R0","R1","R2","R3","R4","C1","C2")))
+
+DEFN <- c(
+  R0 = "Uncalibrated P < .05 (no bias correction)",
+  R1 = "Calibrated P < .05 (layer 1 only)",
+  R2 = "Layer 1, plus BAF point estimate below 0.5, the bias-dominated threshold",
+  R3 = "Layer 1, plus the whole credible interval of BAF below 0.5, the bias-dominated threshold",
+  R4 = "Layer 1, plus probability of bias dominance below 15%",
+  C1 = "BAF point estimate below 0.5, the bias-dominated threshold, no layer 1",
+  C2 = "The whole credible interval of BAF below 0.5, the bias-dominated threshold, no layer 1"
+)
+stopifnot(setequal(DUAL$rule, names(DEFN)))
+
+# 按代号固定顺序：R0-R4 在前、C1-C2 在后，分组小标题按此顺序排在各组第一行
+DUAL <- DUAL[match(c("R0","R1","R2","R3","R4","C1","C2"), DUAL$rule), ]
+row.names(DUAL) <- NULL
+
+st <- data.frame(
+  Rule                = DUAL$rule,
+  `Withholds unless`  = unname(DEFN[DUAL$rule]),
+  `Sens, ED (%)`      = sprintf("%.1f", DUAL$sens_ed),
+  `Spec, ED (%)`      = sprintf("%.1f", DUAL$spec_ed),
+  `PPV, ED (%)`       = sprintf("%.1f", DUAL$ppv_ed),
+  `NPV, ED (%)`       = sprintf("%.1f", DUAL$npv_ed),
+  `Sens, BD (%)`      = sprintf("%.1f", DUAL$sens_bd),
+  `Spec, BD (%)`      = sprintf("%.1f", DUAL$spec_bd),
+  `PPV, BD (%)`       = sprintf("%.1f", DUAL$ppv_bd),
+  `NPV, BD (%)`       = sprintf("%.1f", DUAL$npv_bd),
+  check.names = FALSE, stringsAsFactors = FALSE
+)
+
+# 分组小标题：用 Rule 列承载文字，便于 merge_at 跨整行合并
+# 两组按代号前缀 C 切分，组顺序与数据顺序一致（嵌套规则先、stand-alone 后）。
+grp <- ifelse(startsWith(st$Rule, "C"),
+              "Stand-alone comparators, no calibrated P value",
+              "Nested rules, each adding one component")
+out <- NULL
+for (g in unique(grp)) {
+  hdr <- st[1, ]; hdr[] <- ""
+  hdr$Rule <- g
+  out <- rbind(out, hdr, st[grp == g, ])
+}
+sec_rows <- which(out$Rule %in% unique(grp))
+
+ft <- flextable(out)
+for (sr in sec_rows) ft <- merge_at(ft, i = sr, j = 1:10)
+ft <- align(ft, i = sec_rows, j = 1, align = "left", part = "body")
+ft <- padding(ft, i = sec_rows, j = 1, padding.left = 4, part = "body")
+
+# 多级表头：上层把 8 指标归到两个视角下，下层是列名。列名自带视角缩写
+#   (ED/BD)，第二行是缩写前的 Sens/Spec/PPV/NPV，会重复。改为：
+#   第 1 层：Rule | Withholds unless | "Effect-dominated view" | "Bias-dominated view"
+#   第 2 层：Rule | Withholds unless | "Sens (ED)" "Spec (ED)" "PPV (ED)" "NPV (ED)"
+#                                  | "Sens (BD)" "Spec (BD)" "PPV (BD)" "NPV (BD)"
+ft <- add_header_row(ft, values = c("", "", "Effect-dominated view", "Bias-dominated view"),
+                     colwidths = c(1, 1, 4, 4), top = TRUE)
+ft <- set_header_labels(ft,
+                        Rule               = "Rule",
+                        `Withholds unless` = "Withholds unless",
+                        `Sens, ED (%)`     = "Sens (ED)",
+                        `Spec, ED (%)`     = "Spec (ED)",
+                        `PPV, ED (%)`      = "PPV (ED)",
+                        `NPV, ED (%)`      = "NPV (ED)",
+                        `Sens, BD (%)`     = "Sens (BD)",
+                        `Spec, BD (%)`     = "Spec (BD)",
+                        `PPV, BD (%)`      = "PPV (BD)",
+                        `NPV, BD (%)`      = "NPV (BD)")
+
+ft <- theme_booktabs(ft)
+ft <- fontsize(ft, size = 8, part = "all")                # 与 Table 3 一致
+ft <- bold(ft, part = "header")
+ft <- bold(ft, i = sec_rows, j = 1)
+ft <- align(ft, j = 1:2,  align = "left",  part = "all")
+ft <- align(ft, j = 3:10, align = "right", part = "all")
+# 8.33 in 横向版心：Rule 0.45 + Withholds 1.90 + 8×0.70 = 7.95 in，余量作 cell padding
+ft <- width(ft, j = 1,  width = 0.45)
+ft <- width(ft, j = 2,  width = 1.90)
+for (j in 3:10) ft <- width(ft, j = j, width = 0.70)
+ft <- padding(ft, padding.top = 1, padding.bottom = 1, part = "all")
+ft <- set_table_properties(ft, layout = "fixed")
+ft <- add_footer_lines(ft, values = paste0(
+  "Every rule is listed with the extra requirement it imposes on layer 1, so the rows are ",
+  "nested rather than duplicated: R1 is layer 1 alone, R2 adds the BAF point estimate, R3 ",
+  "additionally requires the whole 95% credible interval to lie below 0.5, and R4 replaces ",
+  "the interval requirement with a calibrated probability of bias dominance below 15%. ",
+  "Each added requirement lowers the share declared usable and lowers the misuse rate among ",
+  "those declared usable: ", 
+  sprintf("%.1f%%", DUAL$declare_usable_pct[DUAL$rule == "R1"]), " declared usable with ",
+  sprintf("%.1f%%", DUAL$bd_among_declared_pct[DUAL$rule == "R1"]), " misuse under R1, ",
+  sprintf("%.1f%%", DUAL$declare_usable_pct[DUAL$rule == "R2"]), " and ",
+  sprintf("%.1f%%", DUAL$bd_among_declared_pct[DUAL$rule == "R2"]), " under R2, ",
+  sprintf("%.1f%%", DUAL$declare_usable_pct[DUAL$rule == "R3"]), " and ",
+  sprintf("%.1f%%", DUAL$bd_among_declared_pct[DUAL$rule == "R3"]), " under R3, and ",
+  sprintf("%.1f%%", DUAL$declare_usable_pct[DUAL$rule == "R4"]), " and ",
+  sprintf("%.1f%%", DUAL$bd_among_declared_pct[DUAL$rule == "R4"]), " under R4. The two ",
+  "requirements are not interchangeable: R3 constrains the interval and R4 the calibrated ",
+  "probability, and at these settings R4 is the stricter of the two."))
+ft
+```
+
+:::
+
+**TTE Case study.** Baseline characteristics of the `r format(n_bl_total, big.mark = ",")` eligible patients by beta-blocker target-dose strategy appear in Table 3, and those of the `r format(q2_n_total, big.mark = ",")` eligible patients by guideline-directed medical therapy strategy appear in eTable 7 in Supplement 1.
+
+::: {custom-style="Table Caption"}
+**Table 3. Baseline characteristics of the `r format(n_bl_total, big.mark = ",")` eligible patients by treatment strategy (beta-blocker target-dose question).** Values are mean (SD) for continuous variables and No. (%) for categorical variables. SMD is the absolute standardized mean difference between strategies. Of `r length(smd_vals)` baseline variables, `r n_imb` exceeded the conventional imbalance threshold of 0.10 (mean absolute SMD `r fmt_num(mean(smd_vals), 3)`, maximum `r fmt_num(max(smd_vals), 3)`), indicating that the two strategies differed systematically at baseline even under the target trial framework.
+:::
+
+```{r jama-table-baseline}
+# JAMA 风格基线表：分组小标题 + 三层表头（N 单独成层）+ 8 pt + booktabs 横线 + 固定列宽
+suppressPackageStartupMessages(library(flextable))
+
+# 各组 N 写入表头，正文不再单独列一行 N
+n_all  <- bl$Overall[bl$Variable == "N"]
+n_trt  <- bl$`Achieved >=50%`[bl$Variable == "N"]
+n_ctrl <- bl$`Did not achieve 50%`[bl$Variable == "N"]
+
+# 分组先按原始标签判定（此时尚未做排版替换，>= 仍是 ASCII）
+sec <- vapply(bl$Variable, function(v) {
+  if (grepl("^Age, mean|^Female|^Age >=", v)) return("Demographics")
+  if (grepl("Creatinine|eGFR|Hemoglobin|Chloride|Potassium", v)) return("Laboratory")
+  "Electrocardiographic"
+}, character(1))
+
+lab <- sub(", n \\(%)", ", No. (%)", bl$Variable)
+lab <- gsub(">=", "\u2265", lab)                    # >= -> ≥
+lab <- gsub("<=", "\u2264", lab)
+lab <- sub("1\\.73m\\^2", "1.73 m\u00b2", lab)      # 1.73m^2 -> 1.73 m²
+
+d <- data.frame(Characteristic = lab,
+                overall = bl$Overall,
+                ach     = bl$`Achieved >=50%`,
+                not     = bl$`Did not achieve 50%`,
+                smd     = bl$SMD,
+                iptw    = bl$`SMD (IPTW)`,
+                sec     = sec,
+                stringsAsFactors = FALSE)
+d <- d[d$Characteristic != "N", ]
+
+sections <- c("Demographics", "Electrocardiographic", "Laboratory")
+out <- NULL
+for (s in sections) {
+  sub_d <- d[d$sec == s, c("Characteristic", "overall", "ach", "not", "smd", "iptw")]
+  if (nrow(sub_d) == 0) next
+  hdr <- data.frame(Characteristic = s, overall = "", ach = "", not = "", smd = "", iptw = "",
+                    stringsAsFactors = FALSE)
+  out <- rbind(out, hdr, sub_d)
+}
+sec_rows <- which(out$Characteristic %in% sections)
+
+ft <- flextable(out)
+# 第 1 层（最上）：两策略列归入一组；两个 SMD 列单独成组
+ft <- add_header_row(ft, values = c("", "", "Target-dose strategy", "Standardized mean difference"),
+                     colwidths = c(1, 1, 2, 2), top = TRUE)
+# 第 2 层（原表头）：简短列名。注意 docx 下 \n 不会真正换行，故 N 另起一层
+ft <- set_header_labels(ft,
+      Characteristic = "Characteristic",
+      overall = "Overall",
+      ach     = "Achieved ≥50%",
+      not     = "Did not achieve 50%",
+      smd     = "Unadjusted",
+      iptw    = "IPTW-adjusted")
+# 第 3 层（紧贴表体）：各组 N
+ft <- add_header_row(ft,
+      values = c("",
+                 paste0("(N = ", format(as.integer(n_all),  big.mark = ","), ")"),
+                 paste0("(n = ", format(as.integer(n_trt),  big.mark = ","), ")"),
+                 paste0("(n = ", format(as.integer(n_ctrl), big.mark = ","), ")"),
+                 "", ""),
+      colwidths = c(1, 1, 1, 1, 1, 1), top = FALSE)
+ft <- theme_booktabs(ft)
+ft <- fontsize(ft, size = 8, part = "all")
+ft <- bold(ft, part = "header")
+ft <- bold(ft, i = sec_rows, j = 1)
+ft <- align(ft, j = 1,   align = "left",  part = "all")
+ft <- align(ft, j = 2:6, align = "right", part = "all")
+ft <- width(ft, j = 1,   width = 2.10)   # Characteristic：容纳最长条目
+ft <- width(ft, j = 2,   width = 1.05)   # Overall
+ft <- width(ft, j = 3:4, width = 1.15)   # 两策略列：容纳 "Did not achieve 50%"
+ft <- width(ft, j = 5,   width = 0.55)   # SMD (unadjusted)
+ft <- width(ft, j = 6,   width = 0.72)   # SMD (IPTW-adjusted)
+ft <- padding(ft, padding.top = 1, padding.bottom = 1, part = "all")
+ft <- set_table_properties(ft, layout = "fixed")
+ft
+```
+
+Question 1 (beta-blocker target dose) failed layer 1; the bias fraction (BAF) was `r fmt_num(BB$bf,3)` (95% credible interval, `r fmt_num(BB$bf_lo,3)` to `r fmt_num(BB$bf_hi,3)`). The uncalibrated relative risk (RR) was `r fmt_num(BB$rr_uncal,3)` (95% CI, `r fmt_num(bb_cal$rr_ci_lower,3)` to `r fmt_num(bb_cal$rr_ci_upper,3)`). Calibration against the empirical null from all `r fmt_num(NUM$part3$nc$K,0)` negative controls ($\hat{\mu}_B$ = `r fmt_num(BB$mu_b,3)`, $\hat{\sigma}_B$ = `r fmt_num(BB$sigma_b,3)`) returned a calibrated P of `r fmt_num(BB$cal_p,3)` and a calibrated RR of `r fmt_num(BB$rr_cal,3)` (95% CI, `r fmt_num(bb_cal$cal_ci_lower,3)` to `r fmt_num(bb_cal$cal_ci_upper,3)`), so the apparent `r paste0(fmt_pct(100*(1-BB$rr_uncal),0), "%")` mortality reduction was not distinguishable from the empirical null.
+
+Question 2 (guideline-directed medical therapy) also failed layer 1; the bias fraction (BAF) was `r fmt_num(GDM$bf,3)` (95% credible interval, `r fmt_num(GDM$bf_lo,3)` to `r fmt_num(GDM$bf_hi,3)`). Under the same design and estimator, the uncalibrated RR was `r fmt_num(GDM$rr_uncal,3)` (95% CI, `r fmt_num(gdm_cal$rr_ci_lower,3)` to `r fmt_num(gdm_cal$rr_ci_upper,3)`); calibration against the shared empirical null returned a calibrated P of `r fmt_num(GDM$cal_p,4)` and a calibrated RR of `r fmt_num(GDM$rr_cal,3)` (95% CI, `r fmt_num(gdm_cal$cal_ci_lower,3)` to `r fmt_num(gdm_cal$cal_ci_upper,3)`).
+
+Question 1 returned a probability of being bias-dominated of `r fmt_num(BB$p_bias_dominated,3)`, above the `r NUM$part2$verdict_breaks[3]` threshold; the determination was not usable as effect evidence.
+
+Question 2 returned a probability of `r fmt_num(GDM$p_bias_dominated,3)`, between the `r NUM$part2$verdict_breaks[2]` and `r NUM$part2$verdict_breaks[3]` thresholds; the point estimate fell in the mixed zone and the interval spanned both zone boundaries, a competitive determination with no usable finding (eTable 1 in Supplement 1).
+
+Under the reporting rules of Table 2, both questions failed layer 1 and were therefore declared usable only by R0 and withheld by R1 through R4, so the calibrated P value did not separate them; the separation came from the bias fraction and its interval (eTable 5 in Supplement 1).
+
+**Robustness.** The bias fraction for question 1 was estimated at `r round(BB$bf*100,0)`%; no safeguard (a TARGET-adherent design, doubly robust estimation, the full negative control panel) changed this finding, because unmeasured confounding is not addressed by design or estimator sophistication. Leave-one-out re-estimation moved $\widehat{\mathrm{BAF}}$ only between `r fmt_num(sens$loo_bf_min,3)` and `r fmt_num(sens$loo_bf_max,3)`, and three alternative Super Learner libraries gave `r fmt_num(sens$sl_bf[[1]],3)`, `r fmt_num(sens$sl_bf[[2]],3)`, `r fmt_num(sens$sl_bf[[3]],3)`.
+
+Figure 3A shows the empirical null distribution; Figure 3B shows BAF for the two questions on the three-zone scale.
+
+```{r jama-fig-null-bf, fig.cap=NULL, out.width="100%"}
+knitr::include_graphics(file.path(FIG_DIR, "v40", "fig3_null_bf_panels.png"))
+```
+
+## Discussion
+
+Reporting BAF and its interval alongside the calibrated P value converts a binary credibility judgment into three questions: whether a signal exists, how large it is, and what fraction is attributable to bias. The rule is deliberately conservative, declaring few estimates usable, because a usable determination requires positive evidence that bias does not dominate, not merely the absence of evidence that it does. Unlike the E-value [@vanderweele2017evalue], which quantifies the confounding needed to overturn a result, or OHDSI calibration [@schuemie2018empirical], which returns only a calibrated P value, BAF reports the fraction of the surviving signal due to bias.
+
+The primary Bland-Altman evaluation showed moderate agreement, with the estimator underestimating $\mathrm{BAF}_{\mathrm{true}}$ (slope `r fmt_num(p1_full$slope,4)`, P < .001) most near 1, so a reported BAF near 1 is a conservative lower bound. Adding $\widehat{\mathrm{BAF}}$ to the calibrated P value raised the AUC from `r fmt_num(disc[[1]]$auc,3)` to `r fmt_num(disc[[2]]$auc,3)` in the bias-dominated view and from `r fmt_num(dual$auc$auc_ed[1],3)` to `r fmt_num(dual$auc$auc_ed[2],3)` in the effect-dominated view, so the two metrics are complementary; the half-width added no ranking information and is retained only because R3 requires the whole interval to fall below 0.5. The nested rules traded yield for safety: under the calibrated P value alone, `r paste0(fmt_pct(strat[[2]]$declare_usable_pct,1), "%")` of estimates were declared usable and `r paste0(fmt_pct(strat[[2]]$bd_among_declared_pct,1), "%")` of those were truly bias-dominated, whereas under R4 only `r paste0(fmt_pct(strat[[5]]$bd_among_declared_pct,1), "%")` were misused.
+
+The case study is methodological, not clinical: it makes no claim about beta-blocker therapy and mortality, and its baseline imbalances (Table 3, eTable 7) diagnose the weighting only, since the effect estimate comes from TMLE. Despite a TARGET-compliant design, doubly robust TMLE, and calibration against `r fmt_num(NUM$part3$nc$K,0)` negative controls, the uncalibrated relative risk of `r fmt_num(BB$rr_uncal,2)` collapsed to `r fmt_num(BB$rr_cal,2)` (calibrated P = `r fmt_num(BB$cal_p,2)`), with $\widehat{\mathrm{BAF}}$ = `r fmt_num(BB$bf,2)`: about `r paste0(fmt_pct(100*BB$bf,0), "%")` of the calibrated signal was attributable to bias, the true fraction likely higher.
+
+For question 2 the calibrated estimate (relative risk `r fmt_num(GDM$rr_cal,2)`, calibrated P = `r fmt_num(GDM$cal_p,3)`) survived calibration, but $\widehat{\mathrm{BAF}}$ = `r fmt_num(GDM$bf,2)` fell in the mixed zone, a competitive determination with no usable finding.
+
+BAF is a property of the evidence, not of the treatment: it quantifies the fraction of the observed association attributable to systematic bias, not whether a true effect exists. A determination of not usable as effect evidence means the study cannot support an effect claim, because the residual signal is small relative to the estimated bias and rests on an unverifiable exchangeability assumption; it does not mean the effect is zero. Because negative-control estimates are already routine, BAF could be appended to existing reports without new data collection.
+
+## Limitations
+
+BAF inherits the negative control assumption that the controls are truly null and exchangeable with the target estimate, and like the no-unmeasured-confounding assumption it probes, this cannot be verified from data. Because both questions were calibrated against one empirical null, fitted from the same `r nc_k` negative controls estimated under the question-1 contrast, we additionally assume the residual confounding distribution is shared across the two contrasts; if they differed, question 2's BAF and determination would be biased undetectably. In simulation, where exchangeability held, `r paste0(fmt_pct(subg_held$bd_among_declared_pct,2), "%")` of estimates declared usable were in truth bias-dominated, rising to `r paste0(fmt_pct(subg_viol$bd_among_declared_pct,2), "%")` under a 30% violation. Of the `r nc_k` negative controls, `r n_nc_below_null` have uncalibrated relative risks below the null and `r n_nc_above_null` above it, so the panel is predominantly but not exclusively protective.
+
+The interval is a credible interval obtained by propagating draws of $\hat{\mu}_B$ while holding $\hat{\psi}_{\mathrm{obs}}$ fixed, so it carries no frequentist coverage guarantee: in the merged simulation pool it contained $\mathrm{BAF}_{\mathrm{true}}$ in `r paste0(fmt_pct(100*ciw$coverage_overall,1), "%")` of repetitions (`r paste0(fmt_pct(100*ciw$coverage_overall_main,1), "%")` in the primary grid alone, where bias and effect share a sign). Being narrower than its nominal coverage affects the rules that consume its upper bound, and not in the direction usually assumed: R3, and its case-study analogue C2, declare an estimate usable only when the entire interval lies below 0.5, which a narrower interval satisfies more easily. Restoring nominal coverage therefore lowers their yield rather than raising it, and because the repetitions that drop out are those with the least evidence against bias dominance the misuse rate falls with it: jointly propagating the omitted term lowered the yield of R3 from 24.3% to 13.2% and its misuse rate from 5.1% to 0.6%, so the R3 misuse rate reported here is an upper bound at nominal coverage, not a lower bound. The lookup table used the same `r n_tot_txt` repetitions as the rule evaluation, so its performance is in-sample; held-out validations bound that optimism (eTable 8 in Supplement 1).
+
+Because the data-generating truth is fixed by the investigator, absolute misuse rates are illustrative; here the truth composition was 18.8% effect-dominated, 28.7% mixed, and 52.5% bias-dominated. A second restriction is directional: the case study belongs to the regime in which bias inflates the apparent effect. The performance numbers reported here pool the two half-grids, so they average over all four roles; the opposing roles were examined separately (eTable 13 and eTable 14 in Supplement 1): the point estimate holds across them, but the interval narrows and its coverage falls further, which, not any loss of accuracy, governs the yield of R3. What is robust is the relative ordering of strategies; the number of controls was examined only up to K = `r K_hi_n`.
+
+The case study uses single-center critical care data restricted to patients with continuous monitoring and a recorded 12-lead electrocardiogram, which limits the generalizability of the findings but not of the metric, which depends only on estimates and their standard errors. The GDMT strategy used three foundational drug classes rather than contemporary four-drug therapy. In question 2, 3,494 patients (23.8%) with a missing guideline-directed medical therapy score were classified as not optimized, and re-estimation under four handling conventions produced no usable determination under any convention (eTable 10 in Supplement 1). The negative-control panel was refitted on the guideline-restricted cohort, so every result here shares the exposure contrast of the target estimates; realigning it moved the question-2 calibrated P value from `r fmt_num(bsr_pub$gdmt$bsr$cal_p,3)` to `r fmt_num(GDM$cal_p,3)`, so the layer-1 pass the earlier all-agent panel would have given question 2 did not survive, and with the realigned panel neither question passes layer 1 while both determinations are unchanged.
+
+## Conclusions
+
+Reporting the Bias Attribution Fraction (BAF) and its credible interval alongside the calibrated P value may give a more defensible credibility assessment than the P value alone: with no additional data, it describes whether a signal exists, its size, and the fraction attributable to bias. Across `r format(des_p$n_total, big.mark = ",")` simulated repetitions, BAF improved discrimination over the calibrated P value, while the nested rules R0 to R4 traded yield for safety, and in the case study the two questions returned distinct determinations. Rigorous design and advanced estimation are necessary but not sufficient, since neither can bound unmeasured confounding.
+
+## References
+
+::: {#refs}
+:::
+
+## Figure Legends
+
+**Figure 1.** `r cap_fig1`
+
+**Figure 2.** `r cap_fig2`
+
+**Figure 3.** `r cap_fig3`
+
+## Article Information
+
+**Study Type.** Original Investigation.
+
+**Author Contributions.** Dr Zeng had full access to all of the data in the study and takes responsibility for the integrity of the data and the accuracy of the data analysis. Dr Zeng conceived the study, designed the credibility metric, implemented the analysis code and the bafratio R package, conducted the simulation study, and drafted the manuscript. Dr Wang contributed to the methodological design and reviewed the statistical approach. Dr Zuo contributed to the clinical interpretation of the negative control selection and reviewed the manuscript. Dr Shu contributed to the study design and critically revised the manuscript for important intellectual content. All authors read and approved the final manuscript. Dr Zeng is the author and maintainer of the bafratio R package used in this work.
+
+**Conflict of Interest Disclosures.** All authors reported no conflict of interest disclosures.
+
+**Funding/Support.** This research received no specific grant from any funding agency in the public, commercial, or not-for-profit sectors.
+
+**Role of the Funder/Sponsor.** Not applicable.
+
+**Data Sharing Statement.** The MIMIC-IV database (version 2.2) is available through PhysioNet (https://physionet.org/content/mimiciv/) and the MIMIC-IV-ECG extension (version 1.0.1) at https://physionet.org/content/mimic-iv-ecg/1.0.1/ to credentialed users. All analysis code, including the simulation pipeline, the case-study TMLE estimation pipeline, and the BAF computation proposed in this work, is available at https://github.com/zengzhechun/bias-fraction, together with an interactive graphical explainer of the metric, the simulation, and the two clinical questions. The methods proposed here are implemented in the companion bafratio R package (version 0.4.0; https://github.com/zengzhechun/bafratio), released under the MIT license, which provides the BAF estimator with bootstrap and Fieller intervals, the two-layer screening rule, the full set of reporting rules evaluated in Table 2, leave-one-out sensitivity analysis, and negative control diagnostics, together with a unit-test suite covering the estimator, the interval procedures, and the classification thresholds; the version used for this manuscript is archived at commit af47a0e. The EmpiricalCalibration R package (Schuemie et al.), which supplies the empirical null machinery used here but does not include BAF, is available from CRAN.
+
+**Additional Contributions.** The authors thank the MIMIC-IV team for making the database publicly available and the OHDSI/EmpiricalCalibration R package developers for the empirical calibration tools upon which this work builds.
+
+**Artificial Intelligence Use Disclosure.** The authors used artificial intelligence tools (DeepSeek V4 Pro, Kimi K3, GLM 5.3, ChatGPT 5.5, and Tencent WorkBuddy) for code development, manuscript editing, and language polishing. All AI-assisted content was critically reviewed and revised by the authors, who take full responsibility for the content of this manuscript.
+
+<!-- Word Count 是硬编码，不是计算值。正文每次改动后必须重跑
+     manuscript/_word_count_jama.py 并把此行更新为实测值。
+     缩写版（JAMA Network Open 投稿口径，正文 ≤3,000 词）2026-09-15 实测 2,950，摘要 340（≤350）；完全版 manuscript_jama_v40.qmd 同日实测 6,665。本行随正文改动而变。
+     口径：Introduction→Conclusions，不含标题/摘要/Key Points/参考文献/表格/图题/Article Information。 -->
+**Word Count.** 2,950 words of text (excluding abstract, references, tables, and figure legends).
+

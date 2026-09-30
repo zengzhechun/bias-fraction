@@ -1,0 +1,144 @@
+Warning message:
+package ‘data.table’ was built under R version 4.4.3 
+BSR core functions loaded (v35: BAF primary, BER auxiliary, Fieller added).
+[null] K = 12 negative controls; fitNull mu_B = -0.1678, sigma_B = 0.1129
+[lookup] 12 bins, median half-width 0.1299, bin edges -Inf ... Inf
+[cohort] 14677 patients after grace-period exclusion; 3494 (23.8%) indeterminate A
+Loading required namespace: SuperLearner
+Qform not specified, using defaults:
+formula for Y_W1:
+Q.kplus1 ~ L_qtc_W0 + L_hr_W0 + L_qrs_W0 + L_cr_W0 + L_egfr_W0 +     L_k_W0 + L_af_W0 + L_lbbb_W0 + age + gender + A_gdmt_W0
+
+gform not specified, using defaults:
+formula for A_gdmt_W0:
+A_gdmt_W0 ~ L_qtc_W0 + L_hr_W0 + L_qrs_W0 + L_cr_W0 + L_egfr_W0 +     L_k_W0 + L_af_W0 + L_lbbb_W0 + age + gender
+
+Loading required package: nnls
+Estimate of time to completion: < 1 minute
+Qform not specified, using defaults:
+formula for Y_W1:
+Q.kplus1 ~ L_qtc_W0 + L_hr_W0 + L_qrs_W0 + L_cr_W0 + L_egfr_W0 +     L_k_W0 + L_af_W0 + L_lbbb_W0 + age + gender + A_gdmt_W0
+
+gform not specified, using defaults:
+formula for A_gdmt_W0:
+A_gdmt_W0 ~ L_qtc_W0 + L_hr_W0 + L_qrs_W0 + L_cr_W0 + L_egfr_W0 +     L_k_W0 + L_af_W0 + L_lbbb_W0 + age + gender
+
+Estimate of time to completion: < 1 minute
+Qform not specified, using defaults:
+formula for Y_W1:
+Q.kplus1 ~ L_qtc_W0 + L_hr_W0 + L_qrs_W0 + L_cr_W0 + L_egfr_W0 +     L_k_W0 + L_af_W0 + L_lbbb_W0 + age + gender + A_gdmt_W0
+
+gform not specified, using defaults:
+formula for A_gdmt_W0:
+A_gdmt_W0 ~ L_qtc_W0 + L_hr_W0 + L_qrs_W0 + L_cr_W0 + L_egfr_W0 +     L_k_W0 + L_af_W0 + L_lbbb_W0 + age + gender
+
+Estimate of time to completion: < 1 minute
+[MI] imputation model on 11183 complete rows; predicted p(optimal) among the indeterminate: median 0.157 (range 0.000-0.329)
+Qform not specified, using defaults:
+formula for Y_W1:
+Q.kplus1 ~ L_qtc_W0 + L_hr_W0 + L_qrs_W0 + L_cr_W0 + L_egfr_W0 +     L_k_W0 + L_af_W0 + L_lbbb_W0 + age + gender + A_gdmt_W0
+
+gform not specified, using defaults:
+formula for A_gdmt_W0:
+A_gdmt_W0 ~ L_qtc_W0 + L_hr_W0 + L_qrs_W0 + L_cr_W0 + L_egfr_W0 +     L_k_W0 + L_af_W0 + L_lbbb_W0 + age + gender
+
+Estimate of time to completion: < 1 minute
+      imputation 1/10 doneQform not specified, using defaults:
+formula for Y_W1:
+Q.kplus1 ~ L_qtc_W0 + L_hr_W0 + L_qrs_W0 + L_cr_W0 + L_egfr_W0 +     L_k_W0 + L_af_W0 + L_lbbb_W0 + age + gender + A_gdmt_W0
+
+gform not specified, using defaults:
+formula for A_gdmt_W0:
+A_gdmt_W0 ~ L_qtc_W0 + L_hr_W0 + L_qrs_W0 + L_cr_W0 + L_egfr_W0 +     L_k_W0 + L_af_W0 + L_lbbb_W0 + age + gender
+
+Estimate of time to completion: < 1 minute
+      imputation 2/10 doneQform not specified, using defaults:
+formula for Y_W1:
+Q.kplus1 ~ L_qtc_W0 + L_hr_W0 + L_qrs_W0 + L_cr_W0 + L_egfr_W0 +     L_k_W0 + L_af_W0 + L_lbbb_W0 + age + gender + A_gdmt_W0
+
+gform not specified, using defaults:
+formula for A_gdmt_W0:
+A_gdmt_W0 ~ L_qtc_W0 + L_hr_W0 + L_qrs_W0 + L_cr_W0 + L_egfr_W0 +     L_k_W0 + L_af_W0 + L_lbbb_W0 + age + gender
+
+Estimate of time to completion: < 1 minute
+      imputation 3/10 doneQform not specified, using defaults:
+formula for Y_W1:
+Q.kplus1 ~ L_qtc_W0 + L_hr_W0 + L_qrs_W0 + L_cr_W0 + L_egfr_W0 +     L_k_W0 + L_af_W0 + L_lbbb_W0 + age + gender + A_gdmt_W0
+
+gform not specified, using defaults:
+formula for A_gdmt_W0:
+A_gdmt_W0 ~ L_qtc_W0 + L_hr_W0 + L_qrs_W0 + L_cr_W0 + L_egfr_W0 +     L_k_W0 + L_af_W0 + L_lbbb_W0 + age + gender
+
+Estimate of time to completion: < 1 minute
+      imputation 4/10 doneQform not specified, using defaults:
+formula for Y_W1:
+Q.kplus1 ~ L_qtc_W0 + L_hr_W0 + L_qrs_W0 + L_cr_W0 + L_egfr_W0 +     L_k_W0 + L_af_W0 + L_lbbb_W0 + age + gender + A_gdmt_W0
+
+gform not specified, using defaults:
+formula for A_gdmt_W0:
+A_gdmt_W0 ~ L_qtc_W0 + L_hr_W0 + L_qrs_W0 + L_cr_W0 + L_egfr_W0 +     L_k_W0 + L_af_W0 + L_lbbb_W0 + age + gender
+
+Estimate of time to completion: < 1 minute
+      imputation 5/10 doneQform not specified, using defaults:
+formula for Y_W1:
+Q.kplus1 ~ L_qtc_W0 + L_hr_W0 + L_qrs_W0 + L_cr_W0 + L_egfr_W0 +     L_k_W0 + L_af_W0 + L_lbbb_W0 + age + gender + A_gdmt_W0
+
+gform not specified, using defaults:
+formula for A_gdmt_W0:
+A_gdmt_W0 ~ L_qtc_W0 + L_hr_W0 + L_qrs_W0 + L_cr_W0 + L_egfr_W0 +     L_k_W0 + L_af_W0 + L_lbbb_W0 + age + gender
+
+Estimate of time to completion: < 1 minute
+      imputation 6/10 doneQform not specified, using defaults:
+formula for Y_W1:
+Q.kplus1 ~ L_qtc_W0 + L_hr_W0 + L_qrs_W0 + L_cr_W0 + L_egfr_W0 +     L_k_W0 + L_af_W0 + L_lbbb_W0 + age + gender + A_gdmt_W0
+
+gform not specified, using defaults:
+formula for A_gdmt_W0:
+A_gdmt_W0 ~ L_qtc_W0 + L_hr_W0 + L_qrs_W0 + L_cr_W0 + L_egfr_W0 +     L_k_W0 + L_af_W0 + L_lbbb_W0 + age + gender
+
+Estimate of time to completion: < 1 minute
+      imputation 7/10 doneQform not specified, using defaults:
+formula for Y_W1:
+Q.kplus1 ~ L_qtc_W0 + L_hr_W0 + L_qrs_W0 + L_cr_W0 + L_egfr_W0 +     L_k_W0 + L_af_W0 + L_lbbb_W0 + age + gender + A_gdmt_W0
+
+gform not specified, using defaults:
+formula for A_gdmt_W0:
+A_gdmt_W0 ~ L_qtc_W0 + L_hr_W0 + L_qrs_W0 + L_cr_W0 + L_egfr_W0 +     L_k_W0 + L_af_W0 + L_lbbb_W0 + age + gender
+
+Estimate of time to completion: < 1 minute
+      imputation 8/10 doneQform not specified, using defaults:
+formula for Y_W1:
+Q.kplus1 ~ L_qtc_W0 + L_hr_W0 + L_qrs_W0 + L_cr_W0 + L_egfr_W0 +     L_k_W0 + L_af_W0 + L_lbbb_W0 + age + gender + A_gdmt_W0
+
+gform not specified, using defaults:
+formula for A_gdmt_W0:
+A_gdmt_W0 ~ L_qtc_W0 + L_hr_W0 + L_qrs_W0 + L_cr_W0 + L_egfr_W0 +     L_k_W0 + L_af_W0 + L_lbbb_W0 + age + gender
+
+Estimate of time to completion: < 1 minute
+      imputation 9/10 doneQform not specified, using defaults:
+formula for Y_W1:
+Q.kplus1 ~ L_qtc_W0 + L_hr_W0 + L_qrs_W0 + L_cr_W0 + L_egfr_W0 +     L_k_W0 + L_af_W0 + L_lbbb_W0 + age + gender + A_gdmt_W0
+
+gform not specified, using defaults:
+formula for A_gdmt_W0:
+A_gdmt_W0 ~ L_qtc_W0 + L_hr_W0 + L_qrs_W0 + L_cr_W0 + L_egfr_W0 +     L_k_W0 + L_af_W0 + L_lbbb_W0 + age + gender
+
+Estimate of time to completion: < 1 minute
+      imputation 10/10 done
+[check] published BAF 0.4596 (0.1856-0.6186) vs reproduced 0.4596 (0.1856-0.6186)  OK
+
+[result] question 2 under four missing-data conventions
+                                             tag     n    rr  log_rr     se
+                                          <char> <int> <num>   <num>  <num>
+1:       indeterminate as suboptimal (published) 14677 0.682 -0.3826 0.0677
+2:         complete case (indeterminate dropped) 11183 0.684 -0.3799 0.0654
+3: indeterminate as optimized (opposite extreme) 14677 0.912 -0.0926 0.0362
+4:           multiple imputation (m = 10, Rubin) 14677 0.745 -0.2939 0.0676
+    cal_p    bf          ci                       verdict
+    <num> <num>      <char>                        <char>
+1: 0.1026 0.460 0.186-0.619       competitive, no verdict
+2: 0.1040 0.463 0.187-0.623       competitive, no verdict
+3: 0.5258 0.676 0.616-0.933 not usable as effect evidence
+4: 0.3377 0.598 0.242-0.805 not usable as effect evidence
+
+=== DONE (GDMT missing-data sensitivity) ===

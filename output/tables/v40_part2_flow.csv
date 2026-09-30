@@ -1,0 +1,7 @@
+"stage","n","bd_true_n","bd_share_pct"
+"all repetitions",1920000,1008000,52.5
+"layer 1 pass (calibrated p < .05)",1187378,427641,36.0155738105304
+"layer 1 pass and usable verdict",424079,12804,3.01924877204483
+"layer 1 pass and mixed verdict",272277,55739,20.4714316670156
+"layer 1 pass and competitive verdict",132047,59781,45.2725166039365
+"layer 1 pass and not-usable verdict",358975,299317,83.381015391044

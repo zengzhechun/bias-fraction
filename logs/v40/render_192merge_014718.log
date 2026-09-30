@@ -1,0 +1,18 @@
+==== render manuscript_jama_v40.qmd 01:47:18 ====
+      affiliation: 1,2,3
+  date: '2026-08-27'
+  bibliography:
+    - references.bib
+  csl: american-medical-association.csl
+  
+Output created: manuscript_jama_v40.docx
+
+==== render supplementary_jama_v40.qmd 01:47:22 ====
+      affiliation: 1,2,3
+  date: '2026-08-27'
+  bibliography:
+    - references.bib
+  csl: american-medical-association.csl
+  
+Output created: supplementary_jama_v40.docx
+

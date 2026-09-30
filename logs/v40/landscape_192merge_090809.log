@@ -1,0 +1,27 @@
+===== 横向投稿版生成 2026-09-18 09:08:09 =====
+---- manuscript_jama_v40 ----
+Output created: manuscript_jama_v40.docx
+
+formatted styles: 10 ['Normal', 'Heading 1', 'Heading 2', 'Heading 3', 'Heading 4', 'Heading 5'] ...
+bolded 7 abstract labels (paragraphs 17..23)
+   正文 7621 词
+word count line set: 7,621
+fixed landscape sectPr block(s): 1
+saved manuscript_jama_v40.docx
+   工作位纵向版已还原，md5 6dd13840aa1417102f0dc13d8577bf82 不变
+---- jama-V40-缩写版 ----
+Output created: jama-V40-缩写版.docx
+
+formatted styles: 10 ['Normal', 'Heading 1', 'Heading 2', 'Heading 3', 'Heading 4', 'Heading 5'] ...
+bolded 7 abstract labels (paragraphs 17..23)
+   正文 3171 词
+word count line set: 3,171
+fixed landscape sectPr block(s): 1
+saved jama-V40-缩写版.docx
+   工作位纵向版已还原，md5 de709256324547279d3c0180d0a93978 不变
+===== 结束 2026-09-18 09:08:17  fail=0 =====
+total 8096
+drwxr-xr-x   4 zengzhechun  staff      128 Sep 18 09:08 .
+drwxr-xr-x  29 zengzhechun  staff      928 Sep 17 20:11 ..
+-rw-r--r--   1 zengzhechun  staff  2065744 Sep 18 09:08 jama-V40-缩写版.docx
+-rw-r--r--   1 zengzhechun  staff  2076591 Sep 18 09:08 manuscript_jama_v40.docx

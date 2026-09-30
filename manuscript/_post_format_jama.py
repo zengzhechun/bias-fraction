@@ -1,8 +1,12 @@
+import sys
 import docx
 from docx.enum.text import WD_LINE_SPACING, WD_ALIGN_PARAGRAPH
 from docx.enum.style import WD_STYLE_TYPE
 
-path = "/Users/zengzhechun/SynologyDrive/工作/数据分析项目/心电图大模型/心电图公开数据集/02 mimic-iv-ecg/Topic1_LTMLE_Betablocker/第39版/manuscript/manuscript_jama_v39.docx"
+# 接受可选路径参数：默认完全版，传参即可对缩写版等其它份同样施加样式。
+# （原先路径写死，导致缩写版只能另写一套临时脚本，临时目录一清理就丢。）
+PATH = "/Users/zengzhechun/SynologyDrive/工作/数据分析项目/心电图大模型/心电图公开数据集/02 mimic-iv-ecg/Topic1_LTMLE_Betablocker/第40版/manuscript/manuscript_jama_v40.docx"
+path = sys.argv[1] if len(sys.argv) > 1 else PATH
 doc = docx.Document(path)
 
 targets = ["Normal"]

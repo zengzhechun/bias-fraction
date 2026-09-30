@@ -1,0 +1,144 @@
+BSR core functions loaded (v35: BAF primary, BER auxiliary, Fieller added).
+Warning message:
+package ‘data.table’ was built under R version 4.4.3 
+[0] loading simulation ...
+    flattened 960,000 repetitions across 960 conditions
+    K levels: 12, 25, 50 | reps per K: 320,000 / 320,000 / 320,000
+[1] Part II Step 1: Bland-Altman agreement ...
+             analysis      n    bias sd_diff loa_lo loa_hi pct_in_loa   ccc
+1  interior (primary) 864000 -0.0492   0.118 -0.280  0.182       93.8 0.815
+2 full (transparency) 960000 -0.0690   0.139 -0.341  0.203       93.8 0.781
+    slope slope_t
+1 -0.0588   -91.2
+2 -0.1814  -306.7
+[2] Part II Step 2: two-layer decision rule ...
+    layer-1 pass 61.9%; of those 36.0% are truly bias-dominated
+   bin bf_centre p_bd_narrow p_bd_wide p_bd_conservative
+1    1    0.0927     0.00623    0.0357            0.0357
+2    2    0.1833     0.01098    0.0726            0.0726
+3    3    0.2654     0.04287    0.1386            0.1386
+4    4    0.3337     0.11140    0.2390            0.2390
+5    5    0.3906     0.24494    0.3613            0.3613
+6    6    0.4404     0.43777    0.5019            0.5019
+7    7    0.4881     0.62974    0.6482            0.6482
+8    8    0.5394     0.81213    0.7680            0.8121
+9    9    0.5993     0.92832    0.8560            0.9283
+10  10    0.6730     0.97610    0.9022            0.9761
+11  11    0.7674     0.99357    0.9302            0.9936
+12  12    0.8862     0.99687    0.9718            0.9969
+                         verdict
+1      usable as effect evidence
+2      usable as effect evidence
+3      usable as effect evidence
+4   mixed, hypothesis-generating
+5   mixed, hypothesis-generating
+6        competitive, no verdict
+7        competitive, no verdict
+8  not usable as effect evidence
+9  not usable as effect evidence
+10 not usable as effect evidence
+11 not usable as effect evidence
+12 not usable as effect evidence
+                               predictor    auc
+1               calibrated p-value alone 0.7869
+2                          BAF_hat alone 0.9182
+3                BAF_hat + CI half-width 0.9182
+4 BAF_hat + CI half-width + calibrated p 0.9186
+                              note
+1                                 
+2                                 
+3 LR chi2 = 70.3, df = 1, p < .001
+4                                 
+                                reading declare_usable_pct
+1 pooled probability (CI width ignored)               21.5
+2            width-specific probability               25.5
+3        conservative max(narrow, wide)               21.5
+  bd_among_declared_pct sens_ed_pct spec_bd_pct
+1                  2.90        81.2        98.8
+2                  4.09        83.7        98.0
+3                  2.90        81.2        98.8
+                                                                                                                                                     strategy
+R0 uncalibrated p < .05 (no bias correction)                                                                     R0 uncalibrated p < .05 (no bias correction)
+R1 calibrated p < .05 (layer 1 only)                                                                                     R1 calibrated p < .05 (layer 1 only)
+R2 R1 + BAF point estimate < 0.5                                                                                             R2 R1 + BAF point estimate < 0.5
+R3 R1 + whole BAF credible interval clear of the bias-dominated zone (< 0.5)     R3 R1 + whole BAF credible interval clear of the bias-dominated zone (< 0.5)
+R4 R1 + calibrated-probability verdict (full two-layer)                                               R4 R1 + calibrated-probability verdict (full two-layer)
+C1 BAF point estimate alone                                                                                                       C1 BAF point estimate alone
+C2 whole BAF credible interval clear of the bias-dominated zone (< 0.5), alone C2 whole BAF credible interval clear of the bias-dominated zone (< 0.5), alone
+                                                                               declare_usable_pct
+R0 uncalibrated p < .05 (no bias correction)                                                 91.7
+R1 calibrated p < .05 (layer 1 only)                                                         61.9
+R2 R1 + BAF point estimate < 0.5                                                             47.2
+R3 R1 + whole BAF credible interval clear of the bias-dominated zone (< 0.5)                 29.9
+R4 R1 + calibrated-probability verdict (full two-layer)                                      21.5
+C1 BAF point estimate alone                                                                  56.2
+C2 whole BAF credible interval clear of the bias-dominated zone (< 0.5), alone               31.9
+                                                                               bd_among_declared_pct
+R0 uncalibrated p < .05 (no bias correction)                                                   51.83
+R1 calibrated p < .05 (layer 1 only)                                                           36.03
+R2 R1 + BAF point estimate < 0.5                                                               20.21
+R3 R1 + whole BAF credible interval clear of the bias-dominated zone (< 0.5)                    7.44
+R4 R1 + calibrated-probability verdict (full two-layer)                                         2.90
+C1 BAF point estimate alone                                                                    23.16
+C2 whole BAF credible interval clear of the bias-dominated zone (< 0.5), alone                  8.60
+                                                                               ppv_not_bd_pct
+R0 uncalibrated p < .05 (no bias correction)                                             48.2
+R1 calibrated p < .05 (layer 1 only)                                                     64.0
+R2 R1 + BAF point estimate < 0.5                                                         79.8
+R3 R1 + whole BAF credible interval clear of the bias-dominated zone (< 0.5)             92.6
+R4 R1 + calibrated-probability verdict (full two-layer)                                  97.1
+C1 BAF point estimate alone                                                              76.8
+C2 whole BAF credible interval clear of the bias-dominated zone (< 0.5), alone           91.4
+                                                                               sens_ed_pct
+R0 uncalibrated p < .05 (no bias correction)                                          94.6
+R1 calibrated p < .05 (layer 1 only)                                                  88.1
+R2 R1 + BAF point estimate < 0.5                                                      88.1
+R3 R1 + whole BAF credible interval clear of the bias-dominated zone (< 0.5)          81.2
+R4 R1 + calibrated-probability verdict (full two-layer)                               81.2
+C1 BAF point estimate alone                                                           98.7
+C2 whole BAF credible interval clear of the bias-dominated zone (< 0.5), alone        85.3
+                                                                               spec_bd_pct
+R0 uncalibrated p < .05 (no bias correction)                                          9.48
+R1 calibrated p < .05 (layer 1 only)                                                 57.54
+R2 R1 + BAF point estimate < 0.5                                                     81.82
+R3 R1 + whole BAF credible interval clear of the bias-dominated zone (< 0.5)         95.77
+R4 R1 + calibrated-probability verdict (full two-layer)                              98.81
+C1 BAF point estimate alone                                                          75.20
+C2 whole BAF credible interval clear of the bias-dominated zone (< 0.5), alone       94.77
+                                 stage      n bd_true_n bd_share_pct
+1                      all repetitions 960000    504000         52.5
+2    layer 1 pass (calibrated p < .05) 593963    214023         36.0
+3      layer 1 pass and usable verdict 205971      5978          2.9
+4       layer 1 pass and mixed verdict 133931     27164         20.3
+5 layer 1 pass and competitive verdict 129128     69650         53.9
+6  layer 1 pass and not-usable verdict 124933    111231         89.0
+                  read
+truth              bias-dominated effect-dominated mixed
+  bias-dominated             42.0              5.2  52.7
+  effect-dominated            0.1             85.3  14.6
+  mixed                       1.9             45.8  52.2
+                       subgroup      n layer1_pass_pct declare_usable_pct
+1      K = 12 negative controls 320000            62.4               21.9
+2      K = 25 negative controls 320000            61.8               21.5
+3      K = 50 negative controls 320000            61.4               20.9
+4     bias exchangeability held 480000            60.5               15.9
+5 30% exchangeability violation 480000            63.2               27.0
+6               sigma_ps = 0.06 480000            69.9               22.6
+7               sigma_ps = 0.10 480000            53.8               20.4
+  bd_among_declared_pct bd_among_layer1_pct median_half_width
+1                 3.538                36.4            0.1935
+2                 2.829                35.9            0.1209
+3                 2.310                35.8            0.0813
+4                 0.913                35.5            0.1233
+5                 4.078                36.6            0.1367
+6                 2.075                38.4            0.1321
+7                 3.819                32.9            0.1277
+[3] Part III: case-study verdicts ...
+                            exposure rr_uncal rr_cal cal_p    bf bf_lo bf_hi
+mean  Beta-blocker >=50% target dose    0.831  0.983 0.894 0.875 0.385 0.992
+mean1          GDMT >=2 of 3 classes    0.682  0.807 0.103 0.460 0.186 0.619
+      ci_class p_bias_dominated                       verdict
+mean      wide            0.997 not usable as effect evidence
+mean1     wide            0.502       competitive, no verdict
+[4] figures ...
+[done] wrote v40_all_numbers.json and 8 CSV tables; figures in output/figures/v40/

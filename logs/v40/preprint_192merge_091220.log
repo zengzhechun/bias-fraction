@@ -1,0 +1,22 @@
+===== 预印本 PDF 生成 2026-09-18 09:12:20 =====
+---- manuscript_medarchive_v40 ----
+
+Output created: manuscript_medarchive_v40.pdf
+
+   生成 09:12:23  2001026 字节
+---- supplementary_medarchive_v40 ----
+
+Output created: supplementary_medarchive_v40.pdf
+
+   生成 09:12:26  565123 字节
+---- 验收 ----
+  [OK  ] manuscript_medarchive_v40.pdf            pages= 30 imgs=10 legends(tbl/fig)=9/10 double-hat=0 >100%=none
+  [OK  ] supplementary_medarchive_v40.pdf         pages= 22 imgs= 1 legends(tbl/fig)=2/1 double-hat=0 >100%=none
+
+  problems: 0
+---- 同步到投稿目录 ----
+   medRxiv_prep/manuscript_medarchive_v40.pdf
+   medRxiv_prep/supplementary_medarchive_v40.pdf
+===== 结束 2026-09-18 09:12:27  fail=0 =====
+-rw-r--r--  1 zengzhechun  staff  2001026 Sep 18 09:12 Submit/JAMA Network Open/medRxiv_prep/manuscript_medarchive_v40.pdf
+-rw-r--r--  1 zengzhechun  staff   565123 Sep 18 09:12 Submit/JAMA Network Open/medRxiv_prep/supplementary_medarchive_v40.pdf

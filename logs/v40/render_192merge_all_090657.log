@@ -1,0 +1,100 @@
+===== 第40版渲染开始 2026-09-18 09:06:57 =====
+---- quarto render manuscript_jama_v40.qmd ----
+  bibliography:
+    - references.bib
+  csl: american-medical-association.csl
+  
+Output created: manuscript_jama_v40.docx
+
+   生成 09:07:01  2076758 字节
+---- quarto render jama-V40-缩写版.qmd ----
+  bibliography:
+    - references.bib
+  csl: american-medical-association.csl
+  
+Output created: jama-V40-缩写版.docx
+
+   生成 09:07:04  2065917 字节
+---- quarto render manuscript_medarchive_v40.qmd ----
+  invalid argument to unary operator
+Calls: .main ... hook_eval -> withVisible -> eval -> eval -> fmt_num -> sprintf
+[39m[31m
+Quitting from manuscript_medarchive_v40.qmd:227-227
+[39m[31mExecution halted
+[39m[33mWARN: Error encountered when rendering files[39m
+   生成 23:24:29  1613913 字节
+---- quarto render manuscript_v40.qmd ----
+  invalid argument to unary operator
+Calls: .main ... hook_eval -> withVisible -> eval -> eval -> fmt_num -> sprintf
+[39m[31m
+Quitting from manuscript_v40.qmd:229-229
+[39m[31mExecution halted
+[39m[33mWARN: Error encountered when rendering files[39m
+   生成 23:24:30  1609314 字节
+---- quarto render supplementary_jama_v40.qmd ----
+  bibliography:
+    - references.bib
+  csl: american-medical-association.csl
+  
+Output created: supplementary_jama_v40.docx
+
+   生成 09:07:09  243118 字节
+---- quarto render supplementary_medarchive_v40.qmd ----
+  bibliography:
+    - references.bib
+  csl: american-medical-association.csl
+  
+Output created: supplementary_medarchive_v40.docx
+
+   生成 09:07:12  243533 字节
+---- quarto render supplementary_v40.qmd ----
+  bibliography:
+    - references.bib
+  csl: american-medical-association.csl
+  
+Output created: supplementary_v40.docx
+
+   生成 09:07:14  241327 字节
+---- 后处理：样式 + 摘要加粗（逐份） ----
+caption styles -> 9pt single: 2 ['Image Caption', 'Table Caption']
+formatted styles: 10 ['Normal', 'Heading 1', 'Heading 2', 'Heading 3', 'Heading 4', 'Heading 5'] ...
+bolded 7 abstract labels (paragraphs 17..23)
+caption styles -> 9pt single: 2 ['Image Caption', 'Table Caption']
+formatted styles: 10 ['Normal', 'Heading 1', 'Heading 2', 'Heading 3', 'Heading 4', 'Heading 5'] ...
+bolded 7 abstract labels (paragraphs 17..23)
+caption styles -> 9pt single: 2 ['Image Caption', 'Table Caption']
+formatted styles: 10 ['Normal', 'Heading 1', 'Heading 2', 'Heading 3', 'Heading 4', 'Heading 5'] ...
+bolded 6 abstract labels (paragraphs 12..21)
+caption styles -> 9pt single: 2 ['Image Caption', 'Table Caption']
+formatted styles: 10 ['Normal', 'Heading 1', 'Heading 2', 'Heading 3', 'Heading 4', 'Heading 5'] ...
+bolded 6 abstract labels (paragraphs 10..19)
+caption styles -> 9pt single: 2 ['Image Caption', 'Table Caption']
+formatted styles: 10 ['Normal', 'Heading 1', 'Heading 2', 'Heading 3', 'Heading 4', 'Heading 5'] ...
+ERROR: 'Abstract' heading not found
+caption styles -> 9pt single: 2 ['Image Caption', 'Table Caption']
+formatted styles: 10 ['Normal', 'Heading 1', 'Heading 2', 'Heading 3', 'Heading 4', 'Heading 5'] ...
+ERROR: 'Abstract' heading not found
+caption styles -> 9pt single: 2 ['Image Caption', 'Table Caption']
+formatted styles: 10 ['Normal', 'Heading 1', 'Heading 2', 'Heading 3', 'Heading 4', 'Heading 5'] ...
+ERROR: 'Abstract' heading not found
+---- 后处理：Word Count 行（JAMA 正文两份） ----
+   manuscript_jama_v40.docx 正文 7621 词
+word count line set: 7,621
+   jama-V40-缩写版.docx 正文 3171 词
+word count line set: 3,171
+---- 后处理：纵向（双写版），逐份剥横向节 ----
+removed landscape sectPr x1, empty sectPr x1
+saved manuscript_jama_v40.docx
+removed landscape sectPr x1, empty sectPr x1
+saved jama-V40-缩写版.docx
+removed landscape sectPr x0, empty sectPr x0
+saved manuscript_medarchive_v40.docx
+removed landscape sectPr x0, empty sectPr x0
+saved manuscript_v40.docx
+removed landscape sectPr x0, empty sectPr x0
+saved supplementary_jama_v40.docx
+removed landscape sectPr x0, empty sectPr x0
+saved supplementary_medarchive_v40.docx
+removed landscape sectPr x0, empty sectPr x0
+saved supplementary_v40.docx
+===== 第40版渲染结束 2026-09-18 09:07:17  fail=0 =====

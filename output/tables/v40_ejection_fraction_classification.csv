@@ -1,0 +1,5 @@
+"stratum","n_cohort","pct_cohort","n_analytic","pct_analytic","has_systolic_code","has_diastolic_code"
+"probable HFrEF",3367,22.3676343585996,3278,22.3342644954691,2577,NA
+"probable HFpEF",2535,16.8404969109148,2504,17.0607072289978,NA,2923
+"neither (indeterminate)",9151,60.7918687304856,8895,60.6050282755331,NA,NA
+"total",15053,100,14677,100,2577,2923

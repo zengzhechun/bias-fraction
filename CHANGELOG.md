@@ -210,3 +210,114 @@ cell-by-cell against `part2.lookup` (12/12 rows exact); HTML tag pairing checked
 downstream effect: the v39 lookup puts that bin just under the 0.65 break, so it moves from
 "not usable" to "competitive, no verdict". No manuscript, table or figure number is affected.
 
+
+## 2026-09-30 — v40: 1.92M pooled evidence base, bias-direction regimes, guideline-restricted negative-control panel, `legacy/` archival
+
+### Evidence base rebuilt as a pooled factorial design
+
+The v39 release rested on a single 960-condition grid (960,000 estimates) whose bias centres were
+all negative. v40 pools that **primary grid** with a **sign-flipped companion grid** (mirror-imaged
+bias centres, same five factors), giving **1,920 conditions × 1,000 repetitions = 1,920,000
+estimates** — 1,728,000 in the interior and 192,000 on the boundary. Truth mix: 52.5%
+bias-dominated / 28.75% mixed / 18.75% effect-dominated. The main grid remains the *design*
+description; **every performance number is now computed on the pooled grid**.
+
+| Quantity | v39 (primary grid only) | **v40 (pooled)** |
+|---|---|---|
+| Conditions / estimates | 960 / 960,000 | **1,920 / 1,920,000** |
+| Agreement (interior) | bias, SD, CCC on 864,000 | **bias −0.020, SD 0.113, CCC 0.838 on 1,728,000** |
+| Agreement (full) | — | **bias −0.040, SD 0.133, CCC 0.810, 93.9% within limits, slope −0.211** |
+| Discrimination AUC | 0.787 → 0.918 | **0.787 → 0.922** (LR χ² = 3835.1, df = 1, *P* < .001) |
+| Misuse rate | 36.0% → 2.9% | **53.4% (uncalibrated) / 36.0% (calibrated *P* only) → 3.0%** (full two-layer) |
+| Yield under the full rule | — | **22.1%** |
+
+The 12-bucket reliability lookup, the dual-view ROC, the confusion matrix and the K-subgroup tables
+were all recomputed (`output/tables/v40_part2_*`). Table 1 was upgraded to the pooled design
+(μ_B ±0.05 to ±0.40, 16 levels, 1,920 conditions).
+
+### Bias-direction regimes (new)
+
+Pooling the two grids isolates four regimes by construction:
+
+| Regime | Conditions | Coverage | Zone match | Misuse under R3 |
+|---|---|---|---|---|
+| Inflation | 960 | 71.1% | 53.1% | 7.4% |
+| Shrinkage | 420 | 46.9% | 42.5% | 0% |
+| Cancellation | 36 | 18.4% | 18.4% | 0% |
+| Reversal | 504 | 36.1% | 84.3% | 100% |
+
+Point estimates hold up across directions (|bias| ≤ 0.069); interval coverage and the misuse rate
+do not. The three-zone classification is more robust than the credible interval. New scripts:
+`R/96_mirror_mu_regimes.R` (builds the companion grid, 8-way parallel, 34.4 min),
+`R/97_direction_regimes_summary.R` (writes `v40_direction_regimes.csv`,
+`v40_direction_summary.csv/.json`). New supplementary subsections and figures (`figP3_direction_roles`).
+
+### Negative-control panel refitted on the guideline-restricted contrast
+
+In v39 the 12 negative controls were fitted on a cohort in which exposure counted **all**
+β-blocker agents, whereas the target estimates use the guideline-restricted definition
+(carvedilol, metoprolol succinate, or bisoprolol at ≥50% of target dose). This mismatch was
+disclosed as a limitation. In v40 the panel is **promoted to a guideline-restricted null**:
+
+- bias SD widens 0.068 → **0.113**;
+- the GDMT calibrated *P* value moves 0.045 → **0.103**, so GDMT **no longer clears the first
+  screening layer** — the calibrated *P* value alone would have licensed both case questions;
+- **both verdict labels are unchanged** (β-blocker *not usable as effect evidence*, GDMT *mixed /
+  competitive*).
+
+Scripts: `R/92_promote_guideline_null.R`, `R/93_promote_guideline_calibration.R`,
+`R/94_negative_control_screening_audit.R`, `R/95_ejection_fraction_proxy_sensitivity.R`.
+New tables: `v40_guideline_null_promotion.csv`, `v40_negative_control_screening.csv`,
+`v40_ejection_fraction_proxy.csv` / `_classification.csv`.
+
+### Case-study numbers (pooled, guideline-restricted)
+
+| Question | Uncalibrated RR | Calibrated RR | Calibrated *P* | BAF̂ (95% CrI) | Layer 1 | Verdict |
+|---|---|---|---|---|---|---|
+| β-blocker ≥50% target dose | 0.83 | 0.98 | 0.894 | **0.87 (0.38–0.99)** | fail | not usable as effect evidence |
+| GDMT ≥2 of 3 classes | 0.68 | 0.81 | 0.103 | **0.46 (0.19–0.62)** | fail | mixed / competitive |
+
+μ_B = −0.168, σ_B = 0.113 shared by both questions; 14,677 patients analysed (15,053 screened,
+376 excluded for death within the 7-day grace period).
+
+### Manuscripts and submission package
+
+All seven renders were rebuilt on the pooled base: JAMA full + abbreviated + supplement, medRxiv
+main + supplement, full working report + supplement, plus the landscape submission DOCX. The
+*JAMA Network Open* upload set is numbered in upload order — `01 Cover_Letter.txt`,
+`02 manuscript-JNO-V40.docx`, `03 supplementary-JNO_v40.docx` — via the idempotent
+`manuscript/_number_upload_files.py`. Word count of the submitted main text: **2,996**.
+Full details in `docs/第40版_README.md` and the source project's
+`Submit/JAMA Network Open/JNO投稿材料清单与合规对照_20260929.md`.
+
+### Repository hygiene: `legacy/` archival and explainer link fix
+
+- **117 superseded items** (v34–v39 manuscripts, renders, tables, figures, logs, explainers,
+  and the v38/v39 `18_*`/`19_*` scripts) moved to **`legacy/`**, with a new `legacy/README.md`
+  explaining each subdirectory. Nothing was deleted; `git log --follow` still traces each file.
+  The root, `R/`, `manuscript/`, `paper/`, `submission/`, `output/`, `logs/v40/`, `analysis/`,
+  `simulation/`, `Target/`, `docs/` and `figures/` now reflect **v40 only**.
+- **Site entry point replaced**: root `index.html` is now the **v40** explainer
+  (`互动讲解器_v40_三部分结构.html`), replacing the v39 file that had been serving the Pages site.
+- **Relative HTML links fixed.** The README previously linked a walkthrough as
+  `[算法说明_临床版_v1.html](算法说明_临床版_v1.html)`. On GitHub a relative link resolves to the
+  **blob view, which shows source code**, not the rendered page. All explainer links in the README
+  now use absolute Pages URLs. ASCII aliases were added for stable referencing:
+  `explainer_v40.html` (= the explainer) and `algorithm_walkthrough_zh.html` (= the clinical
+  walkthrough); the Chinese-named originals remain in place.
+- **README rewritten for v40**: pooled evidence base, direction regimes, refitted panel, `bafratio`
+  v0.4.0, `Explainer v40` badge, updated structure table (including `legacy/`), v40 reproduction
+  commands, and a refreshed Chinese summary.
+- **`.gitignore`**: the large v40 simulation objects are ignored
+  (`v40_ba_gibbs_reps.rds`, `v40_interval_joint_reps.rds`, `v40_comparison_results*.rds`,
+  `v40_sim_frame*.rds`); the three small derived objects
+  (`v40_lookup_holdout.rds`, `v40_gdmt_missing_sensitivity.rds`, `v40_ba_gibbs_stats.rds`) are
+  committed.
+
+### Known follow-up
+
+`算法说明_临床版_v1.html` / `algorithm_walkthrough_zh.html` still carry the **v39 lookup values**
+(bin centres 0.09 / 0.18 / 0.27 … and a bin-7 verdict of 势均力敌) while its banner reads v40. The
+v40 lookup is 0.125 / 0.233 / 0.310 … with bin 7 onward *not usable as effect evidence*. A
+mechanical re-sync against `output/tables/v40_all_numbers.json` (`part2.lookup`) is pending
+confirmation, as the fix changes displayed numbers.

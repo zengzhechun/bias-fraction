@@ -1,0 +1,5 @@
+"predictor","auc","note"
+"calibrated p-value alone",0.787265506835122,""
+"BAF_hat alone",0.921758107238583,""
+"BAF_hat + CI half-width",0.922763857576885,"LR chi2 = 3835.1, df = 1, p < .001"
+"BAF_hat + CI half-width + calibrated p",0.923124696203399,""

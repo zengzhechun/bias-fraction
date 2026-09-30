@@ -1,0 +1,6 @@
+[1] loading precomputed dual-view curves and metrics ...
+                    score auc_ed auc_bd
+1      Calibrated P alone 0.7211 0.7869
+2           BAF-hat alone 0.9514 0.9182
+3 BAF-hat + CI half-width 0.9512 0.9182
+saved figP2C_roc_paper.png (dual view, 9.0 x 4.5 in)
