@@ -121,9 +121,9 @@ preserved under `legacy/` (see `legacy/README.md`).
 
 ## Data availability & what is (and is not) in this repo
 
-- **MIMIC-IV (v2.2)** and **MIMIC-IV-ECG (v1.0.1)** are available from PhysioNet
+- **MIMIC-IV (v2.2)** and **MIMIC-IV-ECG (v1.0)** are available from PhysioNet
   ([mimiciv](https://physionet.org/content/mimiciv/),
-  [mimic-iv-ecg](https://physionet.org/content/mimic-iv-ecg/1.0.1/)) to **credentialed users** who
+  [mimic-iv-ecg](https://physionet.org/content/mimic-iv-ecg/1.0/)) to **credentialed users** who
   complete the required human-subjects training.
 - ⚠️ **This repository contains no patient-level data.** The row-level LTMLE analysis frames
   (`DATA/*.rds`) are **not** distributed here, and neither are the large simulation objects in
