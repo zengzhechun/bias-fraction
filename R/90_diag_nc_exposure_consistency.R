@@ -26,8 +26,8 @@ suppressPackageStartupMessages({
 BASE_DIR   <- "/Users/zengzhechun/SynologyDrive/工作/数据分析项目/心电图大模型/心电图公开数据集/02 mimic-iv-ecg"
 WORK_DIR   <- file.path(BASE_DIR, "Topic1_LTMLE_Betablocker")
 DATA_DIR   <- file.path(WORK_DIR, "DATA")
-V39_DIR    <- file.path(WORK_DIR, "第39版")
-TAB_DIR    <- file.path(V39_DIR, "output", "tables")
+V40_DIR    <- file.path(WORK_DIR, "第40版")
+TAB_DIR    <- file.path(V40_DIR, "output", "tables")
 MIMIC_HOSP <- file.path(BASE_DIR, "mimic-iv-2.2/hosp")
 NC_MIN_EVENTS <- 50L
 
@@ -152,7 +152,7 @@ cat(sprintf("  差                                        : dmean=%+.6f  dsd=%+.
             arm_k2$null_mean - ref[1], arm_k2$null_sd - ref[2]))
 
 # ---- 5. 用新原假设重算两个案例的校准后效应（仅点估计，供方向判断） ----
-cases <- fromJSON(file.path(TAB_DIR, "v39_all_numbers.json"), simplifyVector = FALSE)$part3$cases
+cases <- fromJSON(file.path(TAB_DIR, "v40_all_numbers.json"), simplifyVector = FALSE)$part3$cases
 cat("\n===== 若改用 guideline 暴露的负对照，两个案例的校准后效应 =====\n")
 cat(sprintf("%-34s %10s %10s %10s %10s\n", "case", "logRR_uncal", "mu_B(old)", "mu_B(new)", "logRR_cal_new"))
 for (cs in cases) {

@@ -1,4 +1,4 @@
-# 第39版 / 任务2 (A+): Table 3 "调整后 SMD" 列
+# 第40版 / 任务2 (A+): Table 3 "调整后 SMD" 列
 # 严格复用 run_baseline_smd.R 的清洗口径 (clean_num 范围 + 派生二值 + 性别特异性QTc阈值)
 # 计算 stabilized IPTW 加权 SMD，与未调整 SMD 同分母约定 (未加权合并SD)，保证可比。
 # 两种口径:
@@ -28,7 +28,10 @@ d$L_qrs_W0 <- clean_num(d$L_qrs_W0, 40, 250)
 d$L_egfr_W0 <- clean_num(d$L_egfr_W0, 1, 300)
 d$L_cr_W0  <- clean_num(d$L_cr_W0, 0.1, 25)
 d$L_k_W0   <- clean_num(d$L_k_W0, 1.5, 10)
-d$L_na_W0  <- clean_num(d$L_na_W0, 110, 180)
+# v40 更正：L_na_W0 装载的是氯离子（MIMIC-IV itemid 50902），不是钠（50983）。
+# 旧的 110-180 是钠的量程，套在氯上会把绝大多数取值判为缺失（仅剩 4.1%）。
+# 氯的量程为 70-140 mEq/L。该变量不在 gmodel10 内，不影响任何效应估计。
+d$L_na_W0  <- clean_num(d$L_na_W0, 70, 140)
 d$L_hb_W0  <- clean_num(d$L_hb_W0, 4, 22)
 d$gender   <- factor(d$gender, levels = c("M","F"))
 d$L_af_W0  <- factor(ifelse(d$L_af_W0 == 1, "Yes","No"), levels = c("No","Yes"))

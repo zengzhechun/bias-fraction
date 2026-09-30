@@ -1,5 +1,5 @@
 ## ===========================================================================
-##  v39 new analysis 2 — Does holding the effect estimate fixed drive the
+##  v40 new analysis 2 — Does holding the effect estimate fixed drive the
 ##                      undercoverage of the BAF credible interval?
 ##
 ##  Motivation (review finding): the published 95% credible interval for BAF
@@ -27,14 +27,14 @@
 ##
 ##  Input : output/simulation/comparison_results_v37p1.rds  (condition names
 ##          and design levels only; the data are regenerated here)
-##  Output: output/tables/v39_interval_joint_propagation.csv
-##          output/tables/v39_interval_joint_by_K.csv
-##          output/simulation/v39_interval_joint_reps.rds
+##  Output: output/tables/v40_interval_joint_propagation.csv
+##          output/tables/v40_interval_joint_by_K.csv
+##          output/simulation/v40_interval_joint_reps.rds
 ## ===========================================================================
 
 suppressPackageStartupMessages({ library(data.table) })
 
-BASE  <- "/Users/zengzhechun/SynologyDrive/工作/数据分析项目/心电图大模型/心电图公开数据集/02 mimic-iv-ecg/Topic1_LTMLE_Betablocker/第39版"
+BASE  <- "/Users/zengzhechun/SynologyDrive/工作/数据分析项目/心电图大模型/心电图公开数据集/02 mimic-iv-ecg/Topic1_LTMLE_Betablocker/第40版"
 OUT_T <- file.path(BASE, "output/tables")
 OUT_S <- file.path(BASE, "output/simulation")
 
@@ -190,7 +190,7 @@ BY_SPS <- rbindlist(lapply(sort(unique(R$se_psi_obs)), function(s)
   cbind(scope = sprintf("sigma_psi = %.2f", s), summ_one(R[se_psi_obs == s]))))
 SUM <- rbind(OVERALL, BY_K, BY_SPS)
 
-fwrite(SUM, file.path(OUT_T, "v39_interval_joint_propagation.csv"))
+fwrite(SUM, file.path(OUT_T, "v40_interval_joint_propagation.csv"))
 print(SUM[, .(scope,
               cov_cur = round(coverage_current, 1), cov_jnt = round(coverage_joint, 1),
               half_cur = round(median_halfwidth_current, 3), half_jnt = round(median_halfwidth_joint, 3),
@@ -206,7 +206,7 @@ COND <- R[, .(n = .N,
               coverage_joint   = 100 * mean(lo_jnt <= bf_true & bf_true <= hi_jnt),
               half_cur = median(half_cur), half_jnt = median(half_jnt)),
           by = cond]
-fwrite(COND, file.path(OUT_T, "v39_interval_joint_by_K.csv"))
+fwrite(COND, file.path(OUT_T, "v40_interval_joint_by_K.csv"))
 cat(sprintf("[by condition] median coverage current %.1f%%, joint %.1f%%; conditions at 0%%: %d vs %d\n",
             median(COND$coverage_current), median(COND$coverage_joint),
             sum(COND$coverage_current == 0), sum(COND$coverage_joint == 0)))
@@ -216,6 +216,6 @@ saveRDS(list(reps = R, summary = SUM, by_condition = COND,
                            K = KEEP, sigma_psi = sort(unique(R$se_psi_obs)),
                            mcmc_iter = MCMC_ITER, mcmc_warmup = MCMC_WARMUP,
                            seed_base = SEED_BASE, date = as.character(Sys.Date()))),
-        file.path(OUT_S, "v39_interval_joint_reps.rds"))
+        file.path(OUT_S, "v40_interval_joint_reps.rds"))
 
 cat("\n=== DONE (joint propagation) ===\n")

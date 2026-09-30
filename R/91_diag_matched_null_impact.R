@@ -28,20 +28,20 @@ suppressPackageStartupMessages({
   library(EmpiricalCalibration)
 })
 
-V39_DIR <- "/Users/zengzhechun/SynologyDrive/工作/数据分析项目/心电图大模型/心电图公开数据集/02 mimic-iv-ecg/Topic1_LTMLE_Betablocker/第39版"
+V40_DIR <- "/Users/zengzhechun/SynologyDrive/工作/数据分析项目/心电图大模型/心电图公开数据集/02 mimic-iv-ecg/Topic1_LTMLE_Betablocker/第40版"
 DATA_DIR <- "/Users/zengzhechun/SynologyDrive/工作/数据分析项目/心电图大模型/心电图公开数据集/02 mimic-iv-ecg/Topic1_LTMLE_Betablocker/DATA"
-setwd(V39_DIR)
+setwd(V40_DIR)
 source("R/01_bsr_core.R")
 
-TAB_DIR <- file.path(V39_DIR, "output", "tables")
-OUT_DIR <- file.path(V39_DIR, "output")
+TAB_DIR <- file.path(V40_DIR, "output", "tables")
+OUT_DIR <- file.path(V40_DIR, "output")
 N_BOOT  <- 2000L
 SEED    <- 42L
 
 # ---- 1. 复现判定所需的两张表：查找表分箱与判定阈值 ---------------------------
-NUM <- jsonlite::fromJSON(file.path(TAB_DIR, "v39_all_numbers.json"),
+NUM <- jsonlite::fromJSON(file.path(TAB_DIR, "v40_all_numbers.json"),
                           simplifyVector = FALSE)
-LOOK     <- read.csv(file.path(TAB_DIR, "v39_part2_reliability_lookup.csv"))
+LOOK     <- read.csv(file.path(TAB_DIR, "v40_part2_reliability_lookup.csv"))
 brk      <- c(LOOK$bf_lo[1], LOOK$bf_hi)
 med_half <- as.numeric(NUM$part2$ci_width$median_half_width)
 VERDICT_BREAKS <- c(0.15, 0.45, 0.65)

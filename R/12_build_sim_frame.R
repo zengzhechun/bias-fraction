@@ -61,7 +61,7 @@ for (k in names(res)) {
 }
 sim <- do.call(rbind, rows)
 rownames(sim) <- NULL
-# v39b (2026-09-01): 10 x 8 x 2 sigma_ps x 3 K x 2 exV = 960 conditions
+# v40b (2026-09-01): 10 x 8 x 2 sigma_ps x 3 K x 2 exV = 960 conditions
 stopifnot(nrow(sim) == 960, ncol(sim) == 22)
 
 out_rds <- file.path(SIM_DIR, "simulation_merged_v35.rds")

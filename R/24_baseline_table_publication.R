@@ -18,7 +18,11 @@ map <- list(
   "L_cr_W0"         = c("Creatinine, mean (SD), mg/dL", "cont"),
   "L_egfr_W0"       = c("eGFR, mean (SD), mL/min/1.73m^2", "cont"),
   "L_hb_W0"         = c("Hemoglobin, mean (SD), g/dL", "cont"),
-  "L_na_W0"         = c("Sodium, mean (SD), mEq/L", "cont"),
+  # v40 更正：L_na_W0 是历史遗留变量名。该列取自 MIMIC-IV itemid 50902，
+  # 而 d_labitems.csv 中 50902 = Chloride（钠是 50983，本次提取未取全）。
+  # 故按氯离子报告，参照范围 70-140 mEq/L。清洗量程见 R/25、R/26。
+  # 该变量不在 gmodel10（10 个估计协变量）内，任何效应估计都不依赖它。
+  "L_na_W0"         = c("Chloride, mean (SD), mEq/L", "cont"),
   "L_k_W0"          = c("Potassium, mean (SD), mEq/L", "cont"),
   "L_af_W0"         = c("Atrial fibrillation, n (%)", "Yes"),
   "L_lbbb_W0"       = c("Left bundle branch block, n (%)", "Yes"),

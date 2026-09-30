@@ -1,8 +1,8 @@
 ## ===========================================================================
-##  v39 new analysis 1 — Held-out validation of the BAF reliability lookup
+##  v40 new analysis 1 — Held-out validation of the BAF reliability lookup
 ##
 ##  Motivation (review finding): the 12-bucket lookup table in the manuscript
-##  was built from the SAME 960,000 repetitions that were then used to score
+##  was built from the SAME 1,920,000 repetitions that were then used to score
 ##  the decision rules R0-R4. The manuscript argued that the induced optimism
 ##  must be small because every cell holds >= 1,000 repetitions, but it offered
 ##  no empirical check. This script supplies one.
@@ -10,7 +10,7 @@
 ##  Two cross-validation schemes, both seeded and repeated five times:
 ##    (a) repetition-level : within each condition, 20% of repetitions are held
 ##                           out, so both halves span the whole grid.
-##    (b) condition-level  : 20% of the 960 conditions are held out entirely,
+##    (b) condition-level  : 20% of the 1,920 conditions are held out entirely,
 ##                           which also tests generalisation to grid cells that
 ##                           never contributed to the lookup.
 ##
@@ -23,17 +23,20 @@
 ##  because a lookup built on 80% of the grid assigns bin edges and per-bin
 ##  probabilities that do not transfer perfectly to cells it has never seen.
 ##
-##  Input : output/simulation/comparison_results_v37p1.rds   (960 x 1000)
-##  Output: output/tables/v39_lookup_holdout.csv
-##          output/tables/v39_lookup_holdout_detail.csv
-##          output/tables/v39_lookup_holdout_folds.csv
-##          output/simulation/v39_lookup_holdout.rds
+##  Input : output/simulation/comparison_results_v37p1.rds   (primary, 960 x 1000)
+##          output/simulation/comparison_results_mirror.rds  (mirror,  960 x 1000)
+##          merged evidence pool: 1,920 x 1000 = 1,920,000 repetitions
+##  Output: output/tables/v40_lookup_holdout.csv
+##          output/tables/v40_lookup_holdout_detail.csv
+##          output/tables/v40_lookup_holdout_folds.csv
+##          output/simulation/v40_lookup_holdout.rds
 ## ===========================================================================
 
 suppressPackageStartupMessages({ library(data.table) })
 
-BASE   <- "/Users/zengzhechun/SynologyDrive/工作/数据分析项目/心电图大模型/心电图公开数据集/02 mimic-iv-ecg/Topic1_LTMLE_Betablocker/第39版"
-IN_RDS <- file.path(BASE, "output/simulation/comparison_results_v37p1.rds")
+BASE     <- "/Users/zengzhechun/SynologyDrive/工作/数据分析项目/心电图大模型/心电图公开数据集/02 mimic-iv-ecg/Topic1_LTMLE_Betablocker/第40版"
+IN_MAIN   <- file.path(BASE, "output/simulation/comparison_results_v37p1.rds")
+IN_MIRROR <- file.path(BASE, "output/simulation/comparison_results_mirror.rds")
 OUT_T  <- file.path(BASE, "output/tables")
 OUT_S  <- file.path(BASE, "output/simulation")
 
@@ -55,8 +58,9 @@ rule_labels <- c(
 )
 
 ## ---- 1. build the repetition-level frame ----------------------------------
-cat("[1] flattening comparison_results_v37p1.rds ...\n")
-res <- readRDS(IN_RDS)
+cat("[1] flattening primary + mirror grids ...\n")
+res <- c(readRDS(IN_MAIN), readRDS(IN_MIRROR))
+stopifnot(length(res) == 1920L)
 
 parts <- vector("list", length(res))
 for (i in seq_along(res)) {
@@ -169,7 +173,7 @@ fold_run <- function(scheme) {
 CV <- rbind(fold_run("rep"), fold_run("condition"))
 CV[, `:=`(delta_misuse_pp  = bd_among_declared_pct_test - bd_among_declared_pct_train,
           delta_declare_pp = declare_usable_pct_test - declare_usable_pct_train)]
-fwrite(CV, file.path(OUT_T, "v39_lookup_holdout_folds.csv"))
+fwrite(CV, file.path(OUT_T, "v40_lookup_holdout_folds.csv"))
 
 AGG <- CV[, .(
   declare_train = mean(declare_usable_pct_train),
@@ -184,7 +188,7 @@ AGG <- CV[, .(
   delta_declare = mean(delta_declare_pp)
 ), by = .(scheme, rule)]
 setorder(AGG, scheme, rule)
-fwrite(AGG, file.path(OUT_T, "v39_lookup_holdout.csv"))
+fwrite(AGG, file.path(OUT_T, "v40_lookup_holdout.csv"))
 cat("\n[3] five-fold cross-validated operating characteristics\n")
 print(AGG[, .(scheme, rule = substr(rule, 1, 3),
               declare_tr = round(declare_train, 1), declare_te = round(declare_test, 1),
@@ -197,13 +201,13 @@ set.seed(SEED + 1)
 hold <- sample(conds, size = round(0.20 * length(conds)))
 L80  <- build_lookup(S[!(cond %in% hold)])
 det  <- copy(L80$LOOK)[, split := "lookup built on 80% of conditions (20% held out)"]
-fwrite(det, file.path(OUT_T, "v39_lookup_holdout_detail.csv"))
+fwrite(det, file.path(OUT_T, "v40_lookup_holdout_detail.csv"))
 
 ## ---- 4. persist -----------------------------------------------------------
 saveRDS(list(cv = CV, aggregate = AGG, lookup_80 = L80,
              held_conditions = hold,
              session = list(seed = SEED, nfold = NFOLD,
                             date = as.character(Sys.Date()))),
-        file.path(OUT_S, "v39_lookup_holdout.rds"))
+        file.path(OUT_S, "v40_lookup_holdout.rds"))
 
 cat("\n=== DONE (lookup hold-out) ===\n")

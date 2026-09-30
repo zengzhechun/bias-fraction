@@ -25,12 +25,13 @@
 # the two views are not mirror images of each other and why both are worth
 # reporting: the mixed zone is the group neither view can get right.
 #
-# Input : output/simulation/comparison_results_v37p1.rds
-#         (960 conditions x 1000 reps = 960,000 repetitions)
-# Output: output/tables/v39_dual_view_strategy.csv
-#         output/tables/v39_dual_view_roc.csv
-#         output/tables/v39_dual_view_auc.csv
-#         output/tables/v39_dual_view.json
+# Input : output/simulation/comparison_results_v37p1.rds   (primary grid, 960)
+#         output/simulation/comparison_results_mirror.rds  (mirror grid,  960)
+#         merged: 1,920 conditions x 1000 reps = 1,920,000 repetitions
+# Output: output/tables/v40_dual_view_strategy.csv
+#         output/tables/v40_dual_view_roc.csv
+#         output/tables/v40_dual_view_auc.csv
+#         output/tables/v40_dual_view.json
 
 suppressPackageStartupMessages({
   library(jsonlite)
@@ -38,8 +39,11 @@ suppressPackageStartupMessages({
 source("R/00_config.R")
 
 cat("[1] loading simulation ...\n")
-res <- readRDS(file.path(SIM_DIR, "comparison_results_v37p1.rds"))
-stopifnot(length(res) == 960L)
+res_main   <- readRDS(file.path(SIM_DIR, "comparison_results_v37p1.rds"))
+res_mirror <- readRDS(file.path(SIM_DIR, "comparison_results_mirror.rds"))
+stopifnot(length(res_main) == 960L, length(res_mirror) == 960L)
+res <- c(res_main, res_mirror)
+rm(res_main, res_mirror); invisible(gc())
 
 ## -- flatten ----------------------------------------------------------------
 parts <- vector("list", length(res))
@@ -130,11 +134,11 @@ STRAT <- cbind(rule = names(strat),
                do.call(rbind, lapply(strat, oc_dual)),
                stringsAsFactors = FALSE)
 row.names(STRAT) <- NULL
-write.csv(STRAT, file.path(TAB_DIR, "v39_dual_view_strategy.csv"), row.names = FALSE)
+write.csv(STRAT, file.path(TAB_DIR, "v40_dual_view_strategy.csv"), row.names = FALSE)
 print(STRAT, digits = 4)
 
 ## -- sanity checks ----------------------------------------------------------
-# Each view must be an internally consistent 2x2 table over the same 960,000
+# Each view must be an internally consistent 2x2 table over the same 1,920,000
 # rows. Bayes ties the four numbers together: with p = prevalence of the
 # positive truth, P(positive call) = p*sens + (1-p)*(1-spec), and
 # PPV = p*sens / P(positive call). If a column is ever read as its own
@@ -183,7 +187,7 @@ AUC <- data.frame(
   auc_bd = sapply(SCR, function(s) auc_mw( s, S$bd_tru)),
   stringsAsFactors = FALSE
 )
-write.csv(AUC, file.path(TAB_DIR, "v39_dual_view_auc.csv"), row.names = FALSE)
+write.csv(AUC, file.path(TAB_DIR, "v40_dual_view_auc.csv"), row.names = FALSE)
 print(AUC, digits = 4)
 
 roc_pair <- function(score, n = 300) {
@@ -197,7 +201,7 @@ roc_pair <- function(score, n = 300) {
 ROC <- do.call(rbind, lapply(names(SCR), function(nm)
   cbind(score = nm, roc_pair(SCR[[nm]]))))
 row.names(ROC) <- NULL
-write.csv(ROC, file.path(TAB_DIR, "v39_dual_view_roc.csv"), row.names = FALSE)
+write.csv(ROC, file.path(TAB_DIR, "v40_dual_view_roc.csv"), row.names = FALSE)
 
 ## -- export -----------------------------------------------------------------
 out <- list(
@@ -209,5 +213,5 @@ out <- list(
   auc        = AUC
 )
 write(toJSON(out, digits = 6, auto_unbox = TRUE, pretty = TRUE),
-      file.path(TAB_DIR, "v39_dual_view.json"))
-cat("saved v39_dual_view.{strategy,auc,roc}.csv and v39_dual_view.json\n")
+      file.path(TAB_DIR, "v40_dual_view.json"))
+cat("saved v40_dual_view.{strategy,auc,roc}.csv and v40_dual_view.json\n")

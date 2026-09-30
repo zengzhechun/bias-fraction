@@ -1,4 +1,4 @@
-# 第39版 / 任务2 (Plan A): Q2 (GDMT) baseline SMD table
+# 第40版 / 任务2 (Plan A): Q2 (GDMT) baseline SMD table
 # Mirrors R/25_adjusted_smd_iptw.R (Q1, BB) but for the GDMT question.
 # Authoritative treatment definition: scripts/run_ltmle_gdmt.R
 #   - cohort: Y_W0 == 0 (14,677 grace-period survivors, SAME as Q1 Table 3)
@@ -17,7 +17,7 @@ suppressMessages({ library(data.table) })
 
 BASE_DIR <- "/Users/zengzhechun/SynologyDrive/工作/数据分析项目/心电图大模型/心电图公开数据集/02 mimic-iv-ecg/Topic1_LTMLE_Betablocker"
 DATA_DIR <- file.path(BASE_DIR, "DATA")
-OUT_DIR  <- file.path(BASE_DIR, "第39版", "output")
+OUT_DIR  <- file.path(BASE_DIR, "第40版", "output")
 TAB_DIR  <- file.path(OUT_DIR, "tables")
 
 # ---- 1. 加载并按 run_baseline_smd.R 清洗 (与 Q1 同口径) ----
@@ -43,7 +43,10 @@ d$L_qrs_W0 <- clean_num(d$L_qrs_W0, 40, 250)
 d$L_egfr_W0 <- clean_num(d$L_egfr_W0, 1, 300)
 d$L_cr_W0  <- clean_num(d$L_cr_W0, 0.1, 25)
 d$L_k_W0   <- clean_num(d$L_k_W0, 1.5, 10)
-d$L_na_W0  <- clean_num(d$L_na_W0, 110, 180)
+# v40 更正：L_na_W0 装载的是氯离子（MIMIC-IV itemid 50902），不是钠（50983）。
+# 旧的 110-180 是钠的量程，套在氯上会把绝大多数取值判为缺失。氯的量程为 70-140。
+# 该变量不在 gmodel10 内，不影响任何效应估计。
+d$L_na_W0  <- clean_num(d$L_na_W0, 70, 140)
 d$L_hb_W0  <- clean_num(d$L_hb_W0, 4, 22)
 d$gender   <- factor(d$gender, levels = c("M","F"))
 d$L_af_W0  <- factor(ifelse(d$L_af_W0 == 1, "Yes","No"), levels = c("No","Yes"))
@@ -124,7 +127,7 @@ lab_map <- c(age="Age, mean (SD), y", gender="Female, n (%)",
   L_hr_W0="Heart rate, mean (SD), bpm", L_qrs_W0="QRS duration, mean (SD), ms",
   L_qtc_W0="QTc interval, mean (SD), ms", L_cr_W0="Creatinine, mean (SD), mg/dL",
   L_egfr_W0="eGFR, mean (SD), mL/min/1.73m^2", L_hb_W0="Hemoglobin, mean (SD), g/dL",
-  L_na_W0="Sodium, mean (SD), mEq/L", L_k_W0="Potassium, mean (SD), mEq/L",
+  L_na_W0="Chloride, mean (SD), mEq/L", L_k_W0="Potassium, mean (SD), mEq/L",
   L_af_W0="Atrial fibrillation, n (%)", L_lbbb_W0="Left bundle branch block, n (%)",
   qtc_prolonged="Prolonged QTc, n (%)", qrs_ge120="Wide QRS (>=120 ms), n (%)",
   egfr_lt60="eGFR <60 mL/min/1.73m^2, n (%)", age_ge75="Age >=75 y, n (%)")

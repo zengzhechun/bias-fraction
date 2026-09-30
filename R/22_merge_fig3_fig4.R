@@ -3,7 +3,7 @@
 suppressMessages(library(magick))
 
 fig_dir <- file.path("output", "figures")
-out_dir <- file.path(fig_dir, "v39")
+out_dir <- file.path(fig_dir, "v40")
 dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 
 a <- image_trim(image_read(file.path(fig_dir, "fig01_calibration_plot.png")))

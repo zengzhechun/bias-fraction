@@ -29,11 +29,11 @@
 # Journal style: no in-image title (the caption lives in the figure legend),
 # panel letters and a one-line reading note inside each panel, shared legend.
 #
-# Input : output/tables/v39_dual_view_roc.csv
-#         output/tables/v39_dual_view_auc.csv
-#         output/tables/v39_dual_view_strategy.csv
-# Output: output/figures/v39/figP2C_roc_paper.png   (landscape, 9.0 x 4.0 in)
-#         output/tables/v39_roc_paper_auc.txt       (AUCs, both views)
+# Input : output/tables/v40_dual_view_roc.csv
+#         output/tables/v40_dual_view_auc.csv
+#         output/tables/v40_dual_view_strategy.csv
+# Output: output/figures/v40/figP2C_roc_paper.png   (landscape, 9.0 x 4.0 in)
+#         output/tables/v40_roc_paper_auc.txt       (AUCs, both views)
 
 suppressPackageStartupMessages({
   library(ggplot2)
@@ -41,13 +41,13 @@ suppressPackageStartupMessages({
 })
 source("R/00_config.R")
 
-V38_FIG <- file.path(FIG_DIR, "v39")
+V38_FIG <- file.path(FIG_DIR, "v40")
 dir.create(V38_FIG, showWarnings = FALSE, recursive = TRUE)
 
 cat("[1] loading precomputed dual-view curves and metrics ...\n")
-ROC <- read.csv(file.path(TAB_DIR, "v39_dual_view_roc.csv"),  stringsAsFactors = FALSE)
-AUC <- read.csv(file.path(TAB_DIR, "v39_dual_view_auc.csv"),  stringsAsFactors = FALSE)
-ST  <- read.csv(file.path(TAB_DIR, "v39_dual_view_strategy.csv"), stringsAsFactors = FALSE)
+ROC <- read.csv(file.path(TAB_DIR, "v40_dual_view_roc.csv"),  stringsAsFactors = FALSE)
+AUC <- read.csv(file.path(TAB_DIR, "v40_dual_view_auc.csv"),  stringsAsFactors = FALSE)
+ST  <- read.csv(file.path(TAB_DIR, "v40_dual_view_strategy.csv"), stringsAsFactors = FALSE)
 
 # Fixed curve order and colours; the factor levels, not the row order, decide
 # the legend, so a change in R/23's output order cannot reshuffle the colours.
@@ -64,7 +64,7 @@ writeLines(
   paste(sprintf("%-24s ED view %.4f | BD view %.4f",
                 as.character(AUC$score), AUC$auc_ed, AUC$auc_bd),
         collapse = "\n"),
-  file.path(TAB_DIR, "v39_roc_paper_auc.txt"))
+  file.path(TAB_DIR, "v40_roc_paper_auc.txt"))
 print(AUC, digits = 4)
 
 ## -- operating points: one row per rule, coordinates in both views -----------
@@ -134,7 +134,10 @@ panel_roc <- function(view, col, nx, ny, hj) {
     scale_y_continuous(limits = c(0, 1), expand = c(0, 0)) +
     labs(x = "False-positive rate (1 \u2212 specificity)",
          y = "True-positive rate (sensitivity)",
-         colour = NULL, shape = NULL) +
+         # Colour and linetype carry the same three levels and the same name, so
+         # ggplot merges them into one three-key legend instead of printing the
+         # same keys twice.
+         colour = "Score", linetype = "Score", shape = "Reporting rules") +
     th
   p
 }
@@ -149,10 +152,14 @@ gB <- panel_roc("bd", "auc_bd", pts$nx_b, pts$ny_b, pts$hj_b) +
 g <- (gA | gB) +
   plot_layout(guides = "collect") &
   theme(legend.position = "bottom",
-        legend.box = "horizontal",
-        legend.margin = margin(t = -4),
-        legend.text = element_text(size = 8))
+        # The keys are stacked rather than laid out in one row: seven keys in a
+        # single row are wider than the figure and the last one was clipped.
+        legend.box = "vertical",
+        legend.box.just = "center",
+        legend.margin = margin(t = -2),
+        legend.key.size = unit(0.34, "cm"),
+        legend.text = element_text(size = 7.6))
 
 ggsave(file.path(V38_FIG, "figP2C_roc_paper.png"), g,
-       width = 9.0, height = 4.3, dpi = 300)
-cat("saved figP2C_roc_paper.png (dual view, 9.0 x 4.3 in)\n")
+       width = 9.0, height = 4.5, dpi = 300)
+cat("saved figP2C_roc_paper.png (dual view, 9.0 x 4.5 in)\n")

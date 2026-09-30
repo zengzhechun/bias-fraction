@@ -1,5 +1,5 @@
 ## ===========================================================================
-##  v39 new analysis 2 - Missing-data sensitivity for case study question 2
+##  v40 new analysis 2 - Missing-data sensitivity for case study question 2
 ##
 ##  Review finding #6: an indeterminate guideline-directed medical therapy
 ##  (GDMT) score at baseline. In the analytic cohort (Y_W0 == 0, n = 14,677,
@@ -30,14 +30,15 @@
 ##  verdicts. Nothing about the negative-control panel changes, so the only
 ##  quantity that moves across schemes is the target estimate itself.
 ##
-##  Reproduction check: scheme (A) must return BAF 0.510, 95% CI 0.356-0.603,
-##  which is the published question-2 row. The script asserts this.
+##  Reproduction check: scheme (A) must return the question-2 row that
+##  v40_all_numbers.json reports (the guideline-null convention, BAF ~ 0.460),
+##  because scheme (A) IS the published analysis. The script asserts this.
 ##
 ##  Inputs : DATA/ltmle_wide_K2_gdmt.rds
-##           DATA/bias_calibration_results.rds        (the 12 negative controls)
-##           output/tables/v39_all_numbers.json        (the published lookup)
-##  Outputs: output/tables/v39_gdmt_missing_sensitivity.csv
-##           output/simulation/v39_gdmt_missing_sensitivity.rds
+##           output/data/negative_controls_expanded_guideline.rds  (12 NCs, guideline panel)
+##           output/tables/v40_all_numbers.json        (the published lookup)
+##  Outputs: output/tables/v40_gdmt_missing_sensitivity.csv
+##           output/simulation/v40_gdmt_missing_sensitivity.rds
 ## ===========================================================================
 
 suppressPackageStartupMessages({
@@ -49,12 +50,12 @@ suppressPackageStartupMessages({
 
 BASE     <- "/Users/zengzhechun/SynologyDrive/工作/数据分析项目/心电图大模型/心电图公开数据集/02 mimic-iv-ecg/Topic1_LTMLE_Betablocker"
 DATA_DIR <- file.path(BASE, "DATA")
-V39      <- file.path(BASE, "第39版")
-TAB_DIR  <- file.path(V39, "output/tables")
-SIM_DIR  <- file.path(V39, "output/simulation")
+V40      <- file.path(BASE, "第40版")
+TAB_DIR  <- file.path(V40, "output/tables")
+SIM_DIR  <- file.path(V40, "output/simulation")
 
-source(file.path(V39, "R/00_config.R"))
-source(file.path(V39, "R/01_bsr_core.R"))   # bsr_bootstrap()
+source(file.path(V40, "R/00_config.R"))
+source(file.path(V40, "R/01_bsr_core.R"))   # bsr_bootstrap()
 
 BF_BD <- 0.5; BF_ED <- 1/3
 VERDICT_BREAKS <- c(0.15, 0.45, 0.65)
@@ -72,8 +73,11 @@ verdict_of <- function(p) {
 }
 
 ## ---- empirical null and the published lookup -------------------------------
-cr <- readRDS(file.path(DATA_DIR, "bias_calibration_results.rds"))
-nc <- cr$negative_controls
+## v40 换口径：经验原假设改用与主分析同暴露定义的 guideline 面板
+## （negative_controls_expanded_guideline.rds，暴露率 12.1%），不再用
+## DATA/bias_calibration_results.rds 里的 K2 面板（全部 β 受体阻滞剂，43.5%）。
+ncg       <- readRDS(file.path(V40, "output/data/negative_controls_expanded_guideline.rds"))
+nc        <- ncg$estimates
 nc_log_rr <- as.numeric(nc$logRr)
 nc_se     <- as.numeric(nc$seLogRr)
 nf <- fitNull(nc_log_rr, nc_se)
@@ -81,7 +85,7 @@ mu_b_hat <- unname(nf[1]); sigma_b <- unname(nf[2])
 cat(sprintf("[null] K = %d negative controls; fitNull mu_B = %.4f, sigma_B = %.4f\n",
             length(nc_log_rr), mu_b_hat, sigma_b))
 
-NUM  <- jsonlite::fromJSON(file.path(TAB_DIR, "v39_all_numbers.json"),
+NUM  <- jsonlite::fromJSON(file.path(TAB_DIR, "v40_all_numbers.json"),
                            simplifyVector = FALSE)
 lk <- NUM$part2$lookup
 ## The outer bin edges are -Inf and +Inf, which JSON encodes as null, so the
@@ -224,14 +228,14 @@ cat(sprintf("[check] published BAF %.4f (%.4f-%.4f) vs reproduced %.4f (%.4f-%.4
             as.numeric(pub$bf), as.numeric(pub$bf_lo), as.numeric(pub$bf_hi),
             ALT$bf[1], ALT$bf_lo[1], ALT$bf_hi[1]))
 
-fwrite(ALT, file.path(TAB_DIR, "v39_gdmt_missing_sensitivity.csv"))
+fwrite(ALT, file.path(TAB_DIR, "v40_gdmt_missing_sensitivity.csv"))
 saveRDS(list(table = ALT, fits = res, mi = mi_fits,
              p_imp_summary = list(median = median(p_imp), min = min(p_imp),
                                   max = max(p_imp)),
              n_indeterminate = nna, null_fit = c(mu = mu_b_hat, sigma = sigma_b),
              session = list(seed = SEED, m = M_IMP, n_boot = N_BOOT,
                             boot_seed = BOOT_SEED, date = as.character(Sys.Date()))),
-        file.path(SIM_DIR, "v39_gdmt_missing_sensitivity.rds"))
+        file.path(SIM_DIR, "v40_gdmt_missing_sensitivity.rds"))
 
 cat("\n[result] question 2 under four missing-data conventions\n")
 print(ALT[, .(tag, n, rr = round(rr, 3), log_rr = round(log_rr, 4),
